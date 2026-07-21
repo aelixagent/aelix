@@ -4,11 +4,9 @@ export const DOCS_PATH = "/docs";
 
 /**
  * The live app (the `ui/` project) — the Desk dashboard + the investor Vault dApp.
- * It ships as a static build under /app of THIS site and is exposed via Next
- * rewrites, so these are same-origin paths — one domain, no localhost, no
- * separate deployment. In local dev the standalone Vite server on :5180 is used
- * instead via NEXT_PUBLIC_APP_URL.
+ * It ships as a static build under /app of THIS site (landing/public/app), so
+ * these are same-origin paths — one domain, no localhost, no separate deployment.
+ * /vault is a real page route (app/vault/page.tsx) that frames /app/vault.html.
  */
-const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || "";
-export const VAULT_URL = `${APP_ORIGIN}/vault`; // connect wallet · deposit · withdraw
-export const DESK_APP_URL = `${APP_ORIGIN}/app/index.html`; // raw desk mirror (marketing desk lives at /desk)
+export const VAULT_URL = "/vault"; // connect wallet · deposit · withdraw
+export const DESK_APP_URL = "/app/index.html"; // raw desk mirror (marketing desk lives at /desk)
