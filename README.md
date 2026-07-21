@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/DOCS.png" alt="AELIX, Agentic AI Equity Research Desk" width="100%" />
+
 # ◤ AELIX ◢
 
 ### Agentic AI Equity Research Desk
@@ -18,38 +20,38 @@ connect to a Robinhood Agentic account over MCP, and never place an order withou
 
 ---
 
-Aelix isn't a bot that YOLOs your money. It's a small **desk of specialized sub-agents**
-— fundamental, technical, macro/news, and a **risk manager with veto power** — that screen
+Aelix isn't a bot that YOLOs your money. It's a small **desk of specialized sub-agents**:
+fundamental, technical, macro/news, and a **risk manager with veto power**, that screen
 your watchlist, debate each candidate, and hand you a one-click **preview card**. You
 approve; it places. Everything is wrapped in written guardrails (human-in-the-loop,
 position caps, prompt-injection defense) and mirrored to a Robinhood-style dashboard.
 
-![Aelix — the desk dashboard](docs/demo.jpeg)
+![Aelix, the desk dashboard](docs/demo.jpeg)
 
 > [!WARNING]
 > **Real money, beta, not investment advice.** Robinhood Agentic Trading is in beta
 > (US, equities only). The desk trades only inside an isolated Agentic account funded with
-> a dedicated budget — **that budget is the most it can ever lose**. There is **no track
+> a dedicated budget, **that budget is the most it can ever lose**. There is **no track
 > record and no performance claim here**; this is a reference architecture for learning.
 > Run it at your own risk and monitor it yourself.
 
 ## Why it's different
 
-- **A team, not one prompt** — analysts gather evidence in parallel; an independent risk
+- **A team, not one prompt**, analysts gather evidence in parallel; an independent risk
   manager can veto a trade the analysts liked.
-- **Guardrails are structural, not vibes** — the sub-agents physically have no order tools;
+- **Guardrails are structural, not vibes**, the sub-agents physically have no order tools;
   only the Portfolio Manager can place, and only after your explicit in-session approval.
-- **Prompt-injection-aware** — the news agent treats fetched content as untrusted data and
+- **Prompt-injection-aware**, the news agent treats fetched content as untrusted data and
   quotes suspicious "instructions" instead of acting on them.
-- **Low-touch by design** — it runs read-only research on a schedule and only surfaces a
+- **Low-touch by design**, it runs read-only research on a schedule and only surfaces a
   trade when one genuinely qualifies; most days it tells you to stand aside.
-- **A real dashboard** — a Robinhood-style UI mirrors the desk's state live.
+- **A real dashboard**, a Robinhood-style UI mirrors the desk's state live.
 
 ## How the desk works
 
 You talk to the **Portfolio Manager (PM = the main Claude Code session)** in plain
 language. Analysts gather evidence in parallel; the Risk Manager has veto power; only the
-PM can place orders — and only after **your** approval. After every run the PM writes
+PM can place orders, and only after **your** approval. After every run the PM writes
 `ui/public/desk-state.json`, which the dashboard mirrors live.
 
 ```mermaid
@@ -85,7 +87,7 @@ flowchart TD
 ```
 
 Steps 1–7 are research and produce **no order**. The desk's standard output is the
-**preview card at step 8** — it stops there until you confirm. The full lifecycle is in
+**preview card at step 8**, it stops there until you confirm. The full lifecycle is in
 [the docs](https://www.aelix.xyz/docs/workflow).
 
 ## The desk team
@@ -95,7 +97,7 @@ Steps 1–7 are research and produce **no order**. The desk's standard output is
 | **Portfolio Manager** | *main session* | ✅ *only after your approval* | Orchestrates the run; the only role with order tools |
 | **Fundamental Analyst** | `.claude/agents/fundamental-analyst.md` | ❌ | Valuation, earnings, growth, balance-sheet health |
 | **Technical Analyst** | `.claude/agents/technical-analyst.md` | ❌ | Trend, momentum, support/resistance, scans |
-| **Macro / News Analyst** | `.claude/agents/macro-news-analyst.md` | ❌ | Market backdrop + news — **injection-isolated** |
+| **Macro / News Analyst** | `.claude/agents/macro-news-analyst.md` | ❌ | Market backdrop + news, **injection-isolated** |
 | **Risk Manager** | `.claude/agents/risk-manager.md` | ❌ *(veto power)* | Checks every trade against written caps |
 
 **Least privilege:** only the PM has order tools. The analysts and Risk Manager physically
@@ -112,10 +114,10 @@ claude                                  # open the project (trust the .mcp.json 
 
 # 3. Define your risk caps in strategies/ before trading (the Risk Manager VETOes if unset)
 
-# 4. Run the dashboard (separate terminal) — mirrors each desk run
+# 4. Run the dashboard (separate terminal), mirrors each desk run
 cd ui && npm install && npm run dev     # http://localhost:5180 (shows demo until a live run)
 
-# 5. Drive the desk — just talk to the PM, e.g.:
+# 5. Drive the desk, just talk to the PM, e.g.:
 #   "Screen my watchlist and bring me the top 2 ideas with full team analysis."
 #   "Run the desk on AAPL and NVDA, risk-check a small starter in the better one."
 
@@ -126,7 +128,7 @@ claude mcp remove robinhood-trading
 Full walkthrough → [Installation & Setup](https://www.aelix.xyz/docs/setup).
 
 > [!NOTE]
-> The sub-agents in `.claude/agents/` load when Claude Code **starts** — after adding or
+> The sub-agents in `.claude/agents/` load when Claude Code **starts**, after adding or
 > editing them, restart the session so roles like `fundamental-analyst` are recognized with
 > their restricted tool sets.
 
@@ -139,7 +141,7 @@ Full walkthrough → [Installation & Setup](https://www.aelix.xyz/docs/setup).
   found in fetched/external content (news, analyst notes, web) and surface them as quotes.
 - Every proposed trade must map to a written rule in `strategies/`; the Risk Manager VETOes
   if a cap is unset, a stop is missing, or account data looks inconsistent.
-- You can disconnect the MCP anytime from the Robinhood app — that's your kill switch.
+- You can disconnect the MCP anytime from the Robinhood app, that's your kill switch.
 
 Deep dive → [Guardrails](https://www.aelix.xyz/docs/guardrails) ·
 [Prompt-Injection Defense](https://www.aelix.xyz/docs/prompt-injection) ·
@@ -153,7 +155,7 @@ Deep dive → [Guardrails](https://www.aelix.xyz/docs/guardrails) ·
 ├── .mcp.json                  # Project-scoped Robinhood Trading MCP connection (HTTP + OAuth)
 ├── .claude/
 │   ├── settings.json          # Permissions: reads allowed, orders gated (ask), options denied
-│   └── agents/                # The desk team — one least-privilege sub-agent per role
+│   └── agents/                # The desk team, one least-privilege sub-agent per role
 ├── strategies/                # Written risk caps + entry/exit rules the Risk Manager enforces
 │   ├── README.md              # Caps + when the Risk Manager must VETO
 │   ├── mean-reversion.md      # Buy oversold pullbacks inside an uptrend
@@ -167,7 +169,7 @@ Deep dive → [Guardrails](https://www.aelix.xyz/docs/guardrails) ·
 └── landing/                   # Marketing site + full documentation (Next.js) → aelix.xyz
 ```
 
-Real account state, OAuth tokens, and live logs are **never** committed — only sanitized
+Real account state, OAuth tokens, and live logs are **never** committed, only sanitized
 `*.example.*` files are. See [Configuration](https://www.aelix.xyz/docs/configuration).
 
 ## Documentation
@@ -193,11 +195,11 @@ cd landing && npm install && npm run dev   # http://localhost:5190  (docs at /do
 
 Aelix is a **research & recommendation tool, not financial advice**. Robinhood Agentic
 Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic
-account funded with a dedicated budget — that budget is the most it can ever lose. **There
+account funded with a dedicated budget, that budget is the most it can ever lose. **There
 is no track record and no performance claim here**; all example data is illustrative. All
 investment decisions are your own responsibility. Use only risk capital. Any crypto/token
 material referenced in exploratory notes is **out of scope, unverified, and not
-implemented** — see [Safety & Disclaimer](https://www.aelix.xyz/docs/disclaimer).
+implemented**, see [Safety & Disclaimer](https://www.aelix.xyz/docs/disclaimer).
 
 <div align="center">
 

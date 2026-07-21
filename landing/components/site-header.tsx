@@ -43,7 +43,7 @@ export function SiteHeader() {
     };
   }, []);
 
-  // scrollspy — highlight the nav item for the section in the viewport band
+  // scrollspy, highlight the nav item for the section in the viewport band
   useEffect(() => {
     const secs = NAV.map((n) => document.getElementById(n.href.slice(1))).filter(
       (el): el is HTMLElement => !!el,

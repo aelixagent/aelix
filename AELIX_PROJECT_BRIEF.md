@@ -133,7 +133,7 @@ Turns the desk into something others can use **and verify**: a non-custodial, AI
 - **Chain:** Robinhood Chain (EVM, Arbitrum Orbit). **Testnet chainId 46630** (live/verified, 122 passing tests, guardrails confirmed reverting). **Mainnet 4663 = NOT deployed.**
 - **Big caveats:** periphery (USDG/oracle/swap) is **mocked** in the demo → "functional preview, NOT real RWA exposure." **Not audited. Do not use with real funds.** Stock Tokens are **not for US persons** (build targets non-US); Stock Tokens ≠ share ownership.
 
-> ⚠️ **Docs contradiction to resolve:** `landing/app/docs/_content/architecture.ts` currently states there is "no chain, RPC, wallet, or token code in this repo" and that Web3 was archived as unimplemented — which contradicts the live `onchain/` testnet module. Reconcile before marketing the on-chain layer as real.
+> ✅ **Docs reconciled (2026-07-21):** `architecture.ts`, `faq.ts`, and `disclaimer.ts` no longer claim "no chain code in this repo." They now state the running equities desk has no chain code in its *trading path*, while the on-chain layer is a **separate, testnet-first, unaudited module in `onchain/`** (not on mainnet, not part of the live desk, gated behind legal/securities review). Kept conservative — sanity-check the legal wording if publishing.
 
 ---
 

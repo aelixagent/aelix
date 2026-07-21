@@ -31,7 +31,7 @@ function CountUp({ to, suffix }: { to: number; suffix: string }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Reduced motion: final value is already rendered — do nothing.
+    // Reduced motion: final value is already rendered, do nothing.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
@@ -41,7 +41,7 @@ function CountUp({ to, suffix }: { to: number; suffix: string }) {
         done.current = true;
         io.disconnect();
         const dur = 1000;
-        const step = 45; // flicker quantization — stepped, not smooth
+        const step = 45; // flicker quantization, stepped, not smooth
         let start = 0;
         let lastFlick = -1;
         const tick = (t: number) => {
@@ -98,7 +98,7 @@ export function StatsStrip() {
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <span className="eyebrow">// 01 — THE DESK</span>
+            <span className="eyebrow">// 01, THE DESK</span>
             <h2>
               <DecryptText text="Not a bot that" as="span" />
               <br />

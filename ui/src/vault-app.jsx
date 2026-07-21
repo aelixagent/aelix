@@ -340,7 +340,7 @@ export default function VaultApp() {
       {/* ── floating header ── */}
       <header className="vfloat">
         <a className="vfloat-brand" href="/" title="Back to the Desk">
-          <span className="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 6 L16 27 L28 6 L22.6 6 L16 17.4 L9.4 6 Z" fill="#22242A"/><rect x="13.4" y="2.2" width="5.2" height="5.2" rx="0.4" transform="rotate(45 16 4.8)" fill="#22242A"/></svg></span>
+          <span className="logo" aria-hidden="true"><img src="/aelix-icon.png" alt="" /></span>
           Aelix <span className="vfloat-chip">Vault</span>
         </a>
         <nav className="vfloat-nav">

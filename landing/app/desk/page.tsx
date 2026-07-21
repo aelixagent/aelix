@@ -20,7 +20,7 @@ import { MARQUEE2 } from "@/lib/data";
 export const metadata: Metadata = {
   title: "Desk",
   description:
-    "The Aelix desk — AI analysts, risk manager, human-approved orders. The pixel control room.",
+    "The Aelix desk, AI analysts, risk manager, human-approved orders. The pixel control room.",
 };
 
 export default function Page() {

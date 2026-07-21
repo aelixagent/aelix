@@ -66,8 +66,8 @@ export function LiveDesk() {
         tag: "YOU",
         cls: "you",
         text: ok
-          ? "approved — but this is a demo. Real orders are placed only in the live Claude Code session."
-          : "rejected — desk stands aside. No order placed.",
+          ? "approved, but this is a demo. Real orders are placed only in the live Claude Code session."
+          : "rejected, desk stands aside. No order placed.",
       },
     ]);
     setPhase("done");
@@ -116,7 +116,7 @@ export function LiveDesk() {
             </h2>
           </div>
           <p>
-            A simulated desk run — sense, three analysts, a risk veto, a preview. It always stops at your
+            A simulated desk run, sense, three analysts, a risk veto, a preview. It always stops at your
             approval. This demo places nothing.
           </p>
         </div>
@@ -129,7 +129,7 @@ export function LiveDesk() {
               <span className="term-dot" />
               <span className="term-dot" style={{ background: "var(--warn)" }} />
               <span className="term-dot" style={{ background: "var(--green)" }} />
-              <span className="grow">aelix@desk — run</span>
+              <span className="grow">aelix@desk, run</span>
             </div>
             <div className="term-body" ref={bodyRef} data-lenis-prevent>
               {phase === "idle" && lines.length === 0 && (

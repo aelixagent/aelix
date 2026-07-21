@@ -4,21 +4,21 @@ export const content: DocContent = {
   title: "Installation & Setup",
   description:
     "Connect Aelix to your Robinhood Agentic account the safe way: clone the repo, trust the project MCP server, authenticate over OAuth, tighten the permission gate, and write a strategy before your first order.",
-  eyebrow: "03 — INSTALLATION & SETUP",
+  eyebrow: "03, INSTALLATION & SETUP",
   blocks: [
     {
       type: "prose",
-      md: "This page is the full walkthrough from an empty desktop to a desk that can propose — but never silently place — a trade. It follows [`docs/SETUP.md`](/docs/setup) step for step: get the repo, trust the project-scoped MCP server, authenticate to Robinhood over OAuth, verify the real tool names, tighten the permission gate, and write a strategy before anything trades.",
+      md: "This page is the full walkthrough from an empty desktop to a desk that can propose, but never silently place, a trade. It follows [`docs/SETUP.md`](/docs/setup) step for step: get the repo, trust the project-scoped MCP server, authenticate to Robinhood over OAuth, verify the real tool names, tighten the permission gate, and write a strategy before anything trades.",
     },
     {
       type: "prose",
-      md: "Setup is deliberately conservative. The default posture is **everything gated** — every Robinhood tool call asks for your approval — and you loosen it deliberately, one read-only tool at a time. Nothing here weakens the guardrails in [`CLAUDE.md`](/docs/guardrails); it only wires the broker in behind them.",
+      md: "Setup is deliberately conservative. The default posture is **everything gated**, every Robinhood tool call asks for your approval, and you loosen it deliberately, one read-only tool at a time. Nothing here weakens the guardrails in [`CLAUDE.md`](/docs/guardrails); it only wires the broker in behind them.",
     },
     {
       type: "callout",
       tone: "danger",
       title: "Real money · beta · decide your funding cap first",
-      md: "You are connecting a live brokerage account. **Robinhood Agentic Trading is in beta (US, equities only)** — expect bugs. Before you authenticate, decide the amount you will fund the Agentic account with: **that budget is the most the agent can ever lose.** Start small. None of this is investment advice and there is no track record anywhere in the project. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "You are connecting a live brokerage account. **Robinhood Agentic Trading is in beta (US, equities only)**, expect bugs. Before you authenticate, decide the amount you will fund the Agentic account with: **that budget is the most the agent can ever lose.** Start small. None of this is investment advice and there is no track record anywhere in the project. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -28,14 +28,14 @@ export const content: DocContent = {
       type: "list",
       items: [
         "A **Robinhood individual investing account** in good standing.",
-        "A **desktop** device — you can only open the Agentic account and authenticate there.",
+        "A **desktop** device, you can only open the Agentic account and authenticate there.",
         "A **funding amount decided in advance.** This is the most the agent can ever lose. Start small.",
         "**Claude Code** installed and logged in.",
       ],
     },
     {
       type: "note",
-      md: "The Agentic account opens and authenticates on desktop only. Have the Robinhood **mobile app** on hand too — OAuth includes a verification step there.",
+      md: "The Agentic account opens and authenticates on desktop only. Have the Robinhood **mobile app** on hand too, OAuth includes a verification step there.",
     },
     {
       type: "diagram",
@@ -47,7 +47,7 @@ export const content: DocContent = {
 4. TIGHTEN    claude mcp get robinhood-trading ─▶ split tools deny / ask / allow
 5. STRATEGY   write strategies/*.md            ─▶ caps + entry/exit rules
    ────────────────────────────────────────────────────────────────────────
-   READY      first desk run stops at a preview card — you approve or pass`,
+   READY      first desk run stops at a preview card, you approve or pass`,
     },
     {
       type: "heading",
@@ -135,7 +135,7 @@ cd rh-trading-agent`,
         {
           label: "Consent in browser",
           title: "Approve on Robinhood's OAuth screen",
-          md: "A browser opens Robinhood's OAuth consent screen. **The agent never sees your password** — the OAuth handshake happens between you and Robinhood.",
+          md: "A browser opens Robinhood's OAuth consent screen. **The agent never sees your password**, the OAuth handshake happens between you and Robinhood.",
         },
         {
           label: "Verify on mobile",
@@ -145,7 +145,7 @@ cd rh-trading-agent`,
         {
           label: "Create + fund",
           title: "Onboarding auto-opens for the Agentic account",
-          md: "After connecting, Robinhood's onboarding auto-opens. **Create your Agentic account and fund it with your dedicated budget** — the amount you decided in advance. This isolated account is the only one the desk can trade.",
+          md: "After connecting, Robinhood's onboarding auto-opens. **Create your Agentic account and fund it with your dedicated budget**, the amount you decided in advance. This isolated account is the only one the desk can trade.",
         },
       ],
     },
@@ -161,7 +161,7 @@ cd rh-trading-agent`,
     },
     {
       type: "prose",
-      md: "By default, **every** Robinhood tool call requires manual approval — the `ask` rule applied to `mcp__robinhood-trading__*`. That is intentional for the first runs: you watch every call before it happens. To refine it, you first need the real tool names.",
+      md: "By default, **every** Robinhood tool call requires manual approval, the `ask` rule applied to `mcp__robinhood-trading__*`. That is intentional for the first runs: you watch every call before it happens. To refine it, you first need the real tool names.",
     },
     {
       type: "code",
@@ -170,7 +170,7 @@ cd rh-trading-agent`,
     },
     {
       type: "prose",
-      md: "You can also run `/mcp` in-session to list them. Once you know the names, edit `.claude/settings.json`: move **read-only** tools (positions, buying power, quotes) into `allow` so routine reads stop prompting, and keep **order-placing** tools in `ask` — or in `deny` while you are still testing a strategy and want zero live orders.",
+      md: "You can also run `/mcp` in-session to list them. Once you know the names, edit `.claude/settings.json`: move **read-only** tools (positions, buying power, quotes) into `allow` so routine reads stop prompting, and keep **order-placing** tools in `ask`, or in `deny` while you are still testing a strategy and want zero live orders.",
     },
     {
       type: "heading",
@@ -182,15 +182,15 @@ cd rh-trading-agent`,
       items: [
         {
           term: "deny",
-          md: "Hard block. The tool cannot run, no prompt. Use it to physically wall off tools you never want touched — this repo denies the options order tools (`place_option_order`, `cancel_option_order`) because the desk is **equities only**.",
+          md: "Hard block. The tool cannot run, no prompt. Use it to physically wall off tools you never want touched, this repo denies the options order tools (`place_option_order`, `cancel_option_order`) because the desk is **equities only**.",
         },
         {
           term: "ask",
-          md: "Gated. Every call pauses for your explicit in-session approval. This is where order tools live — `place_equity_order` stays in `ask` so a human always confirms.",
+          md: "Gated. Every call pauses for your explicit in-session approval. This is where order tools live, `place_equity_order` stays in `ask` so a human always confirms.",
         },
         {
           term: "allow",
-          md: "Runs without a prompt. Reserve it for **read-only** tools whose worst case is a wasted API call — quotes, positions, fundamentals, order history.",
+          md: "Runs without a prompt. Reserve it for **read-only** tools whose worst case is a wasted API call, quotes, positions, fundamentals, order history.",
         },
       ],
     },
@@ -198,11 +198,11 @@ cd rh-trading-agent`,
       type: "callout",
       tone: "warn",
       title: "Evaluation order: deny → ask → allow, first match wins",
-      md: "Rules are checked **deny → ask → allow**, and the first match wins. Critically, a matching `ask` rule prompts **even when a broader `allow` also matches**. So a tool you want gated must be in `ask` or `deny` — never left to be overridden by a wide allow. When in doubt, gate it.",
+      md: "Rules are checked **deny → ask → allow**, and the first match wins. Critically, a matching `ask` rule prompts **even when a broader `allow` also matches**. So a tool you want gated must be in `ask` or `deny`, never left to be overridden by a wide allow. When in doubt, gate it.",
     },
     {
       type: "prose",
-      md: "Here is the illustrative example from `docs/SETUP.md`. The tool names are placeholders — **replace them with the actual names** from `claude mcp get`:",
+      md: "Here is the illustrative example from `docs/SETUP.md`. The tool names are placeholders, **replace them with the actual names** from `claude mcp get`:",
     },
     {
       type: "code",
@@ -247,7 +247,7 @@ cd rh-trading-agent`,
     },
     {
       type: "note",
-      md: "Note that `review_equity_order` sits in `allow` — it only **builds a preview**, it does not place anything. The tool that actually submits an order, `place_equity_order`, stays in `ask`. For the full breakdown of every list, see [Configuration & Permissions](/docs/configuration).",
+      md: "Note that `review_equity_order` sits in `allow`, it only **builds a preview**, it does not place anything. The tool that actually submits an order, `place_equity_order`, stays in `ask`. For the full breakdown of every list, see [Configuration & Permissions](/docs/configuration).",
     },
     {
       type: "heading",
@@ -255,13 +255,13 @@ cd rh-trading-agent`,
     },
     {
       type: "prose",
-      md: "Do not trade against an empty rulebook. Write your rules in `strategies/` — per-trade cap, max positions, entry/exit logic, stop conditions. `CLAUDE.md` requires **every proposed trade to map to a written rule there**, and the Risk Manager reads that folder before clearing any trade. If a cap is removed or left unset, the Risk Manager **VETOes**.",
+      md: "Do not trade against an empty rulebook. Write your rules in `strategies/`, per-trade cap, max positions, entry/exit logic, stop conditions. `CLAUDE.md` requires **every proposed trade to map to a written rule there**, and the Risk Manager reads that folder before clearing any trade. If a cap is removed or left unset, the Risk Manager **VETOes**.",
     },
     {
       type: "callout",
       tone: "warn",
       title: "Review the caps before you fund",
-      md: "The numbers shipped in `strategies/README.md` are conservative starting defaults, **not advice** — for example a per-trade cap and a max-position concentration expressed as a percent of account value (NAV). Edit them to match your budget and risk tolerance, then commit. You own these limits; the agent will not change them. Full details in [Strategies](/docs/strategies).",
+      md: "The numbers shipped in `strategies/README.md` are conservative starting defaults, **not advice**, for example a per-trade cap and a max-position concentration expressed as a percent of account value (NAV). Edit them to match your budget and risk tolerance, then commit. You own these limits; the agent will not change them. Full details in [Strategies](/docs/strategies).",
     },
     {
       type: "heading",
@@ -304,14 +304,14 @@ cd rh-trading-agent`,
       type: "callout",
       tone: "warn",
       title: "You stay responsible",
-      md: "**Beta, equities only — expect bugs.** The funding cap limits how much you can lose; it does **not** make a strategy sound. You stay responsible for monitoring the desk. This is **not investment advice.**",
+      md: "**Beta, equities only, expect bugs.** The funding cap limits how much you can lose; it does **not** make a strategy sound. You stay responsible for monitoring the desk. This is **not investment advice.**",
     },
     {
       type: "list",
       items: [
-        "The **funding amount** is the hard ceiling on loss — nothing the agent does can exceed it, but a small cap does not validate the strategy behind a trade.",
-        "Keep order tools in **`ask`** (or **`deny`** while testing). A gated order is the whole point — see [Guardrails](/docs/guardrails).",
-        "Every trade must cite a written rule in `strategies/`, or the Risk Manager vetoes it — see [Strategies](/docs/strategies).",
+        "The **funding amount** is the hard ceiling on loss, nothing the agent does can exceed it, but a small cap does not validate the strategy behind a trade.",
+        "Keep order tools in **`ask`** (or **`deny`** while testing). A gated order is the whole point, see [Guardrails](/docs/guardrails).",
+        "Every trade must cite a written rule in `strategies/`, or the Risk Manager vetoes it, see [Strategies](/docs/strategies).",
         "When you are ready for a first run, follow the [Quickstart](/docs/quickstart) and watch it stop at a preview card.",
       ],
     },

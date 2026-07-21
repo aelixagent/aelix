@@ -9,14 +9,14 @@ export function Team() {
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <span className="eyebrow">// 03 — THE TEAM</span>
+            <span className="eyebrow">// 03, THE TEAM</span>
             <h2>
               A team, not<br />one prompt.
             </h2>
           </div>
           <p>
             Least privilege: only the PM has order tools. The analysts physically cannot place a
-            trade — there are no order tools in their toolset.
+            trade, there are no order tools in their toolset.
           </p>
         </div>
         <div className="team">

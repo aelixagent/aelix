@@ -9,7 +9,7 @@ import "./vx.css";
 
 const Diorama = dynamic(() => import("@/components/vx/diorama"), { ssr: false });
 
-/* Aelix mark — the chartreuse AX monogram tile, shared by the header, preloader
+/* Aelix mark, the chartreuse AX monogram tile, shared by the header, preloader
    and section marks (same asset as the favicon). */
 function VMark({ className }: { className?: string }) {
   return (
@@ -45,7 +45,7 @@ function scrollToId(id: string) {
   if (!el) return;
   const l = getLenis();
   if (l) l.scrollTo(el, { offset: 0, duration: 1.4 });
-  // no Lenis == the user prefers reduced motion — jump, don't animate
+  // no Lenis == the user prefers reduced motion, jump, don't animate
   else el.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
 
@@ -57,7 +57,7 @@ const Diamond = () => (
   </svg>
 );
 
-/* mono micro-index eyebrow — the explanatory spine that lets a first-time
+/* mono micro-index eyebrow, the explanatory spine that lets a first-time
    visitor follow the story act by act. Tick · number · section name. */
 function IndexLabel({ n, children, i = 0 }: { n: string; children: string; i?: number }) {
   return (
@@ -70,7 +70,7 @@ function IndexLabel({ n, children, i = 0 }: { n: string; children: string; i?: n
 }
 
 /**
- * Scroll-linked choreography — the vvvhound trick. Every RAF we compute each
+ * Scroll-linked choreography, the vvvhound trick. Every RAF we compute each
  * section's progress through its runway (0 pinned-in → 1 about to unpin) and
  * write transform/opacity directly, so the CONTENT scrubs with the scroll
  * exactly like the WebGL scene behind it. Enter-once blur reveals still run
@@ -95,20 +95,20 @@ function useScrollChoreography(enabled: boolean) {
         const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0.5;
 
         // content drifts up through its act; eases in/out at the seams
-        const drift = (p - 0.5) * -46; // gentler travel — calmer read
+        const drift = (p - 0.5) * -46; // gentler travel, calmer read
         // narrow fade edges + wide plateau → each act's copy HOLDS on screen much
         // longer while scrolling instead of appearing and vanishing quickly
         const F = 0.07;
         const fadeIn = i === 0 ? 1 : Math.min(1, p / F);
         const fadeOut = Math.min(1, (1 - p) / F);
         let o = Math.max(0, Math.min(fadeIn, fadeOut));
-        o = o * o * (3 - 2 * o); // smoothstep — soft in/out, no abrupt pop
+        o = o * o * (3 - 2 * o); // smoothstep, soft in/out, no abrupt pop
         const scale = i === 0 ? 1 - p * 0.06 : 1; // hero gently recedes
 
         inner.style.transform = `translate3d(0, ${drift.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
         inner.style.opacity = o.toFixed(3);
         // gate the blur-in reveals: they play once the act is actually pinned
-        // (the hero counts as live immediately — the preloader gates it)
+        // (the hero counts as live immediately, the preloader gates it)
         inner.classList.toggle("vx-live", i === 0 || p > 0.001);
       }
       raf = requestAnimationFrame(tick);
@@ -157,7 +157,7 @@ export default function HomePage() {
   useScrollChoreography(ready);
 
   // Mount the heavy WebGL scene (three.js eval + 12 procedural peaks + texture
-  // remap + shader compile) a beat AFTER the preloader has painted — so its
+  // remap + shader compile) a beat AFTER the preloader has painted, so its
   // synchronous init never delays the loader's own first frame. It then builds
   // BEHIND the still-opaque preloader; we only lift the preloader once the scene
   // has actually painted (see the honest counter below).
@@ -167,8 +167,8 @@ export default function HomePage() {
   }, []);
 
   // Honest preloader. The counter eases up to ~90% during the intro, then HOLDS
-  // there while the world is still building — if it isn't loaded yet, we keep
-  // loading — and only completes to 100% (and lifts the veil) once the scene
+  // there while the world is still building, if it isn't loaded yet, we keep
+  // loading, and only completes to 100% (and lifts the veil) once the scene
   // reports its first painted frame. A safety cap dismisses it if that signal
   // never arrives, so a missing asset can't strand the page on the loader.
   useEffect(() => {
@@ -235,7 +235,7 @@ export default function HomePage() {
 
   return (
     <div className="vx-root">
-      {/* preloader — V mark inside a green progress ring, serif % counter */}
+      {/* preloader, V mark inside a green progress ring, serif % counter */}
       <div className={`vx-preload ${ready ? "is-done" : ""}`}>
         <div className="vx-preload__mark">
           <div className="vx-preload__ring" style={{ "--pct": pct }} aria-hidden="true" />
@@ -246,7 +246,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* WebGL scene + veils — mounted behind the preloader, which lifts only
+      {/* WebGL scene + veils, mounted behind the preloader, which lifts only
           once the scene reports its first painted frame (see onReady) */}
       {mount3d && <Diorama onReady={handleSceneReady} />}
       <div className="vx-veil" aria-hidden="true" />
@@ -302,7 +302,7 @@ export default function HomePage() {
           </Reveal>
           <RevealChars text="AELIX" as="h1" className="vx-hero-title" step={70} />
           <Reveal className="vx-sub vx-sub--hero" i={4} style={{ marginTop: "0.4em" }}>
-            An AI trading desk that researches around the clock — and never trades without your yes.
+            Researches around the clock. Never trades without your yes.
           </Reveal>
         </div>
         <div className="vx-cue" aria-hidden="true">
@@ -327,7 +327,7 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "A desk of AI analysts researching your watchlist around the clock —",
+              "A desk of AI analysts researching your watchlist around the clock,",
               "an on-chain agentic layer where the rules and the record are verifiable,",
               "and no order is ever placed without your explicit yes.",
             ]}
@@ -345,7 +345,7 @@ export default function HomePage() {
             step={70}
             lines={[
               "Fundamental, technical and macro analysts each argue their read of a name,",
-              "then a Risk Manager weighs the case — holding veto power over them all.",
+              "then a Risk Manager weighs the case, holding veto power over them all.",
             ]}
           />
         </div>
@@ -360,7 +360,7 @@ export default function HomePage() {
             <Reveal className="vx-trio__item" i={1}>
               <span className="vx-trio__icon"><Diamond /></span>
               <h3>Traders</h3>
-              <p>See the setup before you commit — levels, momentum and risk, read for you.</p>
+              <p>See the setup before you commit, levels, momentum and risk, read for you.</p>
             </Reveal>
             <Reveal className="vx-trio__item" i={2}>
               <span className="vx-trio__icon"><Diamond /></span>
@@ -370,7 +370,7 @@ export default function HomePage() {
             <Reveal className="vx-trio__item" i={3}>
               <span className="vx-trio__icon"><Diamond /></span>
               <h3>Researchers</h3>
-              <p>Ask anything about any ticker — fundamentals, catalysts and the macro backdrop.</p>
+              <p>Ask anything about any ticker, fundamentals, catalysts and the macro backdrop.</p>
             </Reveal>
           </div>
         </div>
@@ -385,7 +385,7 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "Headlines, filings and price action — distilled into what actually",
+              "Headlines, filings and price action, distilled into what actually",
               "moves your names. Every read is quoted, sourced and shown, never blind.",
             ]}
           />
@@ -402,7 +402,7 @@ export default function HomePage() {
             step={70}
             lines={[
               "The desk proposes; you dispose. Position caps, stop rules and no",
-              "averaging into losers become guardrails-as-code — the same written",
+              "averaging into losers become guardrails-as-code, the same written",
               "limits compiled on-chain, so they are enforced, not just promised.",
             ]}
           />
@@ -420,7 +420,7 @@ export default function HomePage() {
             lines={[
               "An ERC-4626 vault holds the book; every decision and outcome is",
               "attested on-chain for a track record you can verify, not take on trust.",
-              "One calm picture — nothing hidden, nothing assumed. Testnet preview.",
+              "One calm picture, nothing hidden, nothing assumed. Testnet preview.",
             ]}
           />
         </div>
@@ -435,7 +435,7 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "The calm layer over your watchlist — one reviewed decision at a time,",
+              "The calm layer over your watchlist, one reviewed decision at a time,",
               "on Robinhood Chain. Testnet-first · preview · not yet live.",
             ]}
           />
@@ -461,8 +461,8 @@ export default function HomePage() {
         <p className="vx-foot__legal">
           <b>Not investment advice.</b> Aelix is an agentic research tool for Robinhood
           Agentic (beta). The desk researches and proposes; every order requires explicit
-          human approval in session. On-chain features — the Guardrails library, ERC-4626
-          vault, on-chain attestations and agent executor — are testnet-first and not yet
+          human approval in session. On-chain features, the Guardrails library, ERC-4626
+          vault, on-chain attestations and agent executor, are testnet-first and not yet
           live: nothing is deployed, all on-chain values shown are illustrative previews,
           and this is not an investment product. There is no track record. Nothing here is
           a recommendation to buy or sell any security. Use only risk capital.

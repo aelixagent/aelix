@@ -5,7 +5,7 @@ import { GlitchText } from "@/components/ui/glitch-text";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Typewriter } from "@/components/ui/typewriter";
 
-/** Cinematic hero — serif wordmark, calm, matches the / homepage vibe.
+/** Cinematic hero, serif wordmark, calm, matches the / homepage vibe.
  *  (The old ROBIN-DROIDS red eyes + pixel robot/hill were removed so /desk
  *  reads as the same brand as the cinematic landing.) */
 export function Hero() {

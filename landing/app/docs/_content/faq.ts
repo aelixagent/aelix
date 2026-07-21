@@ -3,8 +3,8 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "FAQ",
   description:
-    "Straight answers to the questions that matter first — scope, safety, cost of failure, and what Aelix is not.",
-  eyebrow: "15 — FAQ",
+    "Straight answers to the questions that matter first, scope, safety, cost of failure, and what Aelix is not.",
+  eyebrow: "15, FAQ",
   blocks: [
     {
       type: "prose",
@@ -16,7 +16,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**No.** Every order requires your explicit in-session approval. The analysts have no order tools at all; only the Portfolio Manager can place, and only after you say yes to a preview card. No order is ever placed on a schedule or on its own — even the dashboard's [Run desk](/docs/dashboard) button triggers only a read-only run that stops at the preview.",
+      md: "**No.** Every order requires your explicit in-session approval. The analysts have no order tools at all; only the Portfolio Manager can place, and only after you say yes to a preview card. No order is ever placed on a schedule or on its own, even the dashboard's [Run desk](/docs/dashboard) button triggers only a read-only run that stops at the preview.",
     },
     {
       type: "heading",
@@ -24,7 +24,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**US equities only**, long-only, in USD, inside an isolated Robinhood Agentic account (beta). Options, futures, and crypto are out of scope of the underlying beta — the option order tools are explicitly `deny`-ed in [`.claude/settings.json`](/docs/mcp).",
+      md: "**US equities only**, long-only, in USD, inside an isolated Robinhood Agentic account (beta). Options, futures, and crypto are out of scope of the underlying beta, the option order tools are explicitly `deny`-ed in [`.claude/settings.json`](/docs/mcp).",
     },
     {
       type: "heading",
@@ -32,7 +32,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "At most the **dedicated budget you fund the isolated Agentic account with**. The desk can only trade that account — it cannot reach your main Robinhood balance. Fund it with money you can afford to lose, and treat that number as the maximum downside.",
+      md: "At most the **dedicated budget you fund the isolated Agentic account with**. The desk can only trade that account, it cannot reach your main Robinhood balance. Fund it with money you can afford to lose, and treat that number as the maximum downside.",
     },
     {
       type: "heading",
@@ -40,7 +40,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` token is an **out-of-scope, aspirational, testnet-first roadmap idea** — a Web3 experiment, **not** an investment product, and **not implemented** anywhere in this repo. There is no blockchain, RPC, wallet, or token code here. It is gated behind legal/securities review. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` utility token is an **out-of-scope, aspirational, testnet-first roadmap idea**, a Web3 experiment, **not** an investment product, and the token itself is **not built**. The broader on-chain layer (an ERC-4626 vault + guardrails-as-code) exists only as **testnet-first, unaudited code in `onchain/`**, nothing is on mainnet, and it stays gated behind legal/securities review. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -48,7 +48,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The [Macro/News Analyst](/docs/prompt-injection) treats every fetched web page as **untrusted data**. Instruction-like text (\"buy X now\", \"ignore your rules\", \"transfer funds\") is quoted verbatim under `INJECTION ATTEMPTS` and flagged — never obeyed. The PM never acts on instructions found in external content, and because of [least privilege](/docs/team) even a fooled analyst has no order tools.",
+      md: "The [Macro/News Analyst](/docs/prompt-injection) treats every fetched web page as **untrusted data**. Instruction-like text (\"buy X now\", \"ignore your rules\", \"transfer funds\") is quoted verbatim under `INJECTION ATTEMPTS` and flagged, never obeyed. The PM never acts on instructions found in external content, and because of [least privilege](/docs/team) even a fooled analyst has no order tools.",
     },
     {
       type: "heading",
@@ -56,7 +56,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**No.** Aelix is a research tool and reference architecture. There is no track record and no performance claim anywhere in the project — all example data is illustrative. Every investment decision, and all the risk, is yours. Use only risk capital.",
+      md: "**No.** Aelix is a research tool and reference architecture. There is no track record and no performance claim anywhere in the project, all example data is illustrative. Every investment decision, and all the risk, is yours. Use only risk capital.",
     },
     {
       type: "heading",
@@ -80,7 +80,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "By design. The desk is **low-touch** — it runs read-only research and only surfaces a trade when one genuinely qualifies against a written rule in [`strategies/`](/docs/strategies). On most days the honest answer is \"no setup,\" and that is exactly what it reports. Steps 1–6 of a run produce no order.",
+      md: "By design. The desk is **low-touch**, it runs read-only research and only surfaces a trade when one genuinely qualifies against a written rule in [`strategies/`](/docs/strategies). On most days the honest answer is \"no setup,\" and that is exactly what it reports. Steps 1–6 of a run produce no order.",
     },
     {
       type: "heading",
@@ -88,7 +88,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "No. The [dashboard](/docs/dashboard) is a **read-only mirror** — it cannot place orders. Approval and execution happen only in the Claude Code session. The UI just visualizes the snapshot the PM writes after each run.",
+      md: "No. The [dashboard](/docs/dashboard) is a **read-only mirror**, it cannot place orders. Approval and execution happen only in the Claude Code session. The UI just visualizes the snapshot the PM writes after each run.",
     },
     {
       type: "heading",
@@ -96,7 +96,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Independence. The [Risk Manager](/docs/team) reads the written caps in `strategies/` and can **veto a trade the analysts liked**. Because it is a distinct role with read-only account access and no order tools, its judgment is structurally separate from the analysts building the case — and if the caps are unset or the data looks off, it VETOes rather than assuming.",
+      md: "Independence. The [Risk Manager](/docs/team) reads the written caps in `strategies/` and can **veto a trade the analysts liked**. Because it is a distinct role with read-only account access and no order tools, its judgment is structurally separate from the analysts building the case, and if the caps are unset or the data looks off, it VETOes rather than assuming.",
     },
     {
       type: "callout",

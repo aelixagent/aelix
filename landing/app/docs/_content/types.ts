@@ -1,5 +1,5 @@
 /**
- * Aelix docs — content model.
+ * Aelix docs, content model.
  *
  * Every documentation page is a plain-data `DocContent` object: a title, a lede,
  * and an ordered array of typed `Block`s. A single server renderer
@@ -7,7 +7,7 @@
  * so every page looks like one system no matter who authored the data.
  *
  * Inline text fields ending in `md` accept a tiny inline-markdown subset:
- *   **bold**, `code`, [label](href)   — nothing else is parsed.
+ *   **bold**, `code`, [label](href)  , nothing else is parsed.
  * Use `\n\n` inside a `callout`/`note` `md` field to separate paragraphs.
  */
 
@@ -30,7 +30,7 @@ export type Block =
   | { type: "cards"; columns?: 2 | 3; cards: Card[] }
   // Numbered step blocks (the landing "flow" look).
   | { type: "steps"; steps: Step[] }
-  // Definition list — term + explanation.
+  // Definition list, term + explanation.
   | { type: "deflist"; items: { term: string; md: string }[] }
   // Row of pixel pills / tags.
   | { type: "pills"; items: string[] }
@@ -67,7 +67,7 @@ export interface DocContent {
   title: string;
   /** One-line lede under the H1, also used as <meta description>. */
   description: string;
-  /** Pixel eyebrow above the H1, e.g. "01 — GETTING STARTED". */
+  /** Pixel eyebrow above the H1, e.g. "01, GETTING STARTED". */
   eyebrow?: string;
   blocks: Block[];
 }

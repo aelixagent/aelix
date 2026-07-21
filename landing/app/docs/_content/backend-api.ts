@@ -3,12 +3,12 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Backend API",
   description:
-    "Run the Aelix public backend and call its REST API — auth, the Rule-Keeper, Portfolio X-Ray, the 24/7 desk, and alerts.",
-  eyebrow: "19 — Going Public",
+    "Run the Aelix public backend and call its REST API, auth, the Rule-Keeper, Portfolio X-Ray, the 24/7 desk, and alerts.",
+  eyebrow: "19, Going Public",
   blocks: [
     {
       type: "prose",
-      md: "The public backend lives in [`backend/`](/docs/public-architecture) and is a zero-dependency Node service — it runs with plain `node`, no `npm install`. In its default `mock` mode it serves a demo account, so the whole API works with **no credentials** (great for local dev, CI, and the frontend).",
+      md: "The public backend lives in [`backend/`](/docs/public-architecture) and is a zero-dependency Node service, it runs with plain `node`, no `npm install`. In its default `mock` mode it serves a demo account, so the whole API works with **no credentials** (great for local dev, CI, and the frontend).",
     },
     {
       type: "heading",
@@ -18,7 +18,7 @@ export const content: DocContent = {
       type: "code",
       lang: "bash",
       code: `cd backend
-cp .env.example .env        # optional in dev — ephemeral secrets auto-generate
+cp .env.example .env        # optional in dev, ephemeral secrets auto-generate
 npm start                   # → http://localhost:8787  (broker=mock)
 npm test                    # deterministic Rule-Keeper + crypto tests`,
     },
@@ -26,7 +26,7 @@ npm test                    # deterministic Rule-Keeper + crypto tests`,
       type: "callout",
       tone: "warn",
       title: "Secrets are fatal in production",
-      md: "In dev, `JWT_SECRET` and `VAULT_KEY` are auto-generated (ephemeral — sessions reset on restart). In `NODE_ENV=production` the server **refuses to boot** without real ones. Generate: `openssl rand -hex 32` (JWT), `openssl rand -base64 32` (vault).",
+      md: "In dev, `JWT_SECRET` and `VAULT_KEY` are auto-generated (ephemeral, sessions reset on restart). In `NODE_ENV=production` the server **refuses to boot** without real ones. Generate: `openssl rand -hex 32` (JWT), `openssl rand -base64 32` (vault).",
     },
     {
       type: "heading",
@@ -84,7 +84,7 @@ TOKEN=... ; AUTH="authorization: Bearer $TOKEN"`,
     },
     {
       type: "prose",
-      md: "The core endpoint. You send a trade **the user wants to make**; it returns a verdict against the user's own caps with explicit, checkable math — `APPROVE`, `APPROVE-WITH-CHANGES` (with a compliant `suggestedQty`), or `VETO`.",
+      md: "The core endpoint. You send a trade **the user wants to make**; it returns a verdict against the user's own caps with explicit, checkable math, `APPROVE`, `APPROVE-WITH-CHANGES` (with a compliant `suggestedQty`), or `VETO`.",
     },
     {
       type: "code",
@@ -103,7 +103,7 @@ TOKEN=... ; AUTH="authorization: Bearer $TOKEN"`,
     "reasons": [
       "Post-trade AAPL weight vs concentration cap (25%).",
       "Cash after buy is below your 10% buffer.",
-      "No compliant size available — your concentration cap leaves no room to add AAPL."
+      "No compliant size available, your concentration cap leaves no room to add AAPL."
     ],
     "checks": [ { "name": "per-trade cap", "ok": false, "detail": "..." } ],
     "suggestedQty": 0,
@@ -140,7 +140,7 @@ TOKEN=... ; AUTH="authorization: Bearer $TOKEN"`,
     },
     {
       type: "prose",
-      md: "`GET /v1/xray` returns objective analytics on what the user already owns — concentration, sector exposure, cash %, a 0–100 discipline `healthScore`, and `flags` tied to the user's own caps (concentration breach, stop-breach, earnings-soon, underwater, cash-buffer). No recommendations.",
+      md: "`GET /v1/xray` returns objective analytics on what the user already owns, concentration, sector exposure, cash %, a 0–100 discipline `healthScore`, and `flags` tied to the user's own caps (concentration breach, stop-breach, earnings-soon, underwater, cash-buffer). No recommendations.",
     },
     {
       type: "note",

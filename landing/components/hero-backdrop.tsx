@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-/** Faint muted candlesticks drifting behind the hero — pure texture, not a chart. */
+/** Faint muted candlesticks drifting behind the hero, pure texture, not a chart. */
 export function HeroBackdrop() {
   const ref = useRef<HTMLCanvasElement>(null);
 

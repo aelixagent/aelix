@@ -3,22 +3,22 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Quickstart",
   description:
-    "The fastest path from clone to first desk run — private repo, connect the Robinhood MCP over OAuth, fund a small Agentic budget, set your caps, and drive the desk in plain language.",
-  eyebrow: "02 — Quickstart",
+    "The fastest path from clone to first desk run, private repo, connect the Robinhood MCP over OAuth, fund a small Agentic budget, set your caps, and drive the desk in plain language.",
+  eyebrow: "02, Quickstart",
   blocks: [
     {
       type: "prose",
-      md: "This is the shortest route from an empty folder to your first **desk run**. You'll make the repo private, clone it, connect the [Robinhood Trading MCP](/docs/mcp) server over OAuth, fund an isolated **Agentic** account with a small dedicated budget, write your risk caps, and then talk to the **Portfolio Manager** in plain language. The desk researches, risk-checks, and stops at a **preview card** — you approve; it places.",
+      md: "This is the shortest route from an empty folder to your first **desk run**. You'll make the repo private, clone it, connect the [Robinhood Trading MCP](/docs/mcp) server over OAuth, fund an isolated **Agentic** account with a small dedicated budget, write your risk caps, and then talk to the **Portfolio Manager** in plain language. The desk researches, risk-checks, and stops at a **preview card**, you approve; it places.",
     },
     {
       type: "prose",
-      md: "Every step below is grounded in the repo's own [`README.md`](/docs/setup) and [`docs/SETUP.md`](/docs/setup). For the full, annotated walkthrough — refining permissions, verifying tool names, tightening guardrails — read [Installation & Setup](/docs/setup) after you finish here.",
+      md: "Every step below is grounded in the repo's own [`README.md`](/docs/setup) and [`docs/SETUP.md`](/docs/setup). For the full, annotated walkthrough, refining permissions, verifying tool names, tightening guardrails, read [Installation & Setup](/docs/setup) after you finish here.",
     },
     {
       type: "callout",
       tone: "danger",
       title: "Real money · beta · not investment advice",
-      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk only ever trades inside an isolated Agentic account funded with a dedicated budget — **that budget is the most it can lose**. There is no track record and no performance claim anywhere in this project. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk only ever trades inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can lose**. There is no track record and no performance claim anywhere in this project. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -31,10 +31,10 @@ export const content: DocContent = {
     {
       type: "list",
       items: [
-        "**Robinhood individual investing account** — in good standing. The desk connects on top of it and trades only inside a separate Agentic account.",
-        "**A desktop device** — you can only open the Agentic account and complete authentication on desktop.",
-        "**Claude Code, installed and logged in** — the desk runs entirely inside a Claude Code session.",
-        "**A small dedicated budget, decided up front** — this is the most the agent can ever lose. Start small.",
+        "**Robinhood individual investing account**, in good standing. The desk connects on top of it and trades only inside a separate Agentic account.",
+        "**A desktop device**, you can only open the Agentic account and complete authentication on desktop.",
+        "**Claude Code, installed and logged in**, the desk runs entirely inside a Claude Code session.",
+        "**A small dedicated budget, decided up front**, this is the most the agent can ever lose. Start small.",
       ],
     },
     {
@@ -55,12 +55,12 @@ export const content: DocContent = {
         {
           label: "Step 1",
           title: "Make the repo private",
-          md: "Before pushing anything anywhere, set the repository to **private**. It holds guardrails and strategy notes — never secrets, and never the OAuth token.",
+          md: "Before pushing anything anywhere, set the repository to **private**. It holds guardrails and strategy notes, never secrets, and never the OAuth token.",
         },
         {
           label: "Step 2",
           title: "Clone it",
-          md: "A plain `git clone` is enough — the shipped `.mcp.json` already declares the `robinhood-trading` server at project scope.",
+          md: "A plain `git clone` is enough, the shipped `.mcp.json` already declares the `robinhood-trading` server at project scope.",
         },
         {
           label: "Step 3",
@@ -85,7 +85,7 @@ export const content: DocContent = {
         {
           label: "Step 7",
           title: "Approve at the preview",
-          md: "The desk stops at a preview card. You approve in-session; only then does it place — still gated by the `ask` rule.",
+          md: "The desk stops at a preview card. You approve in-session; only then does it place, still gated by the `ask` rule.",
         },
       ],
     },
@@ -96,7 +96,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "This repository holds the **guardrails, strategy notes, agents, dashboard, and setup docs** — never secrets, and never the OAuth token (those live outside the repo). Even so, set it to **private** before you push anything. Do this first.",
+      md: "This repository holds the **guardrails, strategy notes, agents, dashboard, and setup docs**, never secrets, and never the OAuth token (those live outside the repo). Even so, set it to **private** before you push anything. Do this first.",
     },
     {
       type: "callout",
@@ -110,7 +110,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Clone your private repo. The shipped `.mcp.json` already defines the Robinhood Trading MCP server at **project scope**, so you don't need a separate `claude mcp add` step — the plain clone is enough.",
+      md: "Clone your private repo. The shipped `.mcp.json` already defines the Robinhood Trading MCP server at **project scope**, so you don't need a separate `claude mcp add` step, the plain clone is enough.",
     },
     {
       type: "code",
@@ -127,7 +127,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Open the project with `claude`. The first time, Claude Code asks whether to trust the project-scoped MCP server from `.mcp.json` — approve `robinhood-trading` (it's already pre-listed under `enabledMcpjsonServers` in `.claude/settings.json`). Then, inside the session, run `/mcp`, pick `robinhood-trading`, and authenticate: a browser opens Robinhood's OAuth consent screen (**the agent never sees your password**), with a verification step in the Robinhood **mobile app**. Once connected, Robinhood's onboarding auto-opens so you can create your Agentic account and fund it with your dedicated budget.",
+      md: "Open the project with `claude`. The first time, Claude Code asks whether to trust the project-scoped MCP server from `.mcp.json`, approve `robinhood-trading` (it's already pre-listed under `enabledMcpjsonServers` in `.claude/settings.json`). Then, inside the session, run `/mcp`, pick `robinhood-trading`, and authenticate: a browser opens Robinhood's OAuth consent screen (**the agent never sees your password**), with a verification step in the Robinhood **mobile app**. Once connected, Robinhood's onboarding auto-opens so you can create your Agentic account and fund it with your dedicated budget.",
     },
     {
       type: "code",
@@ -137,7 +137,7 @@ export const content: DocContent = {
     },
     {
       type: "note",
-      md: "To see the real tool names once connected, run `claude mcp get robinhood-trading` (or `/mcp` in-session). By default **every** Robinhood tool call is gated by an `ask` rule on `mcp__robinhood-trading__*` — that's intentional for the first runs. Refining that gate is covered in [Configuration](/docs/configuration).",
+      md: "To see the real tool names once connected, run `claude mcp get robinhood-trading` (or `/mcp` in-session). By default **every** Robinhood tool call is gated by an `ask` rule on `mcp__robinhood-trading__*`, that's intentional for the first runs. Refining that gate is covered in [Configuration](/docs/configuration).",
     },
     {
       type: "heading",
@@ -145,11 +145,11 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "`CLAUDE.md` requires **every proposed trade to map to a written rule** in [`strategies/`](/docs/strategies), and the **Risk Manager reads that folder before clearing any trade**. If a cap is removed, blank, or left as `TODO`, the Risk Manager **VETOes** — so fill these in before you trade. The defaults below are conservative starting values you own and edit; they're **illustrative, not advice**.",
+      md: "`CLAUDE.md` requires **every proposed trade to map to a written rule** in [`strategies/`](/docs/strategies), and the **Risk Manager reads that folder before clearing any trade**. If a cap is removed, blank, or left as `TODO`, the Risk Manager **VETOes**, so fill these in before you trade. The defaults below are conservative starting values you own and edit; they're **illustrative, not advice**.",
     },
     {
       type: "table",
-      caption: "Default risk caps from strategies/README.md — edit to match your budget.",
+      caption: "Default risk caps from strategies/README.md, edit to match your budget.",
       headers: ["Cap", "Default", "Purpose"],
       rows: [
         ["**Per-trade cap**", "15% of equity", "Hard ceiling on any one `place_equity_order`."],
@@ -165,7 +165,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "info",
       title: "You own these limits",
-      md: "The agent will not change your caps — if you want different limits, you edit the files. There's also a strict **no-averaging-into-losers** rule. Read [Strategies](/docs/strategies) for the full ruleset and [Guardrails](/docs/guardrails) for why the desk can't weaken them.",
+      md: "The agent will not change your caps, if you want different limits, you edit the files. There's also a strict **no-averaging-into-losers** rule. Read [Strategies](/docs/strategies) for the full ruleset and [Guardrails](/docs/guardrails) for why the desk can't weaken them.",
     },
     {
       type: "heading",
@@ -173,7 +173,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The [dashboard](/docs/dashboard) is a **read-only mirror**, not a controller — it visualizes the `desk-state.json` snapshot the PM writes after each run and **cannot place orders**. Start it in a separate terminal.",
+      md: "The [dashboard](/docs/dashboard) is a **read-only mirror**, not a controller, it visualizes the `desk-state.json` snapshot the PM writes after each run and **cannot place orders**. Start it in a separate terminal.",
     },
     {
       type: "code",
@@ -190,13 +190,13 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "You talk to the **Portfolio Manager** — the main Claude Code session — in plain language. It fans out to the three analysts in parallel, routes their verdicts through the Risk Manager, and comes back with a preview. Try prompts like these.",
+      md: "You talk to the **Portfolio Manager**, the main Claude Code session, in plain language. It fans out to the three analysts in parallel, routes their verdicts through the Risk Manager, and comes back with a preview. Try prompts like these.",
     },
     {
       type: "code",
       lang: "text",
       filename: "example PM prompts",
-      code: "Screen my watchlist and bring me the top 2 ideas with full team analysis.\n\nRun the desk on AAPL and NVDA — fundamental, technical, macro, then\nrisk-check a small starter position in the better one.\n\nAfter the desk run, write the state to ui/public/desk-state.json.",
+      code: "Screen my watchlist and bring me the top 2 ideas with full team analysis.\n\nRun the desk on AAPL and NVDA, fundamental, technical, macro, then\nrisk-check a small starter position in the better one.\n\nAfter the desk run, write the state to ui/public/desk-state.json.",
     },
     {
       type: "prose",
@@ -205,8 +205,8 @@ export const content: DocContent = {
     {
       type: "callout",
       tone: "success",
-      title: "The desk stops at the preview — you place the order",
-      md: "Research and risk checks produce **no order**. The desk's standard output is a **preview card** built from `review_equity_order`, and it **waits** there for your explicit in-session confirmation. Only on your yes does the PM call `place_equity_order` — and that call is **still gated by the `ask` rule**, so you approve one more time at the permission prompt. No order is ever placed on a schedule or on its own.",
+      title: "The desk stops at the preview, you place the order",
+      md: "Research and risk checks produce **no order**. The desk's standard output is a **preview card** built from `review_equity_order`, and it **waits** there for your explicit in-session confirmation. Only on your yes does the PM call `place_equity_order`, and that call is **still gated by the `ask` rule**, so you approve one more time at the permission prompt. No order is ever placed on a schedule or on its own.",
     },
     {
       type: "heading",
@@ -214,7 +214,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "You can cut the desk off from your broker at any time — either disconnect the MCP from the Robinhood app, or remove the server locally.",
+      md: "You can cut the desk off from your broker at any time, either disconnect the MCP from the Robinhood app, or remove the server locally.",
     },
     {
       type: "code",
@@ -238,7 +238,7 @@ export const content: DocContent = {
         },
         {
           term: "Unset caps mean VETO",
-          md: "If `strategies/` caps are missing, blank, or `TODO`, the Risk Manager blocks every trade. Fill them in before your first run — see [Strategies](/docs/strategies).",
+          md: "If `strategies/` caps are missing, blank, or `TODO`, the Risk Manager blocks every trade. Fill them in before your first run, see [Strategies](/docs/strategies).",
         },
         {
           term: "The dashboard can't trade",

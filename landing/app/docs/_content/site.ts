@@ -74,7 +74,7 @@ export const DOCS_NAV: NavGroup[] = [
   },
 ];
 
-/** Flattened, ordered page list — drives prev/next. */
+/** Flattened, ordered page list, drives prev/next. */
 export const DOCS_ORDER: NavItem[] = DOCS_NAV.flatMap((g) => g.items);
 
 export function docHref(slug: string): string {

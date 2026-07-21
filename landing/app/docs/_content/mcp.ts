@@ -3,16 +3,16 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "MCP & Tools",
   description:
-    "The robinhood-trading MCP server is the single connector between Claude Code and the Robinhood Agentic broker — how it connects, and every tool grouped by permission tier.",
-  eyebrow: "11 — MCP & Tools",
+    "The robinhood-trading MCP server is the single connector between Claude Code and the Robinhood Agentic broker, how it connects, and every tool grouped by permission tier.",
+  eyebrow: "11, MCP & Tools",
   blocks: [
     {
       type: "prose",
-      md: "Aelix reaches the broker through exactly one **Model Context Protocol (MCP)** server, named `robinhood-trading`. It is the only path to your account — there is no other API client, no scraper, and no second connection. Everything the desk reads or does at Robinhood goes through this server, and every call is subject to the permission tiers in [`.claude/settings.json`](/docs/configuration).",
+      md: "Aelix reaches the broker through exactly one **Model Context Protocol (MCP)** server, named `robinhood-trading`. It is the only path to your account, there is no other API client, no scraper, and no second connection. Everything the desk reads or does at Robinhood goes through this server, and every call is subject to the permission tiers in [`.claude/settings.json`](/docs/configuration).",
     },
     {
       type: "prose",
-      md: "The server is declared project-scoped in [`.mcp.json`](/docs/configuration), so opening the project in Claude Code prompts you to trust it. Authentication is **OAuth 2.0**, performed in-session — the agent never sees your password.",
+      md: "The server is declared project-scoped in [`.mcp.json`](/docs/configuration), so opening the project in Claude Code prompts you to trust it. Authentication is **OAuth 2.0**, performed in-session, the agent never sees your password.",
     },
     {
       type: "heading",
@@ -64,7 +64,7 @@ claude mcp get robinhood-trading`,
       type: "callout",
       tone: "warn",
       title: "Verify tool names before you rely on them",
-      md: "Robinhood Agentic Trading is in beta and tool names can change. Confirm the **real** tool names with `/mcp` or `claude mcp get robinhood-trading` before hardening your permissions — then tighten `.claude/settings.json` to match. The names below reflect the entries currently in this repo's settings; treat them as a starting point, not gospel. See [Setup](/docs/setup).",
+      md: "Robinhood Agentic Trading is in beta and tool names can change. Confirm the **real** tool names with `/mcp` or `claude mcp get robinhood-trading` before hardening your permissions, then tighten `.claude/settings.json` to match. The names below reflect the entries currently in this repo's settings; treat them as a starting point, not gospel. See [Setup](/docs/setup).",
     },
     {
       type: "heading",
@@ -72,7 +72,7 @@ claude mcp get robinhood-trading`,
     },
     {
       type: "prose",
-      md: "Permissions are evaluated `deny → ask → allow`, first match wins — and a matching `ask` rule prompts even when a broader `allow` also matches. The desk's tools fall into three tiers:",
+      md: "Permissions are evaluated `deny → ask → allow`, first match wins, and a matching `ask` rule prompts even when a broader `allow` also matches. The desk's tools fall into three tiers:",
     },
     {
       type: "table",
@@ -92,7 +92,7 @@ claude mcp get robinhood-trading`,
       type: "callout",
       tone: "info",
       title: "Why review is allowed but place is gated",
-      md: "`review_equity_order` only *builds a preview* — it never submits anything — so it is safe to `allow`. `place_equity_order` actually transacts, so it stays behind an `ask` prompt. That split is what lets the desk assemble a preview card automatically while still requiring your explicit approval to trade.",
+      md: "`review_equity_order` only *builds a preview*, it never submits anything, so it is safe to `allow`. `place_equity_order` actually transacts, so it stays behind an `ask` prompt. That split is what lets the desk assemble a preview card automatically while still requiring your explicit approval to trade.",
     },
     {
       type: "heading",
@@ -100,15 +100,15 @@ claude mcp get robinhood-trading`,
     },
     {
       type: "prose",
-      md: "Tool access is scoped per role in each agent's frontmatter. Only the **Portfolio Manager** holds the order tools (`review_equity_order`, `place_equity_order`). The three analysts and the Risk Manager have **no order tools at all** — they physically cannot place a trade. Each role gets only the read tools its job needs:",
+      md: "Tool access is scoped per role in each agent's frontmatter. Only the **Portfolio Manager** holds the order tools (`review_equity_order`, `place_equity_order`). The three analysts and the Risk Manager have **no order tools at all**, they physically cannot place a trade. Each role gets only the read tools its job needs:",
     },
     {
       type: "list",
       items: [
-        "**Fundamental Analyst** — `get_equity_fundamentals`, `get_earnings_calendar`, `get_earnings_results`, `get_equity_quotes`, `search`.",
-        "**Technical Analyst** — `get_equity_historicals`, `get_equity_quotes`, `get_index_quotes`, `run_scan`, `get_scans`, `get_watchlist_items`.",
-        "**Macro / News Analyst** — `WebSearch`, `WebFetch`, `get_index_quotes`, `get_indexes`, `get_earnings_calendar`.",
-        "**Risk Manager** — `get_portfolio`, `get_equity_positions`, `get_accounts`, `get_equity_orders`, `get_equity_quotes` (read-only).",
+        "**Fundamental Analyst**, `get_equity_fundamentals`, `get_earnings_calendar`, `get_earnings_results`, `get_equity_quotes`, `search`.",
+        "**Technical Analyst**, `get_equity_historicals`, `get_equity_quotes`, `get_index_quotes`, `run_scan`, `get_scans`, `get_watchlist_items`.",
+        "**Macro / News Analyst**, `WebSearch`, `WebFetch`, `get_index_quotes`, `get_indexes`, `get_earnings_calendar`.",
+        "**Risk Manager**, `get_portfolio`, `get_equity_positions`, `get_accounts`, `get_equity_orders`, `get_equity_quotes` (read-only).",
       ],
     },
     {
@@ -121,7 +121,7 @@ claude mcp get robinhood-trading`,
     },
     {
       type: "prose",
-      md: "You can sever the connection at any time — this is your hard stop. Disconnect the MCP from the Robinhood app, or remove it locally:",
+      md: "You can sever the connection at any time, this is your hard stop. Disconnect the MCP from the Robinhood app, or remove it locally:",
     },
     {
       type: "code",

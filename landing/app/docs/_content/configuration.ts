@@ -3,12 +3,12 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Configuration",
   description:
-    "Every config file and knob in the Aelix repo — the MCP connection, the permission gate, the desk sub-agents, and where secrets must never live.",
-  eyebrow: "10 — Configuration",
+    "Every config file and knob in the Aelix repo, the MCP connection, the permission gate, the desk sub-agents, and where secrets must never live.",
+  eyebrow: "10, Configuration",
   blocks: [
     {
       type: "prose",
-      md: "Aelix has **no settings UI and no database** — its entire configuration is a handful of plain files you can read, diff, and edit. The operating contract, the broker connection, the permission gate, the desk roles, and the risk caps are all text on disk. That is the point: every safeguard is something you can audit, not a setting hidden behind a toggle.",
+      md: "Aelix has **no settings UI and no database**, its entire configuration is a handful of plain files you can read, diff, and edit. The operating contract, the broker connection, the permission gate, the desk roles, and the risk caps are all text on disk. That is the point: every safeguard is something you can audit, not a setting hidden behind a toggle.",
     },
     {
       type: "prose",
@@ -18,7 +18,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "info",
       title: "Configuration is code review",
-      md: "Because the whole config is files, changing the desk's behavior is a **commit** you can review. If you want to change the rules, you edit the files — the agent is told in [`CLAUDE.md`](/docs/guardrails) that it may **not** weaken its own guardrails.",
+      md: "Because the whole config is files, changing the desk's behavior is a **commit** you can review. If you want to change the rules, you edit the files, the agent is told in [`CLAUDE.md`](/docs/guardrails) that it may **not** weaken its own guardrails.",
     },
     {
       type: "heading",
@@ -26,16 +26,16 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Seven files (or file groups) hold the whole configuration surface. Everything else in the repo is application code — the [dashboard](/docs/dashboard), the [backtester](/docs/backtesting), and helper tools.",
+      md: "Seven files (or file groups) hold the whole configuration surface. Everything else in the repo is application code, the [dashboard](/docs/dashboard), the [backtester](/docs/backtesting), and helper tools.",
     },
     {
       type: "table",
       headers: ["File", "Purpose"],
       rows: [
-        ["`CLAUDE.md`", "The Portfolio Manager's operating contract — scope, hard guardrails, prompt-injection defense, and process. See [Guardrails](/docs/guardrails)."],
+        ["`CLAUDE.md`", "The Portfolio Manager's operating contract, scope, hard guardrails, prompt-injection defense, and process. See [Guardrails](/docs/guardrails)."],
         ["`.mcp.json`", "The project-scoped Robinhood Trading MCP server (host + transport). See [MCP](/docs/mcp)."],
         ["`.claude/settings.json`", "Permissions (`allow` / `ask` / `deny`), enabled MCP servers, and the session-start hook."],
-        ["`.claude/agents/*.md`", "The desk sub-agents — one file per role, each with a least-privilege tool list. See [The Desk Team](/docs/team)."],
+        ["`.claude/agents/*.md`", "The desk sub-agents, one file per role, each with a least-privilege tool list. See [The Desk Team](/docs/team)."],
         ["`strategies/*.md`", "Risk caps and entry/exit rules the Risk Manager enforces. See [Strategies](/docs/strategies)."],
         ["`ui/public/desk-state.json`", "The live snapshot the PM writes after each run. **Gitignored**; a sanitized `desk-state.example.json` ships instead. See [Dashboard](/docs/dashboard)."],
         ["`logs/*.jsonl`", "Append-only audit trail of desk decisions. See [Logging](/docs/logging)."],
@@ -43,11 +43,11 @@ export const content: DocContent = {
     },
     {
       type: "note",
-      md: "Personal \"allow always\" choices are written to `.claude/settings.local.json`, which is gitignored — your local approvals never leak into the shared repo.",
+      md: "Personal \"allow always\" choices are written to `.claude/settings.local.json`, which is gitignored, your local approvals never leak into the shared repo.",
     },
     {
       type: "heading",
-      text: "The broker connection — .mcp.json",
+      text: "The broker connection, .mcp.json",
     },
     {
       type: "prose",
@@ -70,27 +70,27 @@ export const content: DocContent = {
       type: "deflist",
       items: [
         { term: "robinhood-trading", md: "The server name the permission rules and sub-agent tool lists reference (tools appear as `mcp__robinhood-trading__<tool>`)." },
-        { term: "type: http", md: "A remote HTTP MCP transport — Claude Code connects out to Robinhood's hosted endpoint; nothing runs locally." },
-        { term: "url", md: "`https://agent.robinhood.com/mcp/trading` — the Robinhood Agentic Trading endpoint (US, equities, beta)." },
+        { term: "type: http", md: "A remote HTTP MCP transport, Claude Code connects out to Robinhood's hosted endpoint; nothing runs locally." },
+        { term: "url", md: "`https://agent.robinhood.com/mcp/trading`, the Robinhood Agentic Trading endpoint (US, equities, beta)." },
       ],
     },
     {
       type: "callout",
       tone: "info",
       title: "Trust on first open",
-      md: "Because the server is project-scoped, Claude Code asks you to **trust** the `.mcp.json` server the first time you open the folder. Nothing authenticates until you run the OAuth flow — see [MCP](/docs/mcp) and [Setup](/docs/setup). This file holds **no** tokens or secrets.",
+      md: "Because the server is project-scoped, Claude Code asks you to **trust** the `.mcp.json` server the first time you open the folder. Nothing authenticates until you run the OAuth flow, see [MCP](/docs/mcp) and [Setup](/docs/setup). This file holds **no** tokens or secrets.",
     },
     {
       type: "heading",
-      text: "Permissions & hooks — .claude/settings.json",
+      text: "Permissions & hooks, .claude/settings.json",
     },
     {
       type: "prose",
-      md: "`.claude/settings.json` is the permission gate. It sorts every tool call into one of three buckets — `allow`, `ask`, or `deny` — and it also enables the MCP server and registers a session-start hook. This is the file that makes \"human approval for every order\" **structural** rather than a hope.",
+      md: "`.claude/settings.json` is the permission gate. It sorts every tool call into one of three buckets, `allow`, `ask`, or `deny`, and it also enables the MCP server and registers a session-start hook. This is the file that makes \"human approval for every order\" **structural** rather than a hope.",
     },
     {
       type: "prose",
-      md: "The `permissions` object holds three arrays. Below is a **trimmed but faithful** excerpt — the real file lists every read tool the desk uses; these are representative entries from each bucket.",
+      md: "The `permissions` object holds three arrays. Below is a **trimmed but faithful** excerpt, the real file lists every read tool the desk uses; these are representative entries from each bucket.",
     },
     {
       type: "code",
@@ -128,14 +128,14 @@ export const content: DocContent = {
       items: [
         { term: "allow", md: "Runs with **no prompt**. Reserved for read-only market and account reads (`get_portfolio`, `get_equity_quotes`, …), scans (`run_scan`), the preview-only `review_equity_order`, plus `WebSearch`, a few whitelisted `WebFetch` news domains, and a handful of `git` and `Skill` commands." },
         { term: "ask", md: "Claude Code **pauses and asks you** in-session before the call. This is where every order lives: `place_equity_order` and `cancel_equity_order`, alongside scan- and watchlist-mutating tools." },
-        { term: "deny", md: "**Blocked outright**, no prompt, no override. Holds `place_option_order` and `cancel_option_order` — options aren't supported in this equities-only beta, so they are hard-denied." },
+        { term: "deny", md: "**Blocked outright**, no prompt, no override. Holds `place_option_order` and `cancel_option_order`, options aren't supported in this equities-only beta, so they are hard-denied." },
       ],
     },
     {
       type: "callout",
       tone: "warn",
       title: "review is not place",
-      md: "`review_equity_order` sits in `allow` because it only **builds a preview** — it never sends an order. The tool that actually places, `place_equity_order`, sits in `ask` and stays there. Read the two names carefully before you move anything between buckets.",
+      md: "`review_equity_order` sits in `allow` because it only **builds a preview**, it never sends an order. The tool that actually places, `place_equity_order`, sits in `ask` and stays there. Read the two names carefully before you move anything between buckets.",
     },
     {
       type: "heading",
@@ -153,12 +153,12 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "A `hooks.SessionStart` entry runs a shell script when a session **starts or resumes** — the desk uses it to check whether today's left-side (pre-market) scan has run.",
+      md: "A `hooks.SessionStart` entry runs a shell script when a session **starts or resumes**, the desk uses it to check whether today's left-side (pre-market) scan has run.",
     },
     {
       type: "code",
       lang: "json",
-      filename: ".claude/settings.json — hooks",
+      filename: ".claude/settings.json, hooks",
       code: `"hooks": {
   "SessionStart": [
     {
@@ -181,34 +181,34 @@ export const content: DocContent = {
         { term: "matcher: startup|resume", md: "Fires both when a fresh session starts and when an existing one resumes." },
         { term: "type: command", md: "Runs a shell command; here `bash .claude/hooks/left-side-scan-gate.sh`." },
         { term: "timeout: 15", md: "The hook is given 15 seconds before it is cut off." },
-        { term: "statusMessage", md: "The line shown while the hook runs — `Checking daily left-side scan…`." },
+        { term: "statusMessage", md: "The line shown while the hook runs, `Checking daily left-side scan…`." },
       ],
     },
     {
       type: "note",
-      md: "`defaultMode` is `default`: tools follow the rules above and Claude Code prompts for anything not pre-allowed — no auto-accept or bypass mode.",
+      md: "`defaultMode` is `default`: tools follow the rules above and Claude Code prompts for anything not pre-allowed, no auto-accept or bypass mode.",
     },
     {
       type: "heading",
-      text: "Sub-agent definitions — .claude/agents/*.md",
+      text: "Sub-agent definitions, .claude/agents/*.md",
     },
     {
       type: "prose",
-      md: "Each desk role is one Markdown file in `.claude/agents/`. A YAML frontmatter block at the top defines the role's identity and, critically, its **tool allowlist** — the sub-agent can call nothing outside that list. The body is the role's system prompt. The full roster is on [The Desk Team](/docs/team).",
+      md: "Each desk role is one Markdown file in `.claude/agents/`. A YAML frontmatter block at the top defines the role's identity and, critically, its **tool allowlist**, the sub-agent can call nothing outside that list. The body is the role's system prompt. The full roster is on [The Desk Team](/docs/team).",
     },
     {
       type: "table",
       headers: ["Field", "What it does"],
       rows: [
         ["`name`", "The handle the PM dispatches (e.g. `fundamental-analyst`)."],
-        ["`description`", "Tells the PM **when** to call this role — and states plainly that it does **not** decide trades or place orders."],
-        ["`tools`", "A comma-separated, **least-privilege** allowlist. The sub-agent physically cannot call anything not listed — analysts have **no** order tools at all."],
+        ["`description`", "Tells the PM **when** to call this role, and states plainly that it does **not** decide trades or place orders."],
+        ["`tools`", "A comma-separated, **least-privilege** allowlist. The sub-agent physically cannot call anything not listed, analysts have **no** order tools at all."],
         ["`model`", "Which model backs the role: `sonnet` for the three analysts, `opus` for the Risk Manager."],
       ],
     },
     {
       type: "prose",
-      md: "Here is the actual frontmatter for the Fundamental Analyst — note the tool list is read-only market and earnings data plus `Read`, with no order or mutation tools anywhere in it.",
+      md: "Here is the actual frontmatter for the Fundamental Analyst, note the tool list is read-only market and earnings data plus `Read`, with no order or mutation tools anywhere in it.",
     },
     {
       type: "code",
@@ -216,19 +216,19 @@ export const content: DocContent = {
       filename: ".claude/agents/fundamental-analyst.md",
       code: `---
 name: fundamental-analyst
-description: Equity fundamental analyst on the trading desk. Use to assess valuation, earnings quality, growth, and balance-sheet health for one or more tickers before a trade decision. Returns a structured fundamental verdict — it does NOT decide trades or place orders.
+description: Equity fundamental analyst on the trading desk. Use to assess valuation, earnings quality, growth, and balance-sheet health for one or more tickers before a trade decision. Returns a structured fundamental verdict, it does NOT decide trades or place orders.
 tools: Read, mcp__robinhood-trading__get_equity_fundamentals, mcp__robinhood-trading__get_earnings_calendar, mcp__robinhood-trading__get_earnings_results, mcp__robinhood-trading__get_equity_quotes, mcp__robinhood-trading__search
 model: sonnet
 ---`,
     },
     {
       type: "prose",
-      md: "The **Risk Manager** follows the same shape but is deliberately different: `model: opus` (the last gate before a human sees a trade deserves the stronger model) and a tool list of `Read`, `Grep`, and read-only account/portfolio/order tools — enough to check a proposal against `strategies/`, and nothing that could place, cancel, or preview an order.",
+      md: "The **Risk Manager** follows the same shape but is deliberately different: `model: opus` (the last gate before a human sees a trade deserves the stronger model) and a tool list of `Read`, `Grep`, and read-only account/portfolio/order tools, enough to check a proposal against `strategies/`, and nothing that could place, cancel, or preview an order.",
     },
     {
       type: "callout",
       tone: "warn",
-      title: "Sub-agents load at startup — restart after editing",
+      title: "Sub-agents load at startup, restart after editing",
       md: "The files in `.claude/agents/` are read when Claude Code **starts**. After you add or edit a role, **restart the session** so the role is recognized with its restricted tool set. An edit you don't restart into simply isn't live.",
     },
     {
@@ -237,7 +237,7 @@ model: sonnet
     },
     {
       type: "prose",
-      md: "Your Agentic **account number** is recorded outside version control: copy `.env.example` to `.env` and put the number there. `.env` is gitignored. **No secret, token, or credential belongs in this repo** — the OAuth token that authorizes trading is issued and held by the broker connection, never written to a tracked file.",
+      md: "Your Agentic **account number** is recorded outside version control: copy `.env.example` to `.env` and put the number there. `.env` is gitignored. **No secret, token, or credential belongs in this repo**, the OAuth token that authorizes trading is issued and held by the broker connection, never written to a tracked file.",
     },
     {
       type: "prose",
@@ -250,7 +250,7 @@ model: sonnet
       code: `# Claude Code local/personal overrides (where "allow always" writes rules)
 .claude/settings.local.json
 
-# OAuth tokens and credentials — must never be committed
+# OAuth tokens and credentials, must never be committed
 .claude.json
 *.token
 *.key
@@ -274,12 +274,12 @@ desk-request.json`,
         title: "Lives in the repo",
         tone: "good",
         rows: [
-          "CLAUDE.md — the operating contract",
-          ".mcp.json — the broker host + transport (no token)",
-          ".claude/settings.json — the permission gate",
-          ".claude/agents/*.md — the desk roles",
-          "strategies/*.md — risk caps + rules",
-          "ui/public/desk-state.example.json — sanitized demo data",
+          "CLAUDE.md, the operating contract",
+          ".mcp.json, the broker host + transport (no token)",
+          ".claude/settings.json, the permission gate",
+          ".claude/agents/*.md, the desk roles",
+          "strategies/*.md, risk caps + rules",
+          "ui/public/desk-state.example.json, sanitized demo data",
         ],
       },
       right: {
@@ -287,9 +287,9 @@ desk-request.json`,
         tone: "bad",
         rows: [
           "The Robinhood OAuth token / credentials",
-          ".env — your Agentic account number",
-          ".claude/settings.local.json — personal approvals",
-          "ui/public/desk-state.json — real live account state",
+          ".env, your Agentic account number",
+          ".claude/settings.local.json, personal approvals",
+          "ui/public/desk-state.json, real live account state",
           "Anything under secrets/ or credentials/",
           "*.token, *.key, *.pem files",
         ],
@@ -307,7 +307,7 @@ desk-request.json`,
     },
     {
       type: "prose",
-      md: "The tool names shipped in `.claude/settings.json` are the desk's best guess at the server's surface. Once you've connected and authenticated, you can see the **real** tool names the `robinhood-trading` server exposes and refine the rules to match — narrowing `allow` and confirming every order path stays gated.",
+      md: "The tool names shipped in `.claude/settings.json` are the desk's best guess at the server's surface. Once you've connected and authenticated, you can see the **real** tool names the `robinhood-trading` server exposes and refine the rules to match, narrowing `allow` and confirming every order path stays gated.",
     },
     {
       type: "steps",
@@ -320,7 +320,7 @@ desk-request.json`,
         {
           label: "02",
           title: "Keep every order behind a gate",
-          md: "Leave `place_equity_order` and `cancel_equity_order` in `ask` (or `deny`). **Never** move an order tool into `allow` — that would remove the human approval step the whole desk is built around.",
+          md: "Leave `place_equity_order` and `cancel_equity_order` in `ask` (or `deny`). **Never** move an order tool into `allow`, that would remove the human approval step the whole desk is built around.",
         },
         {
           label: "03",
@@ -346,7 +346,7 @@ desk-request.json`,
     },
     {
       type: "note",
-      md: "Illustrative reference only — not investment advice, no track record, and any numbers shown elsewhere in these docs are demo data. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Illustrative reference only, not investment advice, no track record, and any numbers shown elsewhere in these docs are demo data. See [Safety & Disclaimer](/docs/disclaimer).",
     },
   ],
 };

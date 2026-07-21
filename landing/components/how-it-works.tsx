@@ -10,14 +10,14 @@ export function HowItWorks() {
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <span className="eyebrow">// 02 — HOW IT WORKS</span>
+            <span className="eyebrow">// 02, HOW IT WORKS</span>
             <h2>
               Sense → research →<br />risk → you decide.
             </h2>
           </div>
           <p>
             Steps 1–6 are research and produce no order. The desk&rsquo;s standard output is the
-            preview card at step&nbsp;7 — it stops there until you say go.
+            preview card at step&nbsp;7, it stops there until you say go.
           </p>
         </div>
         <div className="flow">

@@ -32,7 +32,7 @@ export function Faq() {
               <GlitchText text="Straight answers." mode="hover" />
             </h2>
           </div>
-          <p>The important ones, up front — scope, safety, and what this is not.</p>
+          <p>The important ones, up front, scope, safety, and what this is not.</p>
         </div>
         <div className="faq">
           {FAQ.map((f, i) => {

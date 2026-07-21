@@ -48,7 +48,7 @@ function useSettledNumber(target: number, reduced: boolean): number {
   return display;
 }
 
-/** Interactive position-sizing demo — cross the per-trade cap and the Risk Manager vetoes. */
+/** Interactive position-sizing demo, cross the per-trade cap and the Risk Manager vetoes. */
 export function RiskLab() {
   const [equity, setEquity] = useState(10000);
   const [weight, setWeight] = useState(4);
@@ -61,7 +61,7 @@ export function RiskLab() {
   const capLeft = (RISK.capPct / RISK.maxWeight) * 100;
 
   const displayPos = useSettledNumber(pos, reduced);
-  const verdictText = over ? "⛔ VETO — EXCEEDS CAP" : "✓ APPROVE — WITHIN CAP";
+  const verdictText = over ? "⛔ VETO, EXCEEDS CAP" : "✓ APPROVE, WITHIN CAP";
 
   // 3-frame glitch/flash when the verdict flips OK <-> VETO.
   const [glitch, setGlitch] = useState<{ label: string; frame: number } | null>(null);
@@ -70,7 +70,7 @@ export function RiskLab() {
     if (prevOver.current === over) return;
     prevOver.current = over;
     if (reduced) return;
-    const text = over ? "⛔ VETO — EXCEEDS CAP" : "✓ APPROVE — WITHIN CAP";
+    const text = over ? "⛔ VETO, EXCEEDS CAP" : "✓ APPROVE, WITHIN CAP";
     const scramble = () =>
       text
         .split("")
@@ -107,7 +107,7 @@ export function RiskLab() {
           </div>
           <p>
             The Risk Manager checks every proposal against a written per-trade cap of {RISK.capPct}%. Move the
-            sliders — cross the cap and it vetoes.
+            sliders, cross the cap and it vetoes.
           </p>
         </div>
         <div className="risklab">

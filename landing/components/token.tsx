@@ -11,11 +11,11 @@ export function Token() {
         <Reveal className="token-box">
           <div>
             <h3>
-              <GlitchText text="$AELIX — a roadmap experiment" mode="hover" />
+              <GlitchText text="$AELIX, a roadmap experiment" mode="hover" />
             </h3>
             <p>
               A planned utility token on Robinhood Chain (L2) for premium research access, governance
-              over risk parameters, and fee discounts — deployed testnet-first via a launchpad.
+              over risk parameters, and fee discounts, deployed testnet-first via a launchpad.
             </p>
             <p>
               It is a Web3 experiment, not a fundraising or investment vehicle. Chain details, launchpad

@@ -3,18 +3,18 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Audit Logging",
   description:
-    "An append-only JSONL trail of every desk decision — runs, approvals, order events, halts, and injection attempts — written through a dependency-free helper.",
-  eyebrow: "14 — Audit Logging",
+    "An append-only JSONL trail of every desk decision, runs, approvals, order events, halts, and injection attempts, written through a dependency-free helper.",
+  eyebrow: "14, Audit Logging",
   blocks: [
     {
       type: "prose",
-      md: "The desk keeps an **append-only** record of what it did: every desk run, every approval, every order event, every trading halt, and every prompt-injection attempt the [Macro/News Analyst](/docs/prompt-injection) flags. This realizes the project's Transparency & Audit principle and satisfies [`CLAUDE.md`](/docs/guardrails) step 6 — *log it where the user asks*.",
+      md: "The desk keeps an **append-only** record of what it did: every desk run, every approval, every order event, every trading halt, and every prompt-injection attempt the [Macro/News Analyst](/docs/prompt-injection) flags. This realizes the project's Transparency & Audit principle and satisfies [`CLAUDE.md`](/docs/guardrails) step 6, *log it where the user asks*.",
     },
     {
       type: "callout",
       tone: "info",
       title: "Logging records decisions; it does not make them",
-      md: "This is **documentation + tooling only**. It records what happened; it does not authorize anything and weakens no guardrail. The PM still previews every order and never auto-places one — writing a log line is **not** approval, and nothing in the log can be used as one.",
+      md: "This is **documentation + tooling only**. It records what happened; it does not authorize anything and weakens no guardrail. The PM still previews every order and never auto-places one, writing a log line is **not** approval, and nothing in the log can be used as one.",
     },
     {
       type: "heading",
@@ -25,7 +25,7 @@ export const content: DocContent = {
       lang: "text",
       code: `logs/
 ├── desk-runs.example.jsonl   # committed demo arc (illustrative only, not a track record)
-├── desk-runs.jsonl           # real, gitignored — holds live account decisions
+├── desk-runs.jsonl           # real, gitignored, holds live account decisions
 ├── .gitignore                # ignores *.jsonl EXCEPT the example
 └── .gitkeep                  # keeps the dir in git even when only real logs exist`,
     },
@@ -47,7 +47,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Every line carries three **required** keys — `ts` (ISO-8601 with timezone offset), `event`, and `session` — plus a few descriptive fields per event. A one-line `summary` is recommended on every record; the dashboard uses it verbatim.",
+      md: "Every line carries three **required** keys, `ts` (ISO-8601 with timezone offset), `event`, and `session`, plus a few descriptive fields per event. A one-line `summary` is recommended on every record; the dashboard uses it verbatim.",
     },
     {
       type: "prose",
@@ -62,7 +62,7 @@ export const content: DocContent = {
       items: [
         { term: "desk_run", md: "One entry per pass. `tickers` (screened symbols), `proposed` (the proposed trade or `null`, shaped `{ symbol, side, qty, strategy, riskDecision }`), `vetoes` (symbols the Risk Manager vetoed), `injectionAlerts` (count flagged), `summary`." },
         { term: "approval", md: "The human decision on a preview card. `symbol`, `decision` (`approved` / `rejected`), `by` (e.g. `user`), `summary`." },
-        { term: "order_placed", md: "An order was submitted — only ever after an `approval`. `symbol`, `side`, `qty`, `type` (`limit` / `market`), optional `limitPrice`, `status` (e.g. `submitted`), `summary`." },
+        { term: "order_placed", md: "An order was submitted, only ever after an `approval`. `symbol`, `side`, `qty`, `type` (`limit` / `market`), optional `limitPrice`, `status` (e.g. `submitted`), `summary`." },
         { term: "order_filled", md: "A fill confirmation. `symbol`, `qty` (filled), `price`, `status` (e.g. `filled`), `summary`." },
         { term: "halt", md: "The desk stopped trading (e.g. the daily-loss halt). `reason` (e.g. `daily-loss-halt`), optional `dayPnlPct` and `limitPct`, `symbol` usually `null` (account-level), `summary`." },
         { term: "injection", md: "A prompt-injection attempt the Macro/News Analyst flagged, recorded **as a quote** and never acted on. `source`, `quote` (verbatim), `handledBy` (usually `macro-news-analyst`), `action` (quoted and ignored), `symbol` usually `null`, `summary`." },
@@ -87,7 +87,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "`tools/desk-log.mjs` is a **pure Node ESM** helper (no dependencies) that validates and appends records. `appendRecord` throws — writing nothing — if `ts`, `event`, or `session` is missing or if `event` is outside the enum, so a malformed record can never enter the trail.",
+      md: "`tools/desk-log.mjs` is a **pure Node ESM** helper (no dependencies) that validates and appends records. `appendRecord` throws, writing nothing, if `ts`, `event`, or `session` is missing or if `event` is outside the enum, so a malformed record can never enter the trail.",
     },
     {
       type: "code",
@@ -107,7 +107,7 @@ CLI:
       type: "callout",
       tone: "warn",
       title: "Order of operations still holds",
-      md: "An `order_placed` line should only ever appear **after** an `approval` line for the same symbol. The log documents that sequence — it does not authorize skipping it.",
+      md: "An `order_placed` line should only ever appear **after** an `approval` line for the same symbol. The log documents that sequence, it does not authorize skipping it.",
     },
     {
       type: "heading",
@@ -115,7 +115,7 @@ CLI:
     },
     {
       type: "prose",
-      md: "The log surfaces on the [dashboard](/docs/dashboard) as a `decisionLog` array — a compact tail flattened to `{ ts, event, summary, symbol, tone }`. `tone` drives the badge/accent color and is derived deterministically:",
+      md: "The log surfaces on the [dashboard](/docs/dashboard) as a `decisionLog` array, a compact tail flattened to `{ ts, event, summary, symbol, tone }`. `tone` drives the badge/accent color and is derived deterministically:",
     },
     {
       type: "table",

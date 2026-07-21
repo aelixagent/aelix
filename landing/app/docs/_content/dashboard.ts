@@ -3,12 +3,12 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Dashboard",
   description:
-    "A read-only Robinhood-style dashboard that mirrors the desk-state.json snapshot the PM writes after every run — it visualizes state, it cannot place orders.",
-  eyebrow: "12 — Dashboard",
+    "A read-only Robinhood-style dashboard that mirrors the desk-state.json snapshot the PM writes after every run, it visualizes state, it cannot place orders.",
+  eyebrow: "12, Dashboard",
   blocks: [
     {
       type: "prose",
-      md: "The dashboard in [`ui/`](/docs/configuration) is a **mirror, not a controller**. It is a professional, read-only view (Vite + React) that visualizes a `desk-state.json` snapshot the PM session writes after each desk run. It **cannot place orders** — approval and execution happen only in the Claude Code session, per [`CLAUDE.md`](/docs/guardrails).",
+      md: "The dashboard in [`ui/`](/docs/configuration) is a **mirror, not a controller**. It is a professional, read-only view (Vite + React) that visualizes a `desk-state.json` snapshot the PM session writes after each desk run. It **cannot place orders**, approval and execution happen only in the Claude Code session, per [`CLAUDE.md`](/docs/guardrails).",
     },
     {
       type: "heading",
@@ -37,7 +37,7 @@ npm run dev          # opens http://localhost:5180`,
     },
     {
       type: "prose",
-      md: "The app fetches `desk-state.json` first and **falls back to `desk-state.example.json`** when it is absent — so a fresh clone renders the demo, while your real run renders live. `desk-state.json` is **gitignored** (it holds real balances and positions) and is never committed; only the sanitized example is. Each poll is cache-busted, so writes show up within about five seconds without a reload.",
+      md: "The app fetches `desk-state.json` first and **falls back to `desk-state.example.json`** when it is absent, so a fresh clone renders the demo, while your real run renders live. `desk-state.json` is **gitignored** (it holds real balances and positions) and is never committed; only the sanitized example is. Each poll is cache-busted, so writes show up within about five seconds without a reload.",
     },
     {
       type: "callout",
@@ -89,8 +89,8 @@ npm run dev          # opens http://localhost:5180`,
   "injectionAlerts": [                   // from the macro-news analyst; [] if none
     { "source": "url", "quote": "verbatim suspicious text", "handledBy": "macro-news-analyst", "action": "ignored" }
   ],
-  "backtests": [ /* OPTIONAL — omit and the panel hides itself */ ],
-  "decisionLog": [ /* OPTIONAL — omit and the panel hides itself */ ]
+  "backtests": [ /* OPTIONAL, omit and the panel hides itself */ ],
+  "decisionLog": [ /* OPTIONAL, omit and the panel hides itself */ ]
 }`,
     },
     {
@@ -105,14 +105,14 @@ npm run dev          # opens http://localhost:5180`,
     },
     {
       type: "prose",
-      md: "`backtests[]` and `decisionLog[]` are **optional and additive** — older snapshots that omit them still render, and each panel returns nothing when its array is absent or empty.",
+      md: "`backtests[]` and `decisionLog[]` are **optional and additive**, older snapshots that omit them still render, and each panel returns nothing when its array is absent or empty.",
     },
     {
       type: "deflist",
       items: [
         {
           term: "backtests[]",
-          md: "The compact, dashboard-facing summary of per-strategy [backtest](/docs/backtesting) reports (the fuller report shape lives under `backtest/reports/<strategy>.json`). Each entry carries the headline `metrics` plus a downsampled `equitySpark` (and optional `buyHoldSpark` baseline) that feed an inline SVG sparkline. All figures are illustrative — not a live track record.",
+          md: "The compact, dashboard-facing summary of per-strategy [backtest](/docs/backtesting) reports (the fuller report shape lives under `backtest/reports/<strategy>.json`). Each entry carries the headline `metrics` plus a downsampled `equitySpark` (and optional `buyHoldSpark` baseline) that feed an inline SVG sparkline. All figures are illustrative, not a live track record.",
         },
         {
           term: "decisionLog[]",
@@ -126,7 +126,7 @@ npm run dev          # opens http://localhost:5180`,
     },
     {
       type: "prose",
-      md: "The dashboard has an optional **Run desk** button. Because a browser cannot call your Claude Code session directly, it uses a thin, file-based bridge — and it **only ever triggers a read-only desk run that stops at the preview card. It never places an order.**",
+      md: "The dashboard has an optional **Run desk** button. Because a browser cannot call your Claude Code session directly, it uses a thin, file-based bridge, and it **only ever triggers a read-only desk run that stops at the preview card. It never places an order.**",
     },
     {
       type: "diagram",
@@ -145,11 +145,11 @@ npm run dev          # opens http://localhost:5180`,
     {
       type: "list",
       items: [
-        "`desk-request.json` (repo root) is the control file — **gitignored**, created on first click.",
+        "`desk-request.json` (repo root) is the control file, **gitignored**, created on first click.",
         "The Vite plugin only reads/writes that file. It does **not** run the LLM and is **dev-server only** (`npm run dev`).",
         "The actual work runs inside **your authenticated Claude session**, so it inherits the MCP auth, the `strategies/` rules, the Risk Manager veto, and the approval gate.",
         "Latency equals your `/loop` interval; the button is inert without a running watcher loop.",
-        "Production builds have no dev server, so this is a dev/local tool — a hosted setup would replace the Vite plugin with a small persistent backend.",
+        "Production builds have no dev server, so this is a dev/local tool, a hosted setup would replace the Vite plugin with a small persistent backend.",
       ],
     },
     {

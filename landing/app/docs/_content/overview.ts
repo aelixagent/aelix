@@ -4,7 +4,7 @@ export const content: DocContent = {
   title: "What is Aelix?",
   description:
     "Aelix is an agentic AI equity research desk that runs inside Claude Code, connects to a Robinhood Agentic account over MCP, and never places an order without your explicit approval.",
-  eyebrow: "01 — Overview",
+  eyebrow: "01, Overview",
   blocks: [
     {
       type: "prose",
@@ -12,13 +12,13 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "It is deliberately **not** a bot that YOLOs your money. Every safeguard is structural, not aspirational — the analysts physically have no order tools, an independent Risk Manager can veto any trade, and the whole desk is wrapped in written guardrails that live in [`CLAUDE.md`](/docs/guardrails) and cannot be weakened by the agent.",
+      md: "It is deliberately **not** a bot that YOLOs your money. Every safeguard is structural, not aspirational, the analysts physically have no order tools, an independent Risk Manager can veto any trade, and the whole desk is wrapped in written guardrails that live in [`CLAUDE.md`](/docs/guardrails) and cannot be weakened by the agent.",
     },
     {
       type: "callout",
       tone: "danger",
       title: "Real money · beta · not investment advice",
-      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget — **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -26,7 +26,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Retail traders rarely get a second opinion. Aelix gives you five: a **Portfolio Manager** who orchestrates the run, three **analysts** who gather evidence in parallel, and a **Risk Manager** who can kill a trade the analysts liked. The output of a run is almost never an order — it's a decision, most often *\"stand aside.\"*",
+      md: "Retail traders rarely get a second opinion. Aelix gives you five: a **Portfolio Manager** who orchestrates the run, three **analysts** who gather evidence in parallel, and a **Risk Manager** who can kill a trade the analysts liked. The output of a run is almost never an order, it's a decision, most often *\"stand aside.\"*",
     },
     {
       type: "cards",
@@ -81,7 +81,7 @@ export const content: DocContent = {
     },
     {
       type: "note",
-      md: "Steps 1–6 are research and produce **no order**. The desk's standard output is the preview card at step 7 — it stops there until you say go.",
+      md: "Steps 1–6 are research and produce **no order**. The desk's standard output is the preview card at step 7, it stops there until you say go.",
     },
     {
       type: "heading",
@@ -104,7 +104,7 @@ export const content: DocContent = {
         title: "The Aelix desk",
         tone: "good",
         rows: [
-          "Stops at a preview — you place the order",
+          "Stops at a preview, you place the order",
           "A team of four specialist analysts",
           "Independent risk manager with veto",
           "Quotes suspicious “instructions”, ignores them",
@@ -120,7 +120,7 @@ export const content: DocContent = {
       type: "table",
       headers: ["Component", "Where", "What it does"],
       rows: [
-        ["Portfolio Manager", "main Claude Code session", "Orchestrates the run; the **only** role that can place orders — after your approval."],
+        ["Portfolio Manager", "main Claude Code session", "Orchestrates the run; the **only** role that can place orders, after your approval."],
         ["The desk team", "`.claude/agents/*.md`", "Four least-privilege sub-agents: three analysts + a Risk Manager with veto."],
         ["Guardrails", "`CLAUDE.md` + `.claude/settings.json`", "The operating contract plus a `deny → ask → allow` permission gate."],
         ["Strategies", "`strategies/*.md`", "Written risk caps and entry/exit rules the Risk Manager enforces."],
@@ -137,8 +137,8 @@ export const content: DocContent = {
       type: "list",
       items: [
         "**Builders** studying multi-agent orchestration, MCP, and human-in-the-loop design on a real, high-stakes surface.",
-        "**Retail traders** who want a structured second opinion — and a desk that mostly tells them to wait.",
-        "**Anyone** who wants agent guardrails they can read, audit, and edit — not trust blindly.",
+        "**Retail traders** who want a structured second opinion, and a desk that mostly tells them to wait.",
+        "**Anyone** who wants agent guardrails they can read, audit, and edit, not trust blindly.",
       ],
     },
     {

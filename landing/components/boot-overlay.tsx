@@ -33,7 +33,7 @@ export function BootOverlay() {
     <div className={"boot" + (done ? " done" : "")} aria-hidden="true">
       <div className="boot-logo">
         {/* glitch-burst fires at 88% of its 3.6s cycle; the negative delay
-            shifts that burst to ~1.42s wall-clock — right as the boot bar
+            shifts that burst to ~1.42s wall-clock, right as the boot bar
             fills and just before the overlay lifts at 1.65s. */}
         <GlitchText
           text="AELIX"

@@ -3,22 +3,22 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "The Desk Run",
   description:
-    "The end-to-end lifecycle of one desk run — from sensing the account to the preview card — and exactly where it stops until you say go.",
-  eyebrow: "06 — The Desk Run",
+    "The end-to-end lifecycle of one desk run, from sensing the account to the preview card, and exactly where it stops until you say go.",
+  eyebrow: "06, The Desk Run",
   blocks: [
     {
       type: "prose",
-      md: "When you ask the **Portfolio Manager** to run, it works like a small institutional desk: it senses the account, screens for candidates, dispatches three analysts in parallel, synthesizes a single proposed trade, routes it through the Risk Manager, and builds a **preview card**. That is where a run normally ends. The PM is the [main Claude Code session](/docs/team) — the one you talk to — and the only role that can place an order.",
+      md: "When you ask the **Portfolio Manager** to run, it works like a small institutional desk: it senses the account, screens for candidates, dispatches three analysts in parallel, synthesizes a single proposed trade, routes it through the Risk Manager, and builds a **preview card**. That is where a run normally ends. The PM is the [main Claude Code session](/docs/team), the one you talk to, and the only role that can place an order.",
     },
     {
       type: "prose",
-      md: "Crucially, the research phase produces **no order**. Steps 1 through 6 gather evidence and prepare a proposal; step 7 presents it and waits. The desk never advances to `place_equity_order` on a schedule, on a hunch, or on its own — only your explicit in-session confirmation moves it past the preview. Most runs end at a decision to **stand aside**.",
+      md: "Crucially, the research phase produces **no order**. Steps 1 through 6 gather evidence and prepare a proposal; step 7 presents it and waits. The desk never advances to `place_equity_order` on a schedule, on a hunch, or on its own, only your explicit in-session confirmation moves it past the preview. Most runs end at a decision to **stand aside**.",
     },
     {
       type: "callout",
       tone: "info",
       title: "Illustrative only",
-      md: "Everything below describes the *mechanics* of a run. Any ticker, size, or number shown anywhere in these docs is **demo/illustrative** — there is no track record and no performance claim. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Everything below describes the *mechanics* of a run. Any ticker, size, or number shown anywhere in these docs is **demo/illustrative**, there is no track record and no performance claim. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -34,12 +34,12 @@ export const content: DocContent = {
         {
           label: "1",
           title: "Sense",
-          md: "The PM reads **portfolio, positions, and buying power** for the **Agentic account only** — via `get_portfolio` and `get_equity_positions`. This is read-only context: what you hold, what's free, and how the day is going. Other Robinhood accounts are never touched.",
+          md: "The PM reads **portfolio, positions, and buying power** for the **Agentic account only**, via `get_portfolio` and `get_equity_positions`. This is read-only context: what you hold, what's free, and how the day is going. Other Robinhood accounts are never touched.",
         },
         {
           label: "2",
           title: "Screen",
-          md: "The **Technical Analyst** runs scans and reads your watchlists (`run_scan`, `get_scans`, `get_watchlist_items`) to produce a **candidate list** — the shortlist of tickers worth a full look. If you already named the names, this step just confirms them.",
+          md: "The **Technical Analyst** runs scans and reads your watchlists (`run_scan`, `get_scans`, `get_watchlist_items`) to produce a **candidate list**, the shortlist of tickers worth a full look. If you already named the names, this step just confirms them.",
         },
         {
           label: "3",
@@ -49,43 +49,43 @@ export const content: DocContent = {
         {
           label: "4",
           title: "Synthesize",
-          md: "The PM combines the three verdicts into **one proposed trade** — **ticker, side, quantity, order type** — and ties it to a written rule in [`strategies/`](/docs/strategies). No rule, no proposal. This is the PM's judgment call, not a vote of the analysts.",
+          md: "The PM combines the three verdicts into **one proposed trade**, **ticker, side, quantity, order type**, and ties it to a written rule in [`strategies/`](/docs/strategies). No rule, no proposal. This is the PM's judgment call, not a vote of the analysts.",
         },
         {
           label: "5",
           title: "Risk",
-          md: "The **Risk Manager** checks the proposal against [`strategies/`](/docs/strategies) and returns one of `APPROVE` / `APPROVE-WITH-CHANGES` / `VETO`. A **VETO stops the trade**. `APPROVE-WITH-CHANGES` can resize the order or tighten the stop before it proceeds. It is independent and read-only — it can kill a trade the analysts liked. See [Guardrails](/docs/guardrails).",
+          md: "The **Risk Manager** checks the proposal against [`strategies/`](/docs/strategies) and returns one of `APPROVE` / `APPROVE-WITH-CHANGES` / `VETO`. A **VETO stops the trade**. `APPROVE-WITH-CHANGES` can resize the order or tighten the stop before it proceeds. It is independent and read-only, it can kill a trade the analysts liked. See [Guardrails](/docs/guardrails).",
         },
         {
           label: "6",
           title: "Preview",
-          md: "The PM calls **`review_equity_order`** to build a **preview card** with a **cost estimate** — symbol, side, quantity, order type, estimated cost, resulting weight, stop, and rationale. This is a preview, not an order.",
+          md: "The PM calls **`review_equity_order`** to build a **preview card** with a **cost estimate**, symbol, side, quantity, order type, estimated cost, resulting weight, stop, and rationale. This is a preview, not an order.",
         },
         {
           label: "7",
           title: "Approval",
-          md: "⏸ The PM **presents the card to YOU and waits** for explicit confirmation. This is the human-in-the-loop gate. No confirmation, no order — the run simply ends here as a decision you can act on or ignore.",
+          md: "⏸ The PM **presents the card to YOU and waits** for explicit confirmation. This is the human-in-the-loop gate. No confirmation, no order, the run simply ends here as a decision you can act on or ignore.",
         },
         {
           label: "8",
           title: "Execute",
-          md: "**Only on your \"yes\"**, the PM calls **`place_equity_order`** — still gated by the `ask` permission rule in `.claude/settings.json`, so the tool call itself surfaces a prompt. Two independent gates (your approval, then the permission prompt) sit in front of every fill.",
+          md: "**Only on your \"yes\"**, the PM calls **`place_equity_order`**, still gated by the `ask` permission rule in `.claude/settings.json`, so the tool call itself surfaces a prompt. Two independent gates (your approval, then the permission prompt) sit in front of every fill.",
         },
         {
           label: "9",
           title: "Confirm",
-          md: "The PM verifies the fill via **`get_equity_orders`** and **logs it where you ask** — an append-only JSONL trail. See [Audit Logging](/docs/logging) for the record schema.",
+          md: "The PM verifies the fill via **`get_equity_orders`** and **logs it where you ask**, an append-only JSONL trail. See [Audit Logging](/docs/logging) for the record schema.",
         },
         {
           label: "10",
           title: "Snapshot",
-          md: "The PM writes the **full desk state** to **`ui/public/desk-state.json`** after **EVERY run** — and again after any fill — so the [dashboard](/docs/dashboard) mirrors live state: account, positions, candidate verdicts, the proposed trade, recent orders, and any injection alerts. The schema lives in `ui/README.md`.",
+          md: "The PM writes the **full desk state** to **`ui/public/desk-state.json`** after **EVERY run**, and again after any fill, so the [dashboard](/docs/dashboard) mirrors live state: account, positions, candidate verdicts, the proposed trade, recent orders, and any injection alerts. The schema lives in `ui/README.md`.",
         },
       ],
     },
     {
       type: "note",
-      md: "Steps 1–6 are research and preparation and produce **no order**. The desk's standard output is the **preview card at step 7** — it stops there until you say go.",
+      md: "Steps 1–6 are research and preparation and produce **no order**. The desk's standard output is the **preview card at step 7**, it stops there until you say go.",
     },
     {
       type: "heading",
@@ -93,7 +93,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The same lifecycle, drawn end to end — including the `desk-state.json` snapshot the PM writes and the read-only dashboard that polls it.",
+      md: "The same lifecycle, drawn end to end, including the `desk-state.json` snapshot the PM writes and the read-only dashboard that polls it.",
     },
     {
       type: "diagram",
@@ -117,7 +117,7 @@ export const content: DocContent = {
     },
     {
       type: "note",
-      md: "The dashboard is a **mirror, not a controller** — it cache-busts and re-polls `desk-state.json` every ~5s, so a fresh snapshot shows up without a reload. It **cannot place orders**. Details in [Dashboard](/docs/dashboard).",
+      md: "The dashboard is a **mirror, not a controller**, it cache-busts and re-polls `desk-state.json` every ~5s, so a fresh snapshot shows up without a reload. It **cannot place orders**. Details in [Dashboard](/docs/dashboard).",
     },
     {
       type: "heading",
@@ -125,7 +125,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Step 3 fans out to three specialists at once. Each returns a structured block whose fields map 1:1 to the `candidates[]` entries in `desk-state.json`, so the PM can fill the snapshot directly. None of them recommends a placed trade — that synthesis is the PM's job in step 4.",
+      md: "Step 3 fans out to three specialists at once. Each returns a structured block whose fields map 1:1 to the `candidates[]` entries in `desk-state.json`, so the PM can fill the snapshot directly. None of them recommends a placed trade, that synthesis is the PM's job in step 4.",
     },
     {
       type: "table",
@@ -156,7 +156,7 @@ export const content: DocContent = {
       items: [
         {
           term: "APPROVE",
-          md: "The proposal fits every written cap — per-trade size, concentration, open-position count, daily orders, a defined stop, and cash buffer. It moves to the preview unchanged.",
+          md: "The proposal fits every written cap, per-trade size, concentration, open-position count, daily orders, a defined stop, and cash buffer. It moves to the preview unchanged.",
         },
         {
           term: "APPROVE-WITH-CHANGES",
@@ -174,7 +174,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "You don't call steps by name — you talk to the PM in plain language and it runs the pipeline for you, fanning out to the analysts (in parallel where possible), routing through the Risk Manager, and coming back with a preview, never a placed order.",
+      md: "You don't call steps by name, you talk to the PM in plain language and it runs the pipeline for you, fanning out to the analysts (in parallel where possible), routing through the Risk Manager, and coming back with a preview, never a placed order.",
     },
     {
       type: "code",
@@ -182,7 +182,7 @@ export const content: DocContent = {
       filename: "example prompts to the PM",
       code: `"Screen my watchlist and bring me the top 2 ideas with full team analysis."
 
-"Run the desk on AAPL and NVDA — fundamental, technical, macro,
+"Run the desk on AAPL and NVDA, fundamental, technical, macro,
  then risk-check a small starter position in the better one."`,
     },
     {
@@ -192,13 +192,13 @@ export const content: DocContent = {
         {
           title: "Screen the watchlist",
           badge: "STEPS 2–7",
-          md: "The Technical Analyst screens your watchlist, the PM researches the survivors with all three analysts, risk-checks each, and returns previews for the top ideas — or tells you nothing qualifies.",
+          md: "The Technical Analyst screens your watchlist, the PM researches the survivors with all three analysts, risk-checks each, and returns previews for the top ideas, or tells you nothing qualifies.",
           foot: "Output: preview card(s) or \"stand aside\"",
         },
         {
           title: "Run named tickers",
           badge: "STEPS 1–7",
-          md: "You hand the PM specific names. It senses the account, runs full analysis on each, synthesizes a proposed starter in the stronger one, and risk-checks it — then stops at the preview and waits.",
+          md: "You hand the PM specific names. It senses the account, runs full analysis on each, synthesizes a proposed starter in the stronger one, and risk-checks it, then stops at the preview and waits.",
           foot: "Output: one preview card, pending your OK",
         },
       ],
@@ -209,13 +209,13 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The desk's standard output is a **decision**, most often *\"stand aside.\"* It surfaces a trade only when one genuinely qualifies, and even then it stops at the preview — it **never auto-places**.",
+      md: "The desk's standard output is a **decision**, most often *\"stand aside.\"* It surfaces a trade only when one genuinely qualifies, and even then it stops at the preview, it **never auto-places**.",
     },
     {
       type: "callout",
       tone: "danger",
       title: "The desk never places an order on its own",
-      md: "There are two independent gates between a preview and a fill: **(1)** your explicit in-session confirmation at step 7, and **(2)** the `ask` permission prompt on `place_equity_order` at step 8. Neither the analysts nor the Risk Manager nor the dashboard can trade — only the PM can, and only after both gates clear. This is structural, per [`CLAUDE.md`](/docs/guardrails); it cannot be weakened by the agent.",
+      md: "There are two independent gates between a preview and a fill: **(1)** your explicit in-session confirmation at step 7, and **(2)** the `ask` permission prompt on `place_equity_order` at step 8. Neither the analysts nor the Risk Manager nor the dashboard can trade, only the PM can, and only after both gates clear. This is structural, per [`CLAUDE.md`](/docs/guardrails); it cannot be weakened by the agent.",
     },
     {
       type: "divider",

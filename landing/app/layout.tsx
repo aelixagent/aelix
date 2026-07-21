@@ -53,7 +53,7 @@ const ORG_JSONLD = {
       "@id": `${SITE_URL}/#org`,
       name: "Aelix",
       url: SITE_URL,
-      logo: `${SITE_URL}/aelix-mark.png`,
+      logo: `${SITE_URL}/aelix-icon.png`,
       sameAs: ["https://github.com/aelixagent/aelix"],
     },
     {
