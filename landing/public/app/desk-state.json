@@ -1,0 +1,90 @@
+{
+  "generatedAt": null,
+  "session": "no-run",
+  "_note": "No live desk run in this environment. The brokerage sections (account, positions, candidates, orders, backtests) stay EMPTY on purpose — nothing here is simulated or faked. On-chain figures below are read live from Robinhood Chain testnet contracts. A real run (or a connected account via the backend) fills the rest.",
+  "account": {
+    "name": "Robinhood Agentic",
+    "type": "agentic",
+    "connected": false,
+    "equity": null,
+    "cash": null,
+    "buyingPower": null,
+    "dayPnl": null,
+    "dayPnlPct": null,
+    "openPositions": 0,
+    "ordersToday": 0
+  },
+  "riskCaps": {
+    "perTradePct": 15,
+    "maxConcentrationPct": 25,
+    "maxOpenPositions": 6,
+    "maxDailyOrders": 4,
+    "stopLossPct": 8,
+    "dailyLossHaltPct": 5,
+    "cashBufferPct": 10
+  },
+  "positions": [],
+  "candidates": [],
+  "proposedTrade": null,
+  "recentOrders": [],
+  "injectionAlerts": [],
+  "backtests": [],
+  "decisionLog": [],
+  "onchain": {
+    "network": {
+      "name": "Robinhood Chain Testnet",
+      "chainId": 46630,
+      "deployed": true,
+      "explorer": "https://explorer.testnet.chain.robinhood.com"
+    },
+    "contracts": {
+      "guardrails": "0x7Ab7a94200153C473Fc35F413407aedA60D30E5b",
+      "vault": "0xFA698f14C8D7540d35E63c0AC3685AeEc957E500",
+      "attestor": "0x381FE4f75E5e051C90D60ba3a7553D9Cb6062ac6",
+      "executor": "0x4fe433Ea2234ecFc69Ef7Ce817e844D6217c5DF4",
+      "autosave": "0x8e0AcAc14594346053809837C1432f522AE044B0"
+    },
+    "vault": {
+      "symbol": null,
+      "nav": null,
+      "totalAssets": null,
+      "totalShares": null,
+      "sharePrice": null,
+      "yourShares": 0,
+      "yourValue": 0,
+      "utilizationPct": null,
+      "apyPct": null
+    },
+    "guardrails": [
+      { "key": "perTradePct", "label": "Per-trade cap", "value": "15%", "enforced": true },
+      { "key": "maxConcentrationPct", "label": "Max concentration", "value": "25%", "enforced": true },
+      { "key": "maxOpenPositions", "label": "Max open positions", "value": "6", "enforced": true },
+      { "key": "maxDailyOrders", "label": "Max daily orders", "value": "4", "enforced": true },
+      { "key": "stopLossPct", "label": "Stop-loss", "value": "-8%", "enforced": true },
+      { "key": "dailyLossHaltPct", "label": "Daily-loss halt", "value": "-5%", "enforced": true },
+      { "key": "cashBufferPct", "label": "Cash buffer", "value": ">=10%", "enforced": true },
+      { "key": "noAveraging", "label": "No averaging into losers", "value": "enforced", "enforced": true }
+    ],
+    "trackRecord": {
+      "perfScore": null,
+      "attestations": 0,
+      "verifiedPnlPct": null,
+      "lastAttestation": null
+    },
+    "executor": {
+      "type": "Scoped session key (EOA)",
+      "status": "live",
+      "scope": "guardrail-bounded swaps · approval-gated",
+      "sessionKey": null,
+      "dailyCapPct": 15,
+      "lastAction": null
+    },
+    "autosave": {
+      "enabled": false,
+      "cadence": "weekly",
+      "amount": null,
+      "asset": "USDG",
+      "nextRun": null
+    }
+  }
+}

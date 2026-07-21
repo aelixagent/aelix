@@ -110,9 +110,9 @@ export default function VaultApp() {
       try {
         let s
         try {
-          s = await (await fetch('/desk-state.json', { cache: 'no-store' })).json()
+          s = await (await fetch(`${import.meta.env.BASE_URL}desk-state.json`, { cache: 'no-store' })).json()
         } catch {
-          s = await (await fetch('/desk-state.example.json', { cache: 'no-store' })).json()
+          s = await (await fetch(`${import.meta.env.BASE_URL}desk-state.example.json`, { cache: 'no-store' })).json()
         }
         const oc = s.onchain
         if (!oc || !oc.contracts || !oc.contracts.vault) {

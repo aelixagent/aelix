@@ -7,6 +7,7 @@
     "dev:landing": "npm --prefix landing run dev",
     "dev:app": "npm --prefix ui run dev",
     "build": "npm --prefix landing run build && npm --prefix ui run build",
+    "build:app": "node scripts/sync-app-into-landing.mjs",
     "start": "concurrently -n landing,app -c green,yellow \"npm --prefix landing run start\" \"npm --prefix ui run preview\""
   },
   "devDependencies": {

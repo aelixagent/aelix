@@ -122,7 +122,7 @@ export function AccountHeader({ account, generatedAt, live, isDemo }) {
         </div>
       )}
 
-      <a className="vault-link" href="/vault.html" title="Open the investor vault dApp">Open Vault ↗</a>
+      <a className="vault-link" href={`${import.meta.env.BASE_URL}vault.html`} title="Open the investor vault dApp">Open Vault ↗</a>
 
       <div className="asof" title={generatedAt || ''}>
         <span className="asof-k">{useLive ? 'live' : 'as of'}</span>

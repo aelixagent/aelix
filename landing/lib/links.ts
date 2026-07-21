@@ -4,9 +4,11 @@ export const DOCS_PATH = "/docs";
 
 /**
  * The live app (the `ui/` project) — the Desk dashboard + the investor Vault dApp.
- * In dev it runs on :5180 (this marketing site is :5190). Override with
- * NEXT_PUBLIC_APP_URL when both are deployed behind real domains.
+ * It ships as a static build under /app of THIS site and is exposed via Next
+ * rewrites, so these are same-origin paths — one domain, no localhost, no
+ * separate deployment. In local dev the standalone Vite server on :5180 is used
+ * instead via NEXT_PUBLIC_APP_URL.
  */
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:5180";
-export const VAULT_URL = `${APP_URL}/vault.html`; // connect wallet · deposit · withdraw
-export const DESK_APP_URL = `${APP_URL}/`; // live desk mirror
+const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || "";
+export const VAULT_URL = `${APP_ORIGIN}/vault`; // connect wallet · deposit · withdraw
+export const DESK_APP_URL = `${APP_ORIGIN}/app/index.html`; // raw desk mirror (marketing desk lives at /desk)

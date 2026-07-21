@@ -27,9 +27,9 @@ export default function App() {
       // live snapshot written by the PM (gitignored); fall back to the shipped sample
       let data
       try {
-        data = await fetchJson('/desk-state.json')
+        data = await fetchJson(`${import.meta.env.BASE_URL}desk-state.json`)
       } catch {
-        data = await fetchJson('/desk-state.example.json')
+        data = await fetchJson(`${import.meta.env.BASE_URL}desk-state.example.json`)
       }
       setState(data)
       setError(null)

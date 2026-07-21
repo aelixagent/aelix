@@ -58,7 +58,11 @@ function deskTriggerPlugin() {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Dev runs standalone at the root of :5180. The production build is served
+  // under /app on the landing site (Next rewrites /vault + /desk to it), so all
+  // asset + data URLs must resolve under /app/ there.
+  base: command === 'build' ? '/app/' : '/',
   plugins: [react(), deskTriggerPlugin()],
   server: { port: 5180, open: true },
   build: {
@@ -69,4 +73,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
