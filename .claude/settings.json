@@ -1,0 +1,86 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__robinhood-trading__get_accounts",
+      "mcp__robinhood-trading__get_portfolio",
+      "mcp__robinhood-trading__get_equity_positions",
+      "mcp__robinhood-trading__get_option_positions",
+      "mcp__robinhood-trading__get_equity_quotes",
+      "mcp__robinhood-trading__get_equity_historicals",
+      "mcp__robinhood-trading__get_equity_fundamentals",
+      "mcp__robinhood-trading__get_equity_tradability",
+      "mcp__robinhood-trading__get_index_quotes",
+      "mcp__robinhood-trading__get_indexes",
+      "mcp__robinhood-trading__get_option_quotes",
+      "mcp__robinhood-trading__get_option_chains",
+      "mcp__robinhood-trading__get_option_instruments",
+      "mcp__robinhood-trading__get_earnings_calendar",
+      "mcp__robinhood-trading__get_earnings_results",
+      "mcp__robinhood-trading__get_equity_orders",
+      "mcp__robinhood-trading__get_option_orders",
+      "mcp__robinhood-trading__search",
+      "mcp__robinhood-trading__get_watchlists",
+      "mcp__robinhood-trading__get_watchlist_items",
+      "mcp__robinhood-trading__get_popular_watchlists",
+      "mcp__robinhood-trading__get_option_watchlist",
+      "mcp__robinhood-trading__get_scans",
+      "mcp__robinhood-trading__run_scan",
+      "mcp__robinhood-trading__review_equity_order",
+      "WebSearch",
+      "WebFetch(domain:www.thestreet.com)",
+      "WebFetch(domain:www.cnbc.com)",
+      "WebFetch(domain:www.investing.com)",
+      "WebFetch(domain:www.fool.com)",
+      "PowerShell(npm --prefix ui run build 2>&1)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git push *)",
+      "Bash(git check-ignore *)",
+      "Skill(loop)",
+      "Skill(loop:*)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)"
+    ],
+    "deny": [
+      "mcp__robinhood-trading__place_option_order",
+      "mcp__robinhood-trading__cancel_option_order"
+    ],
+    "ask": [
+      "mcp__robinhood-trading__place_equity_order",
+      "mcp__robinhood-trading__cancel_equity_order",
+      "mcp__robinhood-trading__create_scan",
+      "mcp__robinhood-trading__update_scan_config",
+      "mcp__robinhood-trading__update_scan_filters",
+      "mcp__robinhood-trading__create_watchlist",
+      "mcp__robinhood-trading__update_watchlist",
+      "mcp__robinhood-trading__add_to_watchlist",
+      "mcp__robinhood-trading__remove_from_watchlist",
+      "mcp__robinhood-trading__add_option_to_watchlist",
+      "mcp__robinhood-trading__remove_option_from_watchlist",
+      "mcp__robinhood-trading__follow_watchlist",
+      "mcp__robinhood-trading__unfollow_watchlist"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "robinhood-trading"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/left-side-scan-gate.sh",
+            "timeout": 15,
+            "statusMessage": "Checking daily left-side scan…"
+          }
+        ]
+      }
+    ]
+  },
+  "defaultMode": "default"
+}

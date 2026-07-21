@@ -1,0 +1,36 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+fs_permissions = [
+  { access = "read-write", path = "./" },
+  { access = "read-write", path = "../ui/public" },
+]
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "solady/=lib/solady/src/",
+]
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+
+[invariant]
+runs = 64
+depth = 32
+fail_on_revert = false
+
+# Robinhood Chain — Aelix on-chain module.
+# Testnet chainId 46630 (0xB626) RPC https://rpc.testnet.chain.robinhood.com/rpc
+# Mainnet chainId 4663  (0x1237) RPC https://rpc.mainnet.chain.robinhood.com
+# (confirmed via research; re-verify addresses at https://docs.robinhood.com/chain — see DEPLOY.md)
+[rpc_endpoints]
+rh_testnet = "${RH_TESTNET_RPC}"
+rh_mainnet = "${RH_MAINNET_RPC}"

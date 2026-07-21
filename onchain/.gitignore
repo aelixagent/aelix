@@ -1,0 +1,13 @@
+# Foundry
+out/
+cache/
+broadcast/*/dry-run/
+.env
+
+# Vendored deps are checked in (plain, no submodules) for reproducibility;
+# uncomment to exclude if you switch to submodules/soldeer.
+# lib/
+
+# bridge / local deploy artifacts
+bridge/node_modules/
+deployments/

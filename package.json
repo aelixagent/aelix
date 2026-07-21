@@ -1,0 +1,15 @@
+{
+  "name": "aelix",
+  "private": true,
+  "description": "Aelix monorepo launcher — one command runs the landing (Next.js :5190) and the app/vault dashboard (Vite :5180) together.",
+  "scripts": {
+    "dev": "concurrently -n landing,app -c green,yellow \"npm:dev:landing\" \"npm:dev:app\"",
+    "dev:landing": "npm --prefix landing run dev",
+    "dev:app": "npm --prefix ui run dev",
+    "build": "npm --prefix landing run build && npm --prefix ui run build",
+    "start": "concurrently -n landing,app -c green,yellow \"npm --prefix landing run start\" \"npm --prefix ui run preview\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "rh-trading-desk-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Professional desk dashboard for the Robinhood Agentic trading team. Reads desk-state.json written by the PM session.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

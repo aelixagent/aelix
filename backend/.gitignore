@@ -1,0 +1,5 @@
+# Secrets + local state — never commit
+.env
+.env.*
+.data/
+*.log

@@ -1,0 +1,4 @@
+# Decision logs (JSONL) hold live account decisions — never commit real logs.
+# Only the sanitized example is tracked, mirroring the desk-state.json convention.
+*.jsonl
+!desk-runs.example.jsonl

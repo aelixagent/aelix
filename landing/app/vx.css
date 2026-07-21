@@ -1,0 +1,932 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AELIX — cinematic scroll-scrubbed homepage.
+   Bright painterly 3D world behind; thin serif display type in front.
+   Scoped under .vx-root; overrides the site's lime-flood body while mounted.
+   Fonts come from the root layout: --font-serif (Cormorant Garamond),
+   --font-sans (Instrument Sans); pixel/mono vars remain available.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* take over the body only while this route is mounted */
+body:has(.vx-root) {
+  background: #22242A;
+  overflow-x: hidden;
+}
+body:has(.vx-root)::before,
+body:has(.vx-root)::after {
+  display: none !important;
+}
+
+.vx-root {
+  --white: #ECF2F0;
+  --white-dim: rgba(236, 242, 240, 0.78);
+  --white-faint: rgba(236, 242, 240, 0.45);
+  --leaf: #D7FE51; /* Robinhood green — CTA fill / accent */
+  --pine: #22242A; /* near-black base (former deep-green ink) */
+  --lime: #E9FF86; /* neon green — bright accent */
+  --hair: rgba(233, 243, 238, 0.12); /* base hairline */
+  --hair-hi: rgba(233, 243, 238, 0.18); /* brighter hairline */
+  --mono: var(--font-space), ui-monospace, "SFMono-Regular", monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1;
+  color: var(--white);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* ── fixed WebGL backdrop + veils ─────────────────────────────────────── */
+.vx-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* No separate fade-in. The world builds behind the opaque preloader, which
+     then crossfades away to reveal an already-painted scene (see .vx-preload) —
+     one clean handoff instead of a half-loaded world showing through. */
+  opacity: 1;
+}
+.vx-bg canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+/* faint vignette — the scene is bright, keep it airy */
+.vx-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 100% at 50% 35%, transparent 55%, rgba(4, 7, 9, 0.5) 100%),
+    linear-gradient(to bottom, rgba(4, 7, 9, 0.3) 0%, transparent 18%, transparent 80%, rgba(215, 254, 81, 0.06) 100%);
+}
+/* always-on chartreuse horizon aurora — keeps charcoal moments reading as
+   "the world at night", never a dead void. Sits low on screen, drifts slowly,
+   stays behind all content (z 0) and is soft enough not to wash the type. */
+.vx-veil::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(125% 60% at 32% 116%, rgba(215, 254, 81, 0.08), transparent 60%),
+    radial-gradient(140% 66% at 74% 122%, rgba(215, 254, 81, 0.055), transparent 62%);
+  mix-blend-mode: screen;
+  animation: vx-aurora 26s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+@keyframes vx-aurora {
+  0%   { transform: translate3d(-3%, 1%, 0) scale(1.04); opacity: 0.82; }
+  50%  { transform: translate3d(2.5%, -1.5%, 0) scale(1.1); opacity: 1; }
+  100% { transform: translate3d(4%, 0.5%, 0) scale(1.05); opacity: 0.9; }
+}
+.vx-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(255, 255, 255, 0.5) 2px 3px);
+}
+/* whisper-thin fixed measurement grid — reads as terminal precision, not a
+   floodlight; stays under the veil so it never muddies the type */
+.vx-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, rgba(233, 243, 238, 0.5) 0 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(233, 243, 238, 0.5) 0 1px, transparent 1px);
+  background-size: clamp(64px, 9vw, 128px) clamp(64px, 9vw, 128px);
+  mask-image: radial-gradient(140% 120% at 50% 30%, rgba(0, 0, 0, 0.22), transparent 72%);
+  -webkit-mask-image: radial-gradient(140% 120% at 50% 30%, rgba(0, 0, 0, 0.22), transparent 72%);
+}
+
+/* ── header ───────────────────────────────────────────────────────────── */
+.vx-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(16px, 2.4vw, 30px) clamp(18px, 3.4vw, 54px);
+  border-bottom: 1px solid transparent;
+  transition: padding 0.5s var(--ease), background 0.5s var(--ease),
+    border-color 0.5s var(--ease), backdrop-filter 0.5s var(--ease);
+}
+/* condense + reveal a hairline once the hero scrolls away */
+.vx-header.is-scrolled {
+  padding-top: clamp(11px, 1.4vw, 16px);
+  padding-bottom: clamp(11px, 1.4vw, 16px);
+  background: rgba(10, 11, 13, 0.62);
+  border-bottom-color: var(--hair);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+.vx-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+  fill: var(--white);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-logo .vx-vmark {
+  width: 26px;
+  height: 26px;
+  display: block;
+  border-radius: 6px;
+  object-fit: cover;
+  transition: filter 0.3s var(--ease), transform 0.4s var(--ease);
+}
+.vx-logo:hover .vx-vmark {
+  filter: drop-shadow(0 0 12px rgba(215, 254, 81, 0.6));
+  transform: rotate(-6deg);
+}
+.vx-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 30px);
+}
+/* text nav links: animated green underline grows from the left on hover */
+.vx-nav-link {
+  position: relative;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  opacity: 0.9;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.2s;
+}
+.vx-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  height: 1.5px;
+  width: 100%;
+  background: var(--leaf);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease);
+  box-shadow: 0 0 8px rgba(215, 254, 81, 0.5);
+}
+.vx-nav-link:hover { opacity: 1; }
+.vx-nav-link:hover::after { transform: scaleX(1); }
+/* "Desk →" as a subtle bordered pill */
+.vx-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border-radius: 100px;
+  border: 1px solid var(--hair-hi);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  fill: var(--white);
+  background: rgba(233, 243, 238, 0.04);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.3s var(--ease), background 0.3s var(--ease),
+    box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.vx-nav-cta svg { width: 13px; height: 13px; transition: transform 0.3s var(--ease); }
+.vx-nav-cta:hover {
+  border-color: rgba(215, 254, 81, 0.55);
+  background: rgba(215, 254, 81, 0.08);
+  box-shadow: 0 4px 18px rgba(215, 254, 81, 0.18);
+  transform: translateY(-1px);
+}
+.vx-nav-cta:hover svg { transform: translate(1px, -1px); }
+@media (max-width: 720px) {
+  .vx-nav a.vx-nav-hide { display: none; }
+}
+
+/* ── left-side section navigator (diamonds) ───────────────────────────── */
+.vx-navdots {
+  position: fixed;
+  left: clamp(16px, 2.4vw, 40px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.vx-navdots button {
+  position: relative;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.vx-navdots__dot {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(233, 243, 238, 0.55);
+  background: transparent;
+  transition: background 0.4s var(--ease), transform 0.4s var(--ease),
+    box-shadow 0.4s var(--ease), border-color 0.4s var(--ease);
+}
+.vx-navdots button:hover .vx-navdots__dot {
+  border-color: rgba(233, 243, 238, 0.9);
+  background: rgba(233, 243, 238, 0.4);
+}
+.vx-navdots button.is-active .vx-navdots__dot {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  transform: rotate(45deg) scale(1.25);
+  box-shadow: 0 0 14px rgba(215, 254, 81, 0.8);
+}
+/* slide-in mono label on hover */
+.vx-navdots__label {
+  position: absolute;
+  left: 18px;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-dim);
+  background: rgba(10, 11, 13, 0.7);
+  padding: 3px 8px;
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition: opacity 0.32s var(--ease), transform 0.32s var(--ease);
+}
+.vx-navdots button:hover .vx-navdots__label,
+.vx-navdots button.is-active:hover .vx-navdots__label {
+  opacity: 1;
+  transform: translateX(0);
+}
+.vx-navdots button.is-active .vx-navdots__label { color: var(--white); }
+@media (max-width: 720px) {
+  .vx-navdots { display: none; }
+}
+
+/* ── top scroll-progress bar ──────────────────────────────────────────── */
+.vx-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(215, 254, 81, 0.4), var(--leaf));
+  z-index: 25;
+  width: 0;
+  will-change: width;
+}
+
+/* ── sections: tall runway, pinned centered content ───────────────────── */
+.vx-sec {
+  position: relative;
+  width: 100%;
+}
+.vx-sec__inner {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 clamp(20px, 6vw, 90px);
+  gap: 1em;
+  /* scroll-linked choreography (JS writes transform/opacity every frame) */
+  will-change: transform, opacity;
+}
+.vx-h-hero { height: 130vh; }
+.vx-h-view { height: 160vh; }
+/* soft local scrim behind the hero title — keeps the thin serif readable
+   where the pale haze band crosses the letters */
+.vx-h-hero .vx-sec__inner::before {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 26%;
+  bottom: 30%;
+  background: radial-gradient(52% 46% at 50% 50%, rgba(4, 7, 9, 0.5), transparent 74%);
+  z-index: -1;
+  pointer-events: none;
+}
+.vx-h-tall { height: 200vh; }
+.vx-h-mid  { height: 180vh; }
+.vx-h-last { height: 140vh; }
+
+/* ── type: thin high-contrast serif over the bright world ─────────────── */
+.vx-kicker {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(17px, 1.6vw, 22px);
+  letter-spacing: 0.02em;
+  color: var(--white);
+  opacity: 0.95;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+/* ── mono explanatory spine: hero eyebrow + per-act micro-index ─────────── */
+.vx-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: clamp(10px, 1.05vw, 12.5px);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--white-dim);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-eyebrow__tick {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: var(--leaf);
+  box-shadow: 0 0 10px rgba(215, 254, 81, 0.8);
+  flex: none;
+}
+/* per-act micro-index — "◗ 02 — EVERY ANGLE" style chapter marker */
+.vx-index {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.2em;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: clamp(10px, 1vw, 12px);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--white-faint);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-index__tick {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--leaf);
+  box-shadow: 0 0 9px rgba(215, 254, 81, 0.75);
+  flex: none;
+}
+.vx-index__n {
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+.vx-index__n::after {
+  content: "—";
+  margin-left: 10px;
+  color: var(--white-faint);
+}
+.vx-index__label { color: var(--white-dim); }
+
+/* corner HUD ticks on the hero — a whisper of terminal framing */
+.vx-hud {
+  position: absolute;
+  inset: clamp(16px, 3vw, 42px);
+  z-index: 1;
+  pointer-events: none;
+}
+.vx-hud__tick {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+}
+.vx-hud__tick::before,
+.vx-hud__tick::after {
+  content: "";
+  position: absolute;
+  background: rgba(233, 243, 238, 0.4);
+}
+.vx-hud__tick::before { width: 14px; height: 1px; top: 0; }
+.vx-hud__tick::after { width: 1px; height: 14px; left: 0; }
+.vx-hud__tick--tl { top: 0; left: 0; }
+.vx-hud__tick--tr { top: 0; right: 0; }
+.vx-hud__tick--tr::before { right: 0; left: auto; }
+.vx-hud__tick--tr::after { right: 0; left: auto; }
+.vx-hud__tick--bl { bottom: 0; left: 0; }
+.vx-hud__tick--bl::before { bottom: 0; top: auto; }
+.vx-hud__tick--br { bottom: 0; right: 0; }
+.vx-hud__tick--br::before { bottom: 0; top: auto; right: 0; left: auto; }
+.vx-hud__tick--br::after { bottom: 0; top: auto; right: 0; left: auto; }
+@media (max-width: 720px) { .vx-hud { display: none; } }
+
+.vx-hero-title {
+  position: relative;
+  /* the wordmark reveals crisper than body copy so it never smears into a dim
+     grey blob mid-blur — it should read luminous the instant it appears */
+  --rb: 0.12em;
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(4.2rem, 19vw, 16rem);
+  line-height: 0.95;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+/* top-lit off-white gradient on the wordmark, with a soft green underglow.
+   Clip lives on the per-char spans so each revealed letter is lit; we glow
+   with text-shadow (not filter) so the reveal's blur-in stays untouched. */
+.vx-hero-title .vx-reveal {
+  /* SOLID bright fill — no transparent gradient-clip, which could read dim or
+     embossed mid-blur. A hard dark halo keeps every stroke crisp on the bright
+     world; a lime glow makes the wordmark read as luminous light, never dark. */
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow:
+    0 0 24px rgba(233, 255, 134, 0.45),   /* luminous lime halo — reads as glowing light */
+    0 0 64px rgba(215, 254, 81, 0.28),
+    0 1px 2px rgba(6, 8, 10, 0.95),
+    0 2px 12px rgba(6, 8, 10, 0.85),
+    0 6px 32px rgba(6, 8, 10, 0.6);
+}
+.vx-title {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(3rem, 9vw, 7.5rem);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  color: var(--white);
+  text-shadow:
+    0 0 34px rgba(215, 254, 81, 0.28),
+    0 2px 18px rgba(0, 0, 0, 0.6);
+}
+.vx-title .lime { color: var(--leaf); }
+.vx-title--sm { font-size: clamp(2.4rem, 6.5vw, 5rem); }
+.vx-sub--hero {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(15px, 1.6vw, 19px);
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+  max-width: 34ch;
+}
+.vx-sub {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(16px, 1.7vw, 21px);
+  letter-spacing: 0.03em;
+  color: var(--white-dim);
+  max-width: 30ch;
+  line-height: 1.8;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-desc {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(14px, 1.5vw, 16.5px);
+  line-height: 1.9;
+  color: var(--white-dim);
+  max-width: 56ch;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* diamond logo-mark echo behind section marks */
+.vx-mark {
+  position: relative;
+  width: clamp(110px, 20vw, 230px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+}
+.vx-mark::before {
+  content: "";
+  position: absolute;
+  width: 62%;
+  height: 62%;
+  transform: rotate(45deg);
+  background: rgba(233, 243, 238, 0.06);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(233, 243, 238, 0.18);
+}
+.vx-mark .vx-vmark {
+  position: relative;
+  width: 54%;
+  height: 54%;
+  display: block;
+  border-radius: 12px;
+  object-fit: cover;
+  filter: drop-shadow(0 0 22px rgba(215, 254, 81, 0.45));
+}
+
+/* ── "built for" trio ─────────────────────────────────────────────────── */
+.vx-trio {
+  display: flex;
+  gap: clamp(20px, 5vw, 72px);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 1020px;
+}
+.vx-trio__item {
+  flex: 1 1 220px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+}
+.vx-trio__icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.vx-trio__icon::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(233, 243, 238, 0.18);
+  background: rgba(233, 243, 238, 0.06);
+  backdrop-filter: blur(4px);
+}
+.vx-trio__icon svg { position: relative; width: 26px; height: 26px; fill: var(--leaf); color: var(--leaf); }
+.vx-trio h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.7rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-trio p {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--white-dim);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ── buttons: pill CTAs like the reference (leaf fill / glass) ────────── */
+.vx-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 28px;
+  border-radius: 100px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.32s var(--ease), background 0.32s var(--ease),
+    box-shadow 0.32s var(--ease), border-color 0.32s var(--ease);
+}
+.vx-btn svg { width: 15px; height: 15px; transition: transform 0.32s var(--ease); }
+.vx-btn:hover svg { transform: translate(2px, -2px); }
+.vx-btn > span { position: relative; z-index: 1; }
+/* lime CTA: dark text, a moving sheen, greener + glowing on hover */
+.vx-btn-lime {
+  background: linear-gradient(180deg, var(--lime) 0%, var(--leaf) 100%); /* #E9FF86 → #D7FE51, zero green */
+  color: var(--pine);
+  fill: var(--pine);
+  box-shadow: 0 6px 22px rgba(215, 254, 81, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.vx-btn-lime::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.42) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s var(--ease);
+}
+.vx-btn-lime:hover {
+  transform: translateY(-3px) scale(1.015);
+  box-shadow: 0 16px 46px rgba(215, 254, 81, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.vx-btn-lime:hover::before { transform: translateX(120%); }
+.vx-btn-lime:active { transform: translateY(-1px) scale(0.99); filter: brightness(0.96); }
+/* glass CTA: crisper hairline, soft green wash on hover */
+.vx-btn-glass {
+  color: var(--white);
+  fill: var(--white);
+  background: linear-gradient(180deg, rgba(233, 243, 238, 0.1), rgba(233, 243, 238, 0.04));
+  border: 1px solid var(--hair-hi);
+  box-shadow: inset 0 1px 1px rgba(233, 243, 238, 0.18);
+  backdrop-filter: blur(8px);
+}
+.vx-btn-glass:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(180deg, rgba(233, 243, 238, 0.14), rgba(215, 254, 81, 0.06));
+  border-color: rgba(215, 254, 81, 0.35);
+  box-shadow: inset 0 1px 1px rgba(233, 243, 238, 0.22), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.vx-cta-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 0.6em; }
+
+/* ── scroll cue on hero ───────────────────────────────────────────────── */
+.vx-cue {
+  position: absolute;
+  bottom: clamp(24px, 5vh, 54px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  color: var(--white-dim);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.vx-cue__line {
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(to bottom, transparent, rgba(251, 255, 244, 0.7));
+  position: relative;
+  overflow: hidden;
+}
+.vx-cue__line::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--leaf);
+  animation: vx-cue 1.8s ease-in-out infinite;
+}
+@keyframes vx-cue {
+  0% { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(300%); }
+}
+
+/* ── footer / arrival (world is dusk-dark by now) ─────────────────────── */
+.vx-foot {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.1em;
+  padding: 0 clamp(20px, 6vw, 90px) 20vh; /* keep the CTA stack clear of the legal line */
+  background: radial-gradient(120% 100% at 50% 45%, rgba(34, 36, 42, 0.12), rgba(34, 36, 42, 0.42));
+}
+.vx-foot__legal {
+  position: absolute;
+  bottom: clamp(18px, 4vh, 40px);
+  left: 0;
+  right: 0;
+  padding: 0 clamp(20px, 5vw, 60px);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--white-faint);
+  max-width: 780px;
+  margin: 0 auto;
+}
+.vx-foot__legal b { color: var(--white-dim); font-weight: 600; }
+
+/* ── preloader (deep pine, like the world before dawn) ────────────────── */
+.vx-preload {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--pine, #22242A);
+  display: grid;
+  place-items: center;
+  transition: opacity 0.8s ease, visibility 0.8s;
+}
+.vx-preload.is-done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.vx-preload__mark {
+  width: clamp(96px, 16vw, 156px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.vx-preload__mark .vx-vmark {
+  width: 64%;
+  height: 64%;
+  display: block;
+  border-radius: 16px;
+  object-fit: cover;
+  filter: drop-shadow(0 0 18px rgba(215, 254, 81, 0.35));
+  animation: vx-pre-pulse 2.4s var(--ease) infinite;
+}
+/* thin green progress ring driven by the live --pct from the counter */
+.vx-preload__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--leaf) calc(var(--pct, 0) * 1%),
+    rgba(233, 243, 238, 0.08) 0
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  box-shadow: 0 0 24px rgba(215, 254, 81, 0.18);
+}
+@keyframes vx-pre-pulse {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 14px rgba(215, 254, 81, 0.28)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 26px rgba(215, 254, 81, 0.5)); }
+}
+.vx-preload__pct {
+  position: absolute;
+  bottom: clamp(24px, 6vh, 54px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(30px, 5vw, 48px);
+  color: #ECF2F0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.vx-preload__sign {
+  font-family: var(--mono);
+  font-size: 0.4em;
+  letter-spacing: 0.1em;
+  color: var(--white-faint);
+  vertical-align: super;
+  margin-left: 0.15em;
+}
+
+/* ── responsive: keep the spine legible + tappable on a phone ──────────── */
+@media (max-width: 720px) {
+  .vx-sec__inner { gap: 0.85em; padding: 0 clamp(22px, 7vw, 40px); }
+  .vx-index { letter-spacing: 0.18em; gap: 8px; }
+  .vx-index__n::after { margin-left: 8px; }
+  .vx-eyebrow { letter-spacing: 0.2em; gap: 8px; }
+  .vx-sub--hero { max-width: 26ch; }
+  .vx-desc { line-height: 1.8; max-width: 40ch; }
+  .vx-title--sm { font-size: clamp(2rem, 10vw, 3rem); }
+  .vx-trio { gap: 30px; }
+  /* comfortable tap targets */
+  .vx-btn { padding: 15px 26px; }
+  .vx-nav-cta { padding: 10px 16px; }
+  .vx-cta-row { width: 100%; }
+  .vx-cta-row .vx-btn { flex: 1 1 auto; justify-content: center; }
+}
+@media (max-width: 400px) {
+  .vx-index { font-size: 10px; letter-spacing: 0.14em; }
+}
+
+/* ── reveal animations (blur-in on entry) ─────────────────────────────── */
+.vx-reveal {
+  opacity: 0;
+  filter: blur(var(--rb, 0.24em));
+  transform: translateY(0.44em);
+  transition:
+    opacity 1.05s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.05s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * var(--step, 55ms));
+  will-change: opacity, filter, transform;
+}
+.in.vx-reveal,
+.in .vx-reveal {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+.vx-line {
+  display: block;
+  overflow: hidden;
+}
+.vx-chars .vx-reveal {
+  display: inline-block;
+  white-space: pre;
+}
+/* chars are grouped per word so headlines never break mid-word */
+.vx-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+/* reveals inside a pinned act hold until the choreography marks it live,
+   so the stagger plays when the act is actually visible (not during the
+   sticky approach, and never behind the preloader) */
+.vx-sec__inner:not(.vx-live) .vx-reveal {
+  opacity: 0;
+  filter: blur(var(--rb, 0.24em));
+  transform: translateY(0.44em);
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vx-reveal { opacity: 1 !important; filter: none !important; transform: none !important; }
+  /* keep the gradient wordmark visible when reveals are forced on */
+  .vx-hero-title .vx-reveal { filter: none !important; }
+  .vx-bg { animation: none; opacity: 1; }
+  /* keep the aurora glow present, just hold it still */
+  .vx-veil::after { animation: none; }
+  .vx-cue__line::after { animation: none; }
+  .vx-preload__mark .vx-vmark { animation: none; }
+  .vx-btn-lime::before { display: none; }
+  .vx-header, .vx-btn, .vx-nav-cta, .vx-navdots__dot, .vx-navdots__label,
+  .vx-nav-link::after, .vx-logo .vx-vmark { transition: none !important; }
+}
+
+/* ══════════ READABILITY PASS — copy always wins over the bright world ══════════ */
+/* soft charcoal scrim behind every act's content */
+.vx-sec__inner::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1150px, 98%);
+  height: 78%;
+  background: radial-gradient(58% 52% at 50% 50%, rgba(18, 20, 24, 0.55), rgba(18, 20, 24, 0.3) 55%, transparent 76%);
+  z-index: -1;
+  pointer-events: none;
+}
+/* hero gets a stronger, wider scrim (overrides its earlier one) */
+.vx-h-hero .vx-sec__inner::before {
+  left: 4%;
+  right: 4%;
+  width: auto;
+  top: 20%;
+  bottom: 16%;
+  height: auto;
+  transform: none;
+  background:
+    radial-gradient(48% 40% at 50% 46%, rgba(10, 12, 15, 0.82), rgba(10, 12, 15, 0.5) 52%, transparent 74%),
+    radial-gradient(60% 52% at 50% 50%, rgba(10, 12, 15, 0.42), transparent 72%);
+}
+/* layered dark shadows — serif stays legible on pure chartreuse */
+.vx-hero-title,
+.vx-title {
+  text-shadow:
+    0 2px 10px rgba(10, 11, 13, 0.8),
+    0 8px 34px rgba(10, 11, 13, 0.6),
+    0 0 70px rgba(10, 11, 13, 0.45);
+}
+.vx-kicker,
+.vx-sub,
+.vx-desc,
+.vx-index,
+.vx-eyebrow,
+.vx-cue,
+.vx-trio h3,
+.vx-trio p,
+.vx-foot__legal {
+  text-shadow:
+    0 1px 6px rgba(10, 11, 13, 0.85),
+    0 4px 18px rgba(10, 11, 13, 0.55);
+}
+
+/* ══ FOOTER LEGIBILITY — the legal line must read over the bright lake ══ */
+.vx-foot::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36vh;
+  background: linear-gradient(to top, rgba(14, 16, 19, 0.88), rgba(14, 16, 19, 0.5) 55%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.vx-foot > * { position: relative; z-index: 1; }
+.vx-foot__legal {
+  color: rgba(236, 242, 240, 0.88);
+  text-shadow: 0 1px 5px rgba(10, 11, 13, 0.9), 0 3px 14px rgba(10, 11, 13, 0.7);
+}
+.vx-foot__legal b { color: #ECF2F0; }
+
+/* dim helper texts must still read over the bright valley */
+.vx-eyebrow { color: rgba(236, 242, 240, 0.92); }
+.vx-sub--hero,
+.vx-cue,
+.vx-cue span {
+  color: rgba(236, 242, 240, 0.95);
+  text-shadow: 0 1px 6px rgba(10, 11, 13, 0.9), 0 3px 16px rgba(10, 11, 13, 0.65);
+}
+
+/* my blanket z-index rule accidentally un-anchored the legal — re-pin it */
+.vx-foot > .vx-foot__legal {
+  position: absolute;
+  z-index: 1;
+}

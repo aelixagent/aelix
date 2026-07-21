@@ -1,0 +1,9 @@
+{
+  "name": "aelix-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reads live Aelix contract state and writes the onchain block into ui/public/desk-state.json",
+  "bin": { "aelix-bridge": "index.mjs" },
+  "dependencies": { "ethers": "^6.13.0" }
+}

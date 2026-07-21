@@ -1,0 +1,13 @@
+{
+  "name": "aelix-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Aelix public backend — a multi-tenant, 24/7 agentic desk service (Rule-Keeper + Portfolio X-Ray) on the Robinhood Agentic MCP. Zero runtime dependencies; runs on plain Node.",
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "test": "node --test"
+  }
+}

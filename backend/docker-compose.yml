@@ -1,0 +1,27 @@
+# Local / single-node deploy. `docker compose up --build`
+services:
+  aelix-backend:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      NODE_ENV: production
+      PORT: "8787"
+      # REQUIRED in production — generate with:
+      #   openssl rand -hex 32     (JWT_SECRET)
+      #   openssl rand -base64 32  (VAULT_KEY)
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      VAULT_KEY: ${VAULT_KEY:?set VAULT_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5190}
+      BROKER_MODE: ${BROKER_MODE:-mock}
+      SCHEDULER_ENABLED: "true"
+      SCAN_INTERVAL_SEC: "900"
+      # Optional coach layer:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
+    volumes:
+      - aelix-data:/app/.data
+    restart: unless-stopped
+
+volumes:
+  aelix-data:

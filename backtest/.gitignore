@@ -1,0 +1,4 @@
+# Backtest reports may hold real-symbol runs (piped from MCP get_equity_historicals).
+# Keep the directory tracked, but never commit generated reports.
+reports/*.json
+!reports/.gitkeep
