@@ -130,7 +130,7 @@
 .vpos .dim { color: var(--text-dim); }
 .vpos .sep { color: var(--border-2); }
 .vtx { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-dim); display: inline-flex; gap: 8px; align-items: center; }
-.vtx a { color: var(--pos); text-decoration: underline; text-underline-offset: 3px; }
+.vtx a { color: var(--pos); text-decoration: none; }
 .vtx .live { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 8px rgba(255, 197, 61, 0.5); animation: vblink 1.2s step-end infinite; }
 .verr { font-family: var(--font-mono); font-size: 11.5px; color: #ffb4ae; background: var(--neg-bg); border: 1px solid rgba(255, 91, 82, 0.35); border-radius: 12px; padding: 10px 14px; max-width: 460px; text-align: center; line-height: 1.5; }
 /* Network-mismatch notice — amber, not error-red: it's a one-click fix. */
@@ -159,7 +159,7 @@
   max-width: 90vw; display: inline-flex; align-items: center; gap: 12px;
 }
 .vault-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.vault-toast a { color: var(--neon); text-decoration: underline; text-underline-offset: 3px; }
+.vault-toast a { color: var(--neon); text-decoration: none; }
 
 .vault-boot { color: var(--text-dim); padding: 140px 20px; text-align: center; font-family: var(--font-serif); font-size: 17px; }
 .vault-boot.err { color: var(--neg); font-family: var(--font-sans); font-size: 13px; }

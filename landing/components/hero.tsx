@@ -15,12 +15,12 @@ export function Hero() {
       <span className="hud tr" aria-hidden="true" />
       <span className="hud bl" aria-hidden="true" />
       <span className="hud br" aria-hidden="true" />
-      <span className="coords">VLR-011 // 07.26</span>
+      <span className="coords">AX-011 // 07.26</span>
       <span className="coords right">DESK-04 // ONLINE</span>
 
       <div className="wrap hero-inner">
         <span className="tag">
-          <span className="dot" /> VLR // DESK_01
+          <span className="dot" /> AX // DESK_01
         </span>
         <h1 className="title">
           <GlitchText text="AELIX" mode="always" />
@@ -45,7 +45,7 @@ export function Hero() {
             </a>
           </Magnetic>
           <Magnetic>
-            <a href="#flow" className="btn btn-ghost">
+            <a href="#desk" className="btn btn-ghost">
               See The Desk
             </a>
           </Magnetic>

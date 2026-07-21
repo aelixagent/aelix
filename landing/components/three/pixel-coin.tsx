@@ -5,9 +5,11 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
- * PixelCoin — a spinning voxel $VLR coin built from instanced cubes:
- * red pixel rim, ink face, lime "V". Rendered at low DPR + antialias off
- * (image-rendering:pixelated via .pixel-coin canvas) to stay on-theme.
+ * PixelCoin — a spinning voxel $AELIX coin built from instanced cubes:
+ * chartreuse face + deep-chartreuse rim, charcoal embossed "A" (the Aelix
+ * mark). Rendered at low DPR + antialias off (image-rendering:pixelated via
+ * .pixel-coin canvas) to stay on-theme. Red is reserved for danger/sell/veto,
+ * so the mark deliberately uses none.
  *
  * Import with next/dynamic ({ ssr: false }); it fills its parent
  * (<div className="pixel-coin"> sizing comes from globals.css).
@@ -15,27 +17,27 @@ import * as THREE from "three";
  */
 
 const GRID = 15;
-const V_MASK = [
+const A_MASK = [
   "...............",
   "...............",
-  "...##.....##...",
-  "...##.....##...",
-  "...##.....##...",
-  "....##...##....",
-  "....##...##....",
-  "....##...##....",
-  ".....##.##.....",
-  ".....##.##.....",
   "......###......",
   "......###......",
+  ".....##.##.....",
+  ".....##.##.....",
+  "....##...##....",
+  "....#######....",
+  "....##...##....",
+  "...##.....##...",
+  "...##.....##...",
+  "...##.....##...",
   "...............",
   "...............",
   "...............",
 ];
 
-const INK = "#ECF2F0";
-const LIME = "#D7FE51";
-const RED = "#FF5B52";
+const CHARCOAL = "#22242A"; // embossed "A" — reads dark against the face
+const CHARTREUSE = "#D7FE51"; // coin face — the signature accent
+const RIM = "#8FAE2E"; // deep-chartreuse rim
 
 type Voxel = { x: number; y: number; z: number; color: string };
 
@@ -48,14 +50,14 @@ function buildVoxels(): Voxel[] {
       const dy = row - c;
       const d = Math.sqrt(dx * dx + dy * dy);
       if (d > 7.4) continue;
-      const isV = V_MASK[row][col] === "#";
+      const isLetter = A_MASK[row][col] === "#";
       const isRim = d > 6.1;
       voxels.push({
         x: dx,
         y: -dy,
-        // V pixels poke out of both faces for a stamped/embossed read
-        z: isV ? 0.5 : 0,
-        color: isV ? LIME : isRim ? RED : INK,
+        // letter pixels poke out of both faces for a stamped/embossed read
+        z: isLetter ? 0.5 : 0,
+        color: isLetter ? CHARCOAL : isRim ? RIM : CHARTREUSE,
       });
     }
   }
