@@ -11,10 +11,12 @@ import {
 import './styles.css'
 import './vault.css'
 
-// ── Cross-surface links. Marketing site (landing/) runs on :5190 in dev; the
-// desk dashboard is this same app's index.html (same origin). ──
-const LANDING = 'http://localhost:5190'
+// ── Cross-surface links. In dev the marketing site (landing/) runs on :5190;
+// in production everything ships from ONE origin (aelix.xyz), so links must be
+// same-origin root paths — never the hardcoded localhost, which 404s in prod. ──
+const LANDING = import.meta.env.DEV ? 'http://localhost:5190' : ''
 const DOCS_URL = `${LANDING}/docs`
+const DESK_URL = `${LANDING}/desk`
 
 // ---- Robinhood Chain definitions (see onchain/DEPLOY.md) ----
 const CHAINS = {
@@ -339,12 +341,12 @@ export default function VaultApp() {
     <div className="vault-app">
       {/* ── floating header ── */}
       <header className="vfloat">
-        <a className="vfloat-brand" href="/" title="Back to the Desk">
+        <a className="vfloat-brand" href={DESK_URL} title="Back to the Desk">
           <span className="logo" aria-hidden="true"><img src="/aelix-icon.png" alt="" /></span>
           Aelix <span className="vfloat-chip">Vault</span>
         </a>
         <nav className="vfloat-nav">
-          <a href="/">Desk</a>
+          <a href={DESK_URL}>Desk</a>
           <a href={DOCS_URL}>Docs</a>
           {explorerBase && <a href={explorerBase} target="_blank" rel="noreferrer">Explorer ↗</a>}
         </nav>
