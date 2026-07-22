@@ -317,7 +317,7 @@ body:has(.vx-root)::after {
   will-change: transform, opacity;
 }
 .vx-h-hero { height: 130vh; }
-.vx-h-view { height: 160vh; }
+.vx-h-view { height: 220vh; }
 /* soft local scrim behind the hero title — keeps the thin serif readable
    where the pale haze band crosses the letters */
 .vx-h-hero .vx-sec__inner::before {
