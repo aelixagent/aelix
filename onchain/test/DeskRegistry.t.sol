@@ -73,6 +73,25 @@ contract DeskRegistryTest is Test {
         reg.attest(bytes32(0), 1, 100e18, 0, bytes32(0), "");
     }
 
+    function test_uriTooLong_rejected() public {
+        string memory tooLong = new string(reg.MAX_URI_LENGTH() + 1); // one byte over the cap
+        vm.prank(DESK);
+        vm.expectRevert(DeskRegistry.UriTooLong.selector);
+        reg.attest(SUBJECT, 1, 100e18, 0, bytes32(0), tooLong);
+
+        // The same cap guards the squat-proof self-namespace.
+        vm.prank(DESK);
+        vm.expectRevert(DeskRegistry.UriTooLong.selector);
+        reg.attestSelf(LABEL, 1, 100e18, 0, bytes32(0), tooLong);
+    }
+
+    function test_uriAtMaxLength_ok() public {
+        string memory maxUri = new string(reg.MAX_URI_LENGTH()); // exactly at the cap
+        vm.prank(DESK);
+        reg.attest(SUBJECT, 1, 100e18, 0, bytes32(0), maxUri);
+        assertEq(reg.rawCount(SUBJECT), 1);
+    }
+
     function test_timestampIsChainStamped() public {
         vm.warp(1_800_000_000);
         _attest(SUBJECT, 1, 100e18);

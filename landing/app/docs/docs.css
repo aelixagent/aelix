@@ -683,6 +683,111 @@
   white-space: pre;
 }
 
+/* ── interactive 3D architecture map ── */
+.doc-arch3d {
+  margin: 28px 0;
+  border: 1px solid rgba(233, 243, 238, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(215, 254, 81, 0.06), transparent 55%),
+    linear-gradient(180deg, #14161b, #0d0f13);
+}
+.doc-arch3d figcaption {
+  font-family: var(--ff-pixel);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(236, 242, 240, 0.62);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(233, 243, 238, 0.10);
+}
+.doc-arch3d-cap {
+  margin: 0;
+  padding: 12px 16px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(236, 242, 240, 0.62);
+}
+.archmap {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  touch-action: none; /* let drag-rotate own the gesture */
+}
+.archmap-canvas { position: absolute; inset: 0; cursor: grab; }
+.archmap-canvas:active { cursor: grabbing; }
+.archmap-canvas canvas { display: block; }
+.archmap-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.archmap-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  transition: opacity 0.15s linear;
+}
+.archmap-label .al-name {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #ECF2F0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+}
+.archmap-label .al-sub {
+  font-family: var(--ff-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: rgba(236, 242, 240, 0.5);
+}
+.archmap-label.core .al-name { font-size: 14px; color: #D7FE51; }
+.archmap-label.risk .al-name { color: #ffc53d; }
+.archmap-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-family: var(--ff-pixel);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(236, 242, 240, 0.4);
+  pointer-events: none;
+}
+.archmap.mode-loading .archmap-canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(215, 254, 81, 0.12), transparent 70%);
+  animation: archmap-pulse 1.6s ease-in-out infinite;
+}
+@keyframes archmap-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+.archmap.mode-fallback .archmap-hint { display: none; }
+.archmap.mode-fallback::after {
+  content: "3D map unavailable — see the wiring below.";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: rgba(236, 242, 240, 0.4);
+}
+@media (max-width: 640px) {
+  .archmap { height: 320px; }
+  .archmap-label .al-name { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .archmap.mode-loading .archmap-canvas::after { animation: none; }
+}
+
 /* ── divider — thin static hairline ── */
 .doc-divider {
   border: none;
@@ -852,9 +957,17 @@
   background: #22242A;
   padding: 20px 22px 40px;
   overflow-y: auto;
+  /* clip any nav overflow inside the drawer's own box — a fixed element escapes
+     body{overflow-x:hidden}, so without this its content widened the page */
+  overflow-x: hidden;
+  max-width: 100vw;
   transform: translateY(-100%);
   transition: transform 0.32s cubic-bezier(0.7, 0, 0.3, 1);
 }
+.docs-drawer .docs-nav,
+.docs-drawer .docs-nav-group,
+.docs-drawer .docs-nav ul { min-width: 0; max-width: 100%; }
+.docs-drawer .docs-nav-link { overflow-wrap: anywhere; }
 .docs-drawer.open {
   transform: none;
 }

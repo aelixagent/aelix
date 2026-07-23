@@ -69,7 +69,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; overflow-x: clip; }
 body {
   background: var(--bg);
   color: var(--ink);

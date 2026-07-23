@@ -107,6 +107,7 @@ small { opacity: 0.65; font-size: 0.85em; }
 }
 .logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .brand-title {
+  margin: 0;
   font-family: var(--font-serif); font-weight: 600; font-size: 22px;
   letter-spacing: 0.2px; line-height: 1;
 }
@@ -152,7 +153,10 @@ small { opacity: 0.65; font-size: 0.85em; }
 
 /* ---------- layout ---------- */
 .layout { display: grid; grid-template-columns: 1fr 330px; gap: 20px; align-items: start; }
-.col-main, .col-side { display: flex; flex-direction: column; gap: 20px; }
+/* min-width:0 lets these grid tracks shrink below their content's intrinsic width
+   (e.g. the Positions table's min-width) so the table scrolls inside grid-wrap
+   instead of forcing the whole page wider than the viewport on mobile */
+.col-main, .col-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
 
 /* ---------- panels ---------- */
@@ -417,6 +421,7 @@ small { opacity: 0.65; font-size: 0.85em; }
 .oc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 16px; background: var(--bg-2); border-radius: 12px; }
 .oc-cap { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 10.5px; letter-spacing: 0.2px; line-height: 1.6; }
 .oc-cap.warn-cap { color: var(--warn); }
+.oc-read-err { background: var(--neg-bg); color: var(--neg); padding: 8px 13px; border-radius: 9px; margin: -6px 0 14px; font-size: 11.5px; letter-spacing: 0.2px; }
 
 /* vault hero */
 .vault-hero {
@@ -580,3 +585,66 @@ body::after {
 .gate-steps { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 7px; }
 .gate-steps li { font-size: 12.5px; color: var(--text); line-height: 1.5; }
 .gate-steps li::marker { color: var(--pos); font-family: var(--font-mono); font-size: 11px; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Simplify pass — plain links (no underline), loading skeletons, mobile
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* every link/button reads as a clean control, never an underlined hyperlink */
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; }
+.vault-link { text-decoration: none; }
+
+/* never let any child force a horizontal scrollbar on the page (clip keeps
+   position:sticky working, unlike overflow-x:hidden) */
+html { overflow-x: clip; }
+
+/* ---------- loading skeletons (shimmer placeholders, never faked data) ---------- */
+.skel {
+  display: block;
+  background: linear-gradient(90deg,
+    rgba(233, 243, 238, 0.05) 25%,
+    rgba(233, 243, 238, 0.11) 37%,
+    rgba(233, 243, 238, 0.05) 63%);
+  background-size: 400% 100%;
+  animation: skel-shimmer 1.4s ease infinite;
+}
+@keyframes skel-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+.skel-topbar { display: flex; align-items: center; gap: 14px; padding: 22px 0 26px; flex-wrap: wrap; }
+.skel-stats { display: flex; gap: 22px; margin-left: 20px; }
+.skel-stat { display: flex; flex-direction: column; gap: 7px; }
+.skel-grid { display: grid; grid-template-columns: 1fr 330px; gap: 20px; align-items: start; }
+.skel-col { display: flex; flex-direction: column; gap: 20px; }
+.skel-vault { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: 18px 22px; align-items: center; }
+.skel-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; flex: 1; }
+@media (max-width: 1000px) { .skel-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .skel-stats { display: none; } .skel-vault { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+/* ---------- mobile hardening (all breakpoints for the desk app) ---------- */
+@media (max-width: 720px) {
+  .app { padding: 0 14px 40px; }
+  .topbar { flex-wrap: wrap; gap: 12px 16px; padding: 14px 16px; top: 8px; margin: 8px 0 22px; }
+  .brand { min-width: 0; flex: 1 1 auto; }
+  /* flex:1 1 100% forces the stats onto their own full-width row (a bare
+     width:100% is ignored because flex-basis:0 keeps them on the brand row);
+     wrap them so every figure shows instead of hiding in a side-scroll */
+  .topstats { order: 3; flex: 1 1 100%; width: 100%; gap: 14px 22px; flex-wrap: wrap; overflow: visible; }
+  .stat-div { display: none; }
+  .vault-link { order: 2; }
+  .stat-value.hero { font-size: 24px; }
+  .layout { grid-template-columns: 1fr; }
+  .oc-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 460px) {
+  .stat-div { display: none; }
+  .topstats { gap: 14px; }
+  .stat-value { font-size: 15px; }
+  .stat-value.hero { font-size: 21px; }
+  .vault-nav-v { font-size: 30px; }
+  .preview-grid { grid-template-columns: 1fr; }
+  .risk-row { grid-template-columns: 1fr 64px 58px; gap: 8px; }
+  .oc-grid { grid-template-columns: 1fr; }
+  .oc-perf { gap: 14px; }
+  .panel { padding: 16px 15px; }
+}

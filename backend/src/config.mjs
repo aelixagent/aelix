@@ -33,6 +33,7 @@ const list = (v, d) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : 
 const warnings = []
 
 // JWT secret — ephemeral in dev if unset (tokens won't survive restart).
+const JWT_SECRET_PROVIDED = Boolean(process.env.JWT_SECRET)
 let JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET) {
   JWT_SECRET = randomBytes(32).toString('hex')
@@ -42,6 +43,7 @@ if (!JWT_SECRET) {
 // Vault key — 32 bytes base64. Ephemeral in dev if unset (stored tokens become
 // unreadable after restart — acceptable for dev, fatal for prod).
 let VAULT_KEY_B64 = process.env.VAULT_KEY
+const VAULT_KEY_PROVIDED = Boolean(VAULT_KEY_B64)
 let VAULT_KEY
 if (VAULT_KEY_B64) {
   VAULT_KEY = Buffer.from(VAULT_KEY_B64, 'base64')
@@ -60,8 +62,22 @@ export const config = {
   corsOrigins: list(process.env.CORS_ORIGINS, ['http://localhost:5190', 'http://localhost:5180']),
 
   jwtSecret: JWT_SECRET,
+  jwtSecretProvided: JWT_SECRET_PROVIDED,
   jwtTtlSec: num(process.env.JWT_TTL_SEC, 60 * 60 * 24 * 7), // 7 days
   vaultKey: VAULT_KEY,
+  vaultKeyProvided: VAULT_KEY_PROVIDED,
+
+  // Reverse-proxy trust: when true, derive the client IP from the first
+  // X-Forwarded-For hop (so the rate limiter keys on the real client, not the
+  // proxy). Leave false unless the deployment actually sits behind a trusted proxy.
+  trustProxy: bool(process.env.TRUST_PROXY, false),
+
+  // Rate limiting. A generous global limiter plus a stricter one guarding the
+  // login endpoint against password brute-force.
+  rateLimitWindowMs: num(process.env.RATE_LIMIT_WINDOW_MS, 60_000),
+  rateLimitMax: num(process.env.RATE_LIMIT_MAX, 240),
+  loginRateLimitWindowMs: num(process.env.LOGIN_RATE_LIMIT_WINDOW_MS, 15 * 60_000), // 15 min
+  loginRateLimitMax: num(process.env.LOGIN_RATE_LIMIT_MAX, 10),
 
   storeDriver: process.env.STORE_DRIVER || 'json',
   dataFile: resolve(ROOT, process.env.DATA_FILE || '.data/db.json'),
@@ -83,8 +99,8 @@ export const config = {
 export function printBootWarnings(log = console) {
   if (config.isProd()) {
     // In production, missing secrets are fatal, not warnings.
-    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required in production.')
-    if (!process.env.VAULT_KEY) throw new Error('VAULT_KEY is required in production.')
+    if (!config.jwtSecretProvided) throw new Error('JWT_SECRET is required in production.')
+    if (!config.vaultKeyProvided) throw new Error('VAULT_KEY is required in production.')
   }
   for (const w of warnings) log.warn ? log.warn('⚠  ' + w) : log.log('⚠  ' + w)
 }

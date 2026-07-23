@@ -51,9 +51,31 @@ function makeRateLimiter({ windowMs = 60_000, max = 120 } = {}) {
   }
 }
 
+// Resolve the client IP. Only trust X-Forwarded-For when explicitly configured
+// (behind a proxy) — otherwise a client could spoof the header to dodge limits.
+export function clientIp(req, { trustProxy = false } = {}) {
+  if (trustProxy) {
+    const xff = req.headers['x-forwarded-for']
+    if (xff) {
+      const first = String(xff).split(',')[0].trim()
+      if (first) return first
+    }
+  }
+  return req.socket?.remoteAddress || 'unknown'
+}
+
 export function createRouter({ config, store }) {
   const routes = [] // { method, parts, handler, auth }
-  const rateOk = makeRateLimiter({ windowMs: 60_000, max: 240 })
+  const rateOk = makeRateLimiter({
+    windowMs: config.rateLimitWindowMs ?? 60_000,
+    max: config.rateLimitMax ?? 240,
+  })
+  // Stricter, separate limiter guarding the login endpoint against password
+  // brute-force (few attempts per IP per window, independent of the global cap).
+  const loginRateOk = makeRateLimiter({
+    windowMs: config.loginRateLimitWindowMs ?? 15 * 60_000,
+    max: config.loginRateLimitMax ?? 10,
+  })
 
   function add(method, pattern, handler, { auth = false } = {}) {
     const parts = pattern.split('/').filter(Boolean)
@@ -89,13 +111,25 @@ export function createRouter({ config, store }) {
 
   function applyCors(req, res) {
     const origin = req.headers.origin
-    const allowed = config.corsOrigins
-    if (origin && (allowed.includes('*') || allowed.includes(origin))) {
+    const allowed = config.corsOrigins || []
+    const commonHeaders = () => {
+      res.setHeader('access-control-allow-headers', 'authorization, content-type')
+      res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    }
+    // Wildcard mode: allow any origin, but NEVER combine '*' with credentials
+    // (the browser rejects it and it is a security footgun). Public/anon only.
+    if (allowed.includes('*')) {
+      res.setHeader('access-control-allow-origin', '*')
+      commonHeaders()
+      return
+    }
+    // Allowlist mode: reflect the Origin ONLY on an exact match, and only then
+    // send allow-credentials. No match → send no CORS origin header at all.
+    if (origin && allowed.includes(origin)) {
       res.setHeader('access-control-allow-origin', origin)
       res.setHeader('vary', 'Origin')
       res.setHeader('access-control-allow-credentials', 'true')
-      res.setHeader('access-control-allow-headers', 'authorization, content-type')
-      res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      commonHeaders()
     }
   }
 
@@ -115,7 +149,7 @@ export function createRouter({ config, store }) {
   }
 
   async function handle(req, res) {
-    const ip = req.socket.remoteAddress || 'unknown'
+    const ip = clientIp(req, { trustProxy: config.trustProxy })
     applyCors(req, res)
     if (req.method === 'OPTIONS') {
       res.writeHead(204)
@@ -125,6 +159,10 @@ export function createRouter({ config, store }) {
     if (!rateOk(ip)) return json(res, 429, { error: 'rate limit exceeded' })
 
     const url = new URL(req.url, 'http://localhost')
+    // Stricter brute-force guard on the login endpoint (separate budget per IP).
+    if (req.method === 'POST' && url.pathname === '/v1/auth/login' && !loginRateOk(ip)) {
+      return json(res, 429, { error: 'too many login attempts — try again later' })
+    }
     const found = match(req.method, url.pathname)
     if (!found) return json(res, 404, { error: 'not found' })
 

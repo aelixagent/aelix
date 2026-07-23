@@ -33,6 +33,11 @@ contract DeskRegistry {
     mapping(bytes32 => Attestation[]) private _log;
     mapping(bytes32 => Attestation[]) private _selfLog;
 
+    /// @notice Upper bound on the optional `uri` pointer. A normal ipfs/https URI is well
+    ///         under this; the cap just stops a caller from bloating storage/gas with an
+    ///         arbitrarily long string (griefing).
+    uint256 public constant MAX_URI_LENGTH = 2048;
+
     event SubjectRegistered(bytes32 indexed subject, address indexed attester);
     event Attested(
         bytes32 indexed subject,
@@ -48,6 +53,8 @@ contract DeskRegistry {
     error NotSubjectAttester();
     error EpochNotIncreasing();
     error NoData();
+    /// @notice The optional `uri` exceeds {MAX_URI_LENGTH}.
+    error UriTooLong();
 
     /// @notice Squat-proof attestation: the subject is derived from YOUR address, so no
     ///         one can front-run or claim your track-record id. Verifiers recompute it via
@@ -62,6 +69,7 @@ contract DeskRegistry {
     ) external returns (uint256 index) {
         if (label == bytes32(0)) revert EmptySubject();
         if (nav == 0) revert ZeroNav();
+        if (bytes(uri).length > MAX_URI_LENGTH) revert UriTooLong();
         bytes32 subject = subjectFor(msg.sender, label);
         if (selfAttesterOf[subject] == address(0)) {
             selfAttesterOf[subject] = msg.sender;
@@ -113,6 +121,7 @@ contract DeskRegistry {
     ) internal returns (uint256 index) {
         if (subject == bytes32(0)) revert EmptySubject();
         if (nav == 0) revert ZeroNav();
+        if (bytes(uri).length > MAX_URI_LENGTH) revert UriTooLong();
 
         address owner = attesterOf[subject];
         if (owner == address(0)) {

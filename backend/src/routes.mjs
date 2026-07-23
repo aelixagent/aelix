@@ -6,7 +6,33 @@ import { evaluateTrade } from './desk/rulekeeper.mjs'
 import { portfolioXray } from './desk/xray.mjs'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+const PASSWORD_MAX = 200 // cap input so scrypt can't be driven into a CPU DoS
+const SYMBOL_RE = /^[A-Za-z0-9.\-]{1,12}$/
 const safeUser = (u) => ({ id: u.id, email: u.email, createdAt: u.createdAt, settings: u.settings })
+
+// Validate a user-supplied trade before it reaches getQuote / evaluateTrade.
+// Returns a cleaned trade object; throws HttpError(400) on bad input.
+function validateTrade(raw) {
+  if (!raw || typeof raw !== 'object') throw new HttpError(400, 'trade object is required')
+  const symbol = String(raw.symbol ?? '').trim().toUpperCase()
+  if (!symbol || !SYMBOL_RE.test(symbol)) throw new HttpError(400, 'trade.symbol must be a valid ticker (1–12 of A–Z, 0–9, ., -)')
+  const side = String(raw.side ?? '').trim().toLowerCase()
+  if (side !== 'buy' && side !== 'sell') throw new HttpError(400, 'trade.side must be "buy" or "sell"')
+  const qty = Number(raw.qty)
+  if (!Number.isFinite(qty) || qty <= 0) throw new HttpError(400, 'trade.qty must be a finite number > 0')
+  const trade = { symbol, side, qty }
+  if (raw.price != null) {
+    const price = Number(raw.price)
+    if (!Number.isFinite(price) || price < 0) throw new HttpError(400, 'trade.price must be a finite number >= 0 when provided')
+    trade.price = price
+  }
+  if (raw.stop != null) {
+    const stop = Number(raw.stop)
+    if (!Number.isFinite(stop) || stop < 0) throw new HttpError(400, 'trade.stop must be a finite number >= 0 when provided')
+    trade.stop = stop
+  }
+  return trade
+}
 
 export function registerRoutes(router, services) {
   const { config, store } = services
@@ -28,6 +54,7 @@ export function registerRoutes(router, services) {
     const password = String(body.password || '')
     if (!EMAIL_RE.test(email)) throw new HttpError(400, 'a valid email is required')
     if (password.length < 8) throw new HttpError(400, 'password must be at least 8 characters')
+    if (password.length > PASSWORD_MAX) throw new HttpError(400, `password must be at most ${PASSWORD_MAX} characters`)
     if (store.getUserByEmail(email)) throw new HttpError(409, 'an account with that email already exists')
     const user = store.createUser({ email, passwordHash: hashPassword(password) })
     return { status: 201, body: { token: issueToken(user), user: safeUser(user) } }
@@ -36,6 +63,9 @@ export function registerRoutes(router, services) {
   router.post('/v1/auth/login', ({ body }) => {
     const email = String(body.email || '').trim().toLowerCase()
     const password = String(body.password || '')
+    // Cap password length BEFORE hashing so an oversized input can't drive the
+    // synchronous scrypt into an event-loop CPU DoS.
+    if (password.length > PASSWORD_MAX) throw new HttpError(400, `password must be at most ${PASSWORD_MAX} characters`)
     const user = store.getUserByEmail(email)
     if (!user || !verifyPassword(password, user.passwordHash)) {
       throw new HttpError(401, 'invalid email or password')
@@ -112,11 +142,11 @@ export function registerRoutes(router, services) {
   router.post('/v1/rulekeeper/check', async ({ user, body, query }) => {
     const broker = services.brokerFor(user)
     if (!broker) throw new HttpError(409, 'connect your account first')
-    const trade = body.trade || body
+    const trade = validateTrade(body.trade || body)
     const account = await broker.getAccount()
     const positions = await broker.getPositions()
     // fill live price if omitted
-    if (!trade.price && trade.symbol) {
+    if (!trade.price) {
       const q = await broker.getQuote(trade.symbol)
       trade.price = q.last
     }

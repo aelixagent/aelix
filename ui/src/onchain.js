@@ -46,7 +46,9 @@ export async function readOnchain(cfg) {
   const chain = CHAINS[cfg.chainId] || CHAINS[46630]
   const pc = createPublicClient({ chain, transport: http(chain.rpcUrls.default.http[0]) })
   const c = cfg.contracts || {}
-  const out = { live: true }
+  // Start NOT live: only flip to true once a real contract read actually succeeds,
+  // so the UI can never claim "· live" off a resolved-but-all-failed read.
+  const out = { live: false }
 
   // ---- Guardrails (real caps from GuardrailConfig) ----
   if (c.guardrails) {
@@ -67,6 +69,7 @@ export async function readOnchain(cfg) {
         ...(buyBps != null ? [{ key: 'execBuy', label: 'Buy exec-slippage', value: bps(buyBps), enforced: true }] : []),
         ...(sellBps != null ? [{ key: 'execSell', label: 'Sell exec-slippage', value: bps(sellBps), enforced: true }] : []),
       ]
+      out.live = true // a real GuardrailConfig read succeeded
     } catch (e) { out.guardrailsError = e.shortMessage || e.message }
   }
 
@@ -96,12 +99,14 @@ export async function readOnchain(cfg) {
       let deployed = 0
       for (const tok of allowed) {
         try {
-          const [bal, pv, sym, tDec, cb] = await Promise.all([
+          const [bal, pv, sym, tDec, cb, stopRaw] = await Promise.all([
             pc.readContract({ address: tok, abi: ERC20_ABI, functionName: 'balanceOf', args: [c.vault] }),
             pc.readContract({ address: c.vault, abi: VAULT_ABI, functionName: 'positionValue', args: [tok] }),
             pc.readContract({ address: tok, abi: ERC20_ABI, functionName: 'symbol' }).catch(() => tok.slice(0, 6)),
             pc.readContract({ address: c.vault, abi: VAULT_ABI, functionName: 'tokenDecimals', args: [tok] }).catch(() => 18),
             pc.readContract({ address: c.vault, abi: VAULT_ABI, functionName: 'costBasisUsdg', args: [tok] }).catch(() => 0n),
+            // real per-token stop price (E18); the guardrail requires one, so never fake a 0
+            pc.readContract({ address: c.vault, abi: VAULT_ABI, functionName: 'stopPriceE18', args: [tok] }).catch(() => 0n),
           ])
           if (bal === 0n) continue
           const qty = n(bal, Number(tDec))
@@ -118,7 +123,7 @@ export async function readOnchain(cfg) {
             pnl,
             pnlPct: costBasis > 0 ? (pnl / costBasis) * 100 : 0,
             weightPct: navNum > 0 ? (value / navNum) * 100 : 0,
-            stop: 0,
+            stop: stopRaw > 0n ? n(stopRaw, 18) : null, // real stop, or '—' if genuinely unset
           })
         } catch { /* skip a token whose feed is down (H2 fail-open) */ }
       }
@@ -130,7 +135,8 @@ export async function readOnchain(cfg) {
         totalShares: n(supply, Number(vDec)),
         yourShares: null,
         yourValue: null,
-        sharePrice: sharePriceRaw > 0n ? n(sharePriceRaw, uDec) : (supply > 0n ? navNum / n(supply, Number(vDec)) : 1),
+        // real share price = NAV/supply; an empty vault has no meaningful price → '—'
+        sharePrice: sharePriceRaw > 0n ? n(sharePriceRaw, uDec) : (supply > 0n ? navNum / n(supply, Number(vDec)) : null),
         utilizationPct: navNum > 0 ? Math.round((deployed / navNum) * 100) : 0,
         apyPct: null,
         cash: n(cash, uDec),
@@ -140,6 +146,7 @@ export async function readOnchain(cfg) {
         live: true,
       }
       out.positions = positions
+      out.live = true // a real vault read succeeded
     } catch (e) { out.vaultError = e.shortMessage || e.message }
 
     // ---- Recent on-chain trades (TradeExecuted) ----
@@ -154,19 +161,22 @@ export async function readOnchain(cfg) {
         toBlock: latest,
       })
       const recent = logs.slice(-8).reverse()
-      const uDecGuess = out.vault ? undefined : 18
       const orders = []
       for (const l of recent) {
         const { token, isBuy, amountIn, amountOut } = l.args
         let sym = token.slice(0, 6)
         try { sym = await pc.readContract({ address: token, abi: ERC20_ABI, functionName: 'symbol' }) } catch { /* keep short addr */ }
+        // The Stock Token's real decimals — the token amount (amountOut on a buy,
+        // amountIn on a sell) is denominated in these, not a hardcoded 18.
+        let tDec = 18
+        try { tDec = Number(await pc.readContract({ address: c.vault, abi: VAULT_ABI, functionName: 'tokenDecimals', args: [token] })) } catch { /* fall back to 18 */ }
         let time = null
         try { const b = await pc.getBlock({ blockNumber: l.blockNumber }); time = Number(b.timestamp) * 1000 } catch { /* no ts */ }
         // buy: amountIn USDG -> amountOut tokens; sell: amountIn tokens -> amountOut USDG
         orders.push({
           side: isBuy ? 'buy' : 'sell',
           symbol: sym,
-          qty: isBuy ? n(amountOut, 18) : n(amountIn, 18),
+          qty: isBuy ? n(amountOut, tDec) : n(amountIn, tDec),
           price: null,
           status: 'filled',
           time,
@@ -174,7 +184,6 @@ export async function readOnchain(cfg) {
         })
       }
       out.trades = orders
-      void uDecGuess
     } catch (e) { out.tradesError = e.shortMessage || e.message }
   }
 

@@ -149,6 +149,15 @@
 
 .vdisc { font-size: 10.5px; color: var(--text-faint); text-align: center; max-width: 440px; line-height: 1.65; }
 
+/* inline shimmer skeleton (reuses skel-shimmer from styles.css) */
+.vskel-inline {
+  display: inline-block; width: 72px; height: 13px; border-radius: 6px; vertical-align: middle;
+  background: linear-gradient(90deg,
+    rgba(233, 243, 238, 0.05) 25%, rgba(233, 243, 238, 0.12) 37%, rgba(233, 243, 238, 0.05) 63%);
+  background-size: 400% 100%; animation: skel-shimmer 1.4s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) { .vskel-inline { animation: none; } }
+
 /* toast */
 .vault-toast {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
@@ -164,6 +173,27 @@
 .vault-boot { color: var(--text-dim); padding: 140px 20px; text-align: center; font-family: var(--font-serif); font-size: 17px; }
 .vault-boot.err { color: var(--neg); font-family: var(--font-sans); font-size: 13px; }
 .vault-boot code { font-family: var(--font-mono); background: var(--bg-2); padding: 1px 6px; border-radius: 5px; }
+
+/* ══ VAULT 3D — calm hero centerpiece above the title ══ */
+.vscene { position: relative; width: 100%; max-width: 440px; height: 216px; margin: 0 auto -10px; pointer-events: none; }
+.vscene-canvas { position: absolute; inset: 0; }
+.vscene-canvas canvas { display: block; }
+.vscene.mode-loading .vscene-canvas::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(215, 254, 81, 0.14), transparent 70%); animation: vscene-pulse 1.6s ease-in-out infinite;
+}
+@keyframes vscene-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+.vscene.mode-fallback .vscene-canvas::before {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 120px; height: 120px; border-radius: 50%;
+  border: 1.5px solid rgba(215, 254, 81, 0.5);
+  box-shadow: 0 0 60px rgba(215, 254, 81, 0.22), inset 0 0 40px rgba(215, 254, 81, 0.12);
+  animation: vscene-spin 16s linear infinite;
+}
+@keyframes vscene-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .vscene.mode-loading .vscene-canvas::after, .vscene.mode-fallback .vscene-canvas::before { animation: none; }
+}
+@media (max-width: 560px) { .vscene { height: 158px; margin-bottom: -4px; } }
 
 /* ══ VAULT HERO — serif arrival, matches the landing's voice ══ */
 .vhero { text-align: center; margin: 0 auto 26px; max-width: 640px; }

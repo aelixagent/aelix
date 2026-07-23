@@ -55,16 +55,8 @@
       "utilizationPct": null,
       "apyPct": null
     },
-    "guardrails": [
-      { "key": "perTradePct", "label": "Per-trade cap", "value": "15%", "enforced": true },
-      { "key": "maxConcentrationPct", "label": "Max concentration", "value": "25%", "enforced": true },
-      { "key": "maxOpenPositions", "label": "Max open positions", "value": "6", "enforced": true },
-      { "key": "maxDailyOrders", "label": "Max daily orders", "value": "4", "enforced": true },
-      { "key": "stopLossPct", "label": "Stop-loss", "value": "-8%", "enforced": true },
-      { "key": "dailyLossHaltPct", "label": "Daily-loss halt", "value": "-5%", "enforced": true },
-      { "key": "cashBufferPct", "label": "Cash buffer", "value": ">=10%", "enforced": true },
-      { "key": "noAveraging", "label": "No averaging into losers", "value": "enforced", "enforced": true }
-    ],
+    "_guardrailsNote": "Intentionally empty: guardrails are rendered as 'enforced on-chain' and must come ONLY from a live GuardrailConfig read — never from this sample. They populate for real from Robinhood Chain.",
+    "guardrails": [],
     "trackRecord": {
       "perfScore": null,
       "attestations": 0,
@@ -73,10 +65,10 @@
     },
     "executor": {
       "type": "Scoped session key (EOA)",
-      "status": "live",
+      "status": "preview",
       "scope": "guardrail-bounded swaps · approval-gated",
       "sessionKey": null,
-      "dailyCapPct": 15,
+      "dailyCapPct": null,
       "lastAction": null
     },
     "autosave": {

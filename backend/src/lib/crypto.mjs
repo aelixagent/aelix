@@ -51,12 +51,25 @@ export function verifyJwt(token, secret) {
   const parts = String(token).split('.')
   if (parts.length !== 3) throw new Error('malformed token')
   const [p1, p2, sig] = parts
+  // Pin the algorithm: reject anything that isn't HS256 (defends against alg
+  // confusion / "alg: none" downgrade attacks) BEFORE trusting the signature.
+  let header
+  try {
+    header = JSON.parse(Buffer.from(p1, 'base64url').toString('utf8'))
+  } catch {
+    throw new Error('malformed token header')
+  }
+  if (!header || header.alg !== 'HS256') throw new Error('unexpected token alg')
   const expected = createHmac('sha256', secret).update(`${p1}.${p2}`).digest('base64url')
   const a = Buffer.from(sig)
   const b = Buffer.from(expected)
   if (a.length !== b.length || !timingSafeEqual(a, b)) throw new Error('bad signature')
   const body = JSON.parse(Buffer.from(p2, 'base64url').toString('utf8'))
-  if (body.exp && Math.floor(Date.now() / 1000) > body.exp) throw new Error('token expired')
+  const now = Math.floor(Date.now() / 1000)
+  const skew = 60 // allow small clock skew
+  if (body.exp != null && now > Number(body.exp)) throw new Error('token expired')
+  if (body.nbf != null && now + skew < Number(body.nbf)) throw new Error('token not yet valid')
+  if (body.iat != null && now + skew < Number(body.iat)) throw new Error('token issued in the future')
   return body
 }
 

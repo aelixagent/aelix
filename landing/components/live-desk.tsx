@@ -178,6 +178,23 @@ export function LiveDesk() {
                 {chg >= 0 ? "▲ +" : "▼ "}
                 {chg.toFixed(2)}%
               </span>
+              {/* Not a real quote — this chart is an illustrative random walk. Label it
+                  so a visitor never mistakes it for live NVDA market data. */}
+              <span
+                title="Illustrative sample data — not a live market quote"
+                style={{
+                  marginLeft: "auto",
+                  fontFamily: "var(--ff-pixel)",
+                  fontSize: 8,
+                  letterSpacing: 1,
+                  color: "var(--muted, #8b94a3)",
+                  border: "1px solid var(--line, rgba(255,255,255,.15))",
+                  borderRadius: 3,
+                  padding: "1px 4px",
+                }}
+              >
+                SAMPLE
+              </span>
             </div>
             <div className="chart-wrap">
               <Candles

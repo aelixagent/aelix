@@ -36,19 +36,43 @@ contract UniswapSwapAdapter is ISwapAdapter, Ownable2Step {
     IUniswapV2Router public router;
     address public hopToken; // optional intermediary; address(0) = direct pools only
 
+    /// @notice Seconds added to `block.timestamp` to form the router swap deadline. A real,
+    ///         short deadline bounds how long a signed/pending swap can sit in the mempool
+    ///         before it must be re-quoted — passing `block.timestamp` alone effectively
+    ///         disables the router's deadline protection.
+    uint256 public deadlineBuffer;
+
+    /// @dev Hard bounds on {deadlineBuffer}: long enough to survive normal block latency,
+    ///      short enough that the deadline still means something (a huge buffer is no
+    ///      protection at all).
+    uint256 public constant MIN_DEADLINE_BUFFER = 30; //     30 seconds
+    uint256 public constant MAX_DEADLINE_BUFFER = 3600; //   1 hour
+
     event RouterSet(address indexed router);
     event HopTokenSet(address indexed hop);
+    event DeadlineBufferSet(uint256 buffer);
 
     error InsufficientOutput();
+    error BadDeadlineBuffer();
 
     constructor(address router_, address hopToken_, address owner_) Ownable(owner_) {
         router = IUniswapV2Router(router_);
         hopToken = hopToken_;
+        deadlineBuffer = 300; // 5 minutes — sane default within the allowed bounds
     }
 
     function setRouter(address r) external onlyOwner {
         router = IUniswapV2Router(r);
         emit RouterSet(r);
+    }
+
+    /// @notice Set the swap deadline buffer (seconds), bounded to [MIN, MAX].
+    function setDeadlineBuffer(uint256 buffer) external onlyOwner {
+        if (buffer < MIN_DEADLINE_BUFFER || buffer > MAX_DEADLINE_BUFFER) {
+            revert BadDeadlineBuffer();
+        }
+        deadlineBuffer = buffer;
+        emit DeadlineBufferSet(buffer);
     }
 
     function setHopToken(address h) external onlyOwner {
@@ -76,8 +100,11 @@ contract UniswapSwapAdapter is ISwapAdapter, Ownable2Step {
             path[1] = tokenOut;
         }
 
+        // forge-lint: disable-next-line(block-timestamp) — a short, bounded deadline is the
+        // intended router protection; block.timestamp alone would disable it.
+        uint256 deadline = block.timestamp + deadlineBuffer;
         uint256[] memory amounts =
-            router.swapExactTokensForTokens(amountIn, minOut, path, to, block.timestamp);
+            router.swapExactTokensForTokens(amountIn, minOut, path, to, deadline);
         // Zero any residual allowance (e.g. if the router pulled less than amountIn, as a
         // fee-on-transfer tokenIn could cause) so no standing approval lingers (LOW-3).
         IERC20(tokenIn).forceApprove(address(router), 0);

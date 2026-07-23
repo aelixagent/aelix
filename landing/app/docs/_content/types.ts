@@ -38,6 +38,8 @@ export type Block =
   | { type: "compare"; left: CompareCol; right: CompareCol }
   // Pre-formatted monospace diagram (ASCII flow charts).
   | { type: "diagram"; title?: string; ascii: string }
+  // Interactive 3D architecture map (client-only WebGL; ASCII diagrams remain the text form).
+  | { type: "arch3d"; title?: string; caption?: string }
   // A small muted footnote-style line.
   | { type: "note"; md: string }
   // Horizontal pixel divider.

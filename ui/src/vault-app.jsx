@@ -10,6 +10,7 @@ import {
 } from 'viem'
 import './styles.css'
 import './vault.css'
+import { VaultScene } from './vault-scene.jsx'
 
 // ── Cross-surface links. In dev the marketing site (landing/) runs on :5190;
 // in production everything ships from ONE origin (aelix.xyz), so links must be
@@ -64,11 +65,16 @@ const ERC20_ABI = parseAbi([
   'function mint(address,uint256)', // testnet mock only — no-op path on mainnet USDG
 ])
 const AUTOSAVE_ABI = parseAbi([
-  'function createPlan(uint256 amountPerPeriod, uint64 period, uint32 totalPeriods)',
+  'function createPlan(uint256 amountPerPeriod, uint64 period, uint32 totalPeriods, uint16 maxDriftBps)',
   'function cancelPlan()',
   'function due(address) view returns (bool)',
-  'function plans(address) view returns (uint256 amountPerPeriod, uint64 period, uint64 nextExec, uint32 totalPeriods, uint32 periodsDone, bool active)',
+  'function plans(address) view returns (uint256 amountPerPeriod, uint64 period, uint64 nextExec, uint32 totalPeriods, uint32 periodsDone, bool active, uint16 maxDriftBps, uint256 refSharePriceE18)',
 ])
+
+// Skips a contribution only if share price spiked >20% since the last one — a
+// keeper-front-run guard. Generous enough to never block normal DCA; the plan
+// re-anchors after each fill. 0 would disable it.
+const AUTOSAVE_MAX_DRIFT_BPS = 2000
 
 const MAX_UINT = (2n ** 256n) - 1n
 
@@ -152,31 +158,36 @@ export default function VaultApp() {
 
   const refresh = useCallback(async (acct) => {
     if (!cfg || !acct) return
-    const pc = publicClient()
-    const vault = cfg.contracts.vault
-    const [symbol, vdec, asset, shares, nav, supply, maxWd] = await Promise.all([
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'symbol' }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'decimals' }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'asset' }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'balanceOf', args: [acct] }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'navUsdg' }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'totalSupply' }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'maxWithdraw', args: [acct] }),
-    ])
-    const [uDec, uSym, uBal, value] = await Promise.all([
-      pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'decimals' }),
-      pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'symbol' }),
-      pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'balanceOf', args: [acct] }),
-      pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'convertToAssets', args: [shares] }).catch(() => 0n),
-    ])
-    let plan = null
-    if (cfg.contracts.autosave) {
-      try {
-        const p = await pc.readContract({ address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'plans', args: [acct] })
-        plan = { amountPerPeriod: p[0], period: p[1], nextExec: p[2], totalPeriods: p[3], periodsDone: p[4], active: p[5] }
-      } catch { /* no plan */ }
+    try {
+      const pc = publicClient()
+      const vault = cfg.contracts.vault
+      const [symbol, vdec, asset, shares, nav, supply, maxWd] = await Promise.all([
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'symbol' }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'decimals' }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'asset' }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'balanceOf', args: [acct] }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'navUsdg' }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'totalSupply' }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'maxWithdraw', args: [acct] }),
+      ])
+      const [uDec, uSym, uBal, value] = await Promise.all([
+        pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'decimals' }),
+        pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'symbol' }),
+        pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'balanceOf', args: [acct] }),
+        pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'convertToAssets', args: [shares] }).catch(() => 0n),
+      ])
+      let plan = null
+      if (cfg.contracts.autosave) {
+        try {
+          const p = await pc.readContract({ address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'plans', args: [acct] })
+          plan = { amountPerPeriod: p[0], period: p[1], nextExec: p[2], totalPeriods: p[3], periodsDone: p[4], active: p[5] }
+        } catch { /* no plan */ }
+      }
+      setPos({ symbol, vdec, asset, shares, value, nav, supply, maxWd, uDec, uSym, uBal, plan })
+    } catch (e) {
+      // A failed contract read must surface, not reject unhandled and leave stale/empty state.
+      setErr((e.shortMessage || e.message || 'Could not read vault state').slice(0, 200))
     }
-    setPos({ symbol, vdec, asset, shares, value, nav, supply, maxWd, uDec, uSym, uBal, plan })
   }, [cfg, publicClient])
 
   // Read the wallet's current chain once on load so we can warn on a mismatch
@@ -301,7 +312,7 @@ export default function VaultApp() {
     if (amount <= 0n) return
     tx(async () => {
       await ensureAllowance(cfg.contracts.autosave, MAX_UINT)
-      return walletClient().writeContract({ account, chain, address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'createPlan', args: [amount, period, total] })
+      return walletClient().writeContract({ account, chain, address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'createPlan', args: [amount, period, total, AUTOSAVE_MAX_DRIFT_BPS] })
     }, `Start autosave`)
   }
   function doCancelPlan() {
@@ -321,7 +332,8 @@ export default function VaultApp() {
   const contractRows = cfg ? CONTRACT_META.filter(([k]) => cfg.contracts[k]).map(([k, label]) => ({ key: k, label, addr: cfg.contracts[k] })) : []
 
   const uSym = pos?.uSym || 'USDG'
-  const vSym = pos?.symbol || 'vVLRA'
+  // real share-token symbol from the vault's symbol() read; never invent a ticker
+  const vSym = pos?.symbol || 'shares'
 
   // per-tab field wiring (Deposit / Withdraw / Redeem share one field UI)
   let field = null
@@ -342,7 +354,7 @@ export default function VaultApp() {
       {/* ── floating header ── */}
       <header className="vfloat">
         <a className="vfloat-brand" href={DESK_URL} title="Back to the Desk">
-          <span className="logo" aria-hidden="true"><img src="/aelix-icon.png" alt="" /></span>
+          <span className="logo" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}aelix-icon.png`} alt="" /></span>
           Aelix <span className="vfloat-chip">Vault</span>
         </a>
         <nav className="vfloat-nav">
@@ -359,10 +371,11 @@ export default function VaultApp() {
 
       {/* ── centered action stage ── */}
       <main className="vstage">
+        <VaultScene active={!!account} />
         <div className="vhero">
-          <div className="vhero-kicker"><span className="tick" aria-hidden="true" />ERC-4626 · ROBINHOOD CHAIN · TESTNET</div>
+          <div className="vhero-kicker"><span className="tick" aria-hidden="true" />Robinhood Chain · Testnet</div>
           <h1 className="vhero-title">The Vault</h1>
-          <p className="vhero-sub">Deposit USDG. The desk trades inside on-chain guardrails — and you approve every move.</p>
+          <p className="vhero-sub">Deposit USDG. The desk trades inside on-chain guardrails — you approve every move.</p>
         </div>
         {wrongNet && <div className="verr warn">Wrong network — your wallet is on chain {walletChainId}. Switch to <b>{chain?.name}</b> to deposit or trade.</div>}
         {err && !wrongNet && <div className="verr">{err}</div>}
@@ -383,13 +396,16 @@ export default function VaultApp() {
                 <div className="vfield-main">
                   <input
                     className="vfield-input" inputMode="decimal" placeholder="0"
+                    aria-label={`${field.cta} amount in ${field.token}`}
                     value={field.value} disabled={!account}
                     onChange={(e) => field.set(e.target.value.replace(/[^0-9.]/g, ''))}
                   />
                   <span className="vfield-token"><span className="tk">{field.token.replace(/^v/, '')[0]}</span>{field.token}</span>
                 </div>
                 <div className="vfield-bottom">
-                  <span className="vfield-bal">{field.balLabel}: <b>{account ? fmt(field.bal, field.dec) : '—'}</b></span>
+                  <span className="vfield-bal">{field.balLabel}:{' '}
+                    {!account ? <b>—</b> : pos ? <b>{fmt(field.bal, field.dec)}</b> : <span className="vskel-inline" aria-label="loading balance" />}
+                  </span>
                   {account && pos && <button className="vfield-max" onClick={() => field.set(formatUnits(field.bal, field.dec))}>Max</button>}
                 </div>
               </div>
@@ -419,13 +435,14 @@ export default function VaultApp() {
                     <div className="vfield-label">Auto-deposit each period</div>
                     <div className="vfield-main">
                       <input className="vfield-input" inputMode="decimal" placeholder="0" value={saveAmt} disabled={!account}
+                        aria-label={`Auto-deposit amount each period in ${uSym}`}
                         onChange={(e) => setSaveAmt(e.target.value.replace(/[^0-9.]/g, ''))} />
                       <span className="vfield-token"><span className="tk">U</span>{uSym}</span>
                     </div>
                   </div>
                   <div className="vauto-row">
-                    <div className="vauto-mini"><div className="k">Every N days</div><input inputMode="numeric" value={savePeriodDays} disabled={!account} onChange={(e) => setSavePeriodDays(e.target.value.replace(/[^0-9]/g, ''))} /></div>
-                    <div className="vauto-mini"><div className="k"># periods (0=∞)</div><input inputMode="numeric" value={savePeriods} disabled={!account} onChange={(e) => setSavePeriods(e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                    <div className="vauto-mini"><div className="k">Every N days</div><input inputMode="numeric" aria-label="Autosave period in days" value={savePeriodDays} disabled={!account} onChange={(e) => setSavePeriodDays(e.target.value.replace(/[^0-9]/g, ''))} /></div>
+                    <div className="vauto-mini"><div className="k"># periods (0=∞)</div><input inputMode="numeric" aria-label="Number of autosave periods (0 for unlimited)" value={savePeriods} disabled={!account} onChange={(e) => setSavePeriods(e.target.value.replace(/[^0-9]/g, ''))} /></div>
                   </div>
                   <button className="vaction" disabled={!account ? !cfg : (busy || !(Number(saveAmt) > 0))} onClick={!account ? connect : doCreatePlan}>
                     {!account ? 'Connect wallet' : busy ? 'Confirming…' : 'Start saving'}
@@ -446,6 +463,9 @@ export default function VaultApp() {
               <span className="sep">·</span>
               <span className="dim">NAV {fmt(pos.nav, pos.uDec)}</span>
             </div>
+          )}
+          {account && !pos && !err && (
+            <div className="vpos"><span className="vskel-inline" style={{ width: 200, height: 15 }} aria-label="loading your position" /></div>
           )}
           {lastTx && (
             <div className="vtx">

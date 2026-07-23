@@ -3,6 +3,7 @@ import type { Block } from "../_content/types";
 import { md } from "./inline-md";
 import { CodeBlock } from "./code-block";
 import { Hash } from "./icons";
+import ArchMap from "@/components/three/arch-map";
 
 /** Deterministic heading id from its text (also used by the "On this page" rail). */
 export function slugify(text: string): string {
@@ -191,6 +192,15 @@ export function DocBlocks({ blocks }: { blocks: Block[] }) {
               <figure className="doc-diagram" key={k}>
                 {b.title ? <figcaption>{b.title}</figcaption> : null}
                 <pre>{b.ascii}</pre>
+              </figure>
+            );
+
+          case "arch3d":
+            return (
+              <figure className="doc-arch3d" key={k}>
+                {b.title ? <figcaption>{b.title}</figcaption> : null}
+                <ArchMap />
+                {b.caption ? <p className="doc-arch3d-cap">{b.caption}</p> : null}
               </figure>
             );
 

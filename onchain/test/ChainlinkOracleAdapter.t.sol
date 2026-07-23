@@ -131,4 +131,30 @@ contract ChainlinkOracleAdapterTest is Test {
         vm.expectRevert();
         a.setFeed(STK, address(feed), 3600); // not the owner
     }
+
+    // ------------------------------------------------------------------ setFeed validation
+
+    function test_setFeed_zeroStaleness_reverts() public {
+        ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
+        MockAggregator feed = new MockAggregator(8, 50e8);
+        vm.prank(HUMAN);
+        vm.expectRevert(ChainlinkOracleAdapter.ZeroStaleness.selector);
+        a.setFeed(STK, address(feed), 0); // 0 would silently disable the freshness guard
+    }
+
+    function test_setFeed_zeroFeedDecimals_reverts() public {
+        ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
+        MockAggregator feed = new MockAggregator(0, 50e8); // implausible 0-dec feed
+        vm.prank(HUMAN);
+        vm.expectRevert(ChainlinkOracleAdapter.BadFeedDecimals.selector);
+        a.setFeed(STK, address(feed), 3600);
+    }
+
+    function test_setFeed_tooManyFeedDecimals_reverts() public {
+        ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
+        MockAggregator feed = new MockAggregator(19, 50e8); // > 18 decimals
+        vm.prank(HUMAN);
+        vm.expectRevert(ChainlinkOracleAdapter.BadFeedDecimals.selector);
+        a.setFeed(STK, address(feed), 3600);
+    }
 }

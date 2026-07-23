@@ -94,7 +94,7 @@ contract IntegrationTest is Test {
         usdg.mint(ALICE, 10_000e18);
         vm.startPrank(ALICE);
         usdg.approve(address(save), type(uint256).max);
-        save.createPlan(5_000e18, 1 weeks, 2);
+        save.createPlan(5_000e18, 1 weeks, 2, 0);
         vm.stopPrank();
 
         save.executeDue(ALICE); // week 1

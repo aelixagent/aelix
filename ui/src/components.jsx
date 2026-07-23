@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { usd, pct, num, signClass, timeAgo } from './format.js'
 
-/* ---------- run trigger (button → desk-request.json, dev server only) ---------- */
+/* ---------- run trigger (copies a desk-run prompt to the clipboard; read-only) ---------- */
 
 export function RunControls() {
   const [tickers, setTickers] = useState('')
@@ -29,6 +29,7 @@ export function RunControls() {
       <div className="runbar-row">
         <input
           className="run-input"
+          aria-label="Tickers to run the desk on (comma-separated; blank screens the watchlist)"
           placeholder="tickers e.g. AAPL, NVDA  (blank = screen the watchlist)"
           value={tickers}
           onChange={(e) => setTickers(e.target.value)}
@@ -58,17 +59,6 @@ export function DecisionBadge({ decision }) {
   return <span className={map[decision] || 'badge'}>{label || '—'}</span>
 }
 
-function ScoreChip({ value, label }) {
-  // value -2..+2
-  const cls = value > 0 ? 'chip pos' : value < 0 ? 'chip neg' : 'chip flat'
-  const sign = value > 0 ? `+${value}` : `${value}`
-  return (
-    <span className={cls} title={`${label}: ${sign}`}>
-      <em>{label}</em> {sign}
-    </span>
-  )
-}
-
 /* ---------- account header (command bar) ---------- */
 
 export function AccountHeader({ account, generatedAt, live, isDemo }) {
@@ -77,20 +67,18 @@ export function AccountHeader({ account, generatedAt, live, isDemo }) {
   // on-chain vault figures in the header instead of sample brokerage numbers.
   const useLive = !!(isDemo && live)
   const connected = useLive ? true : !!a.connected
-  const acctName = useLive ? 'Robinhood Chain · vault' : (a.name || 'Agentic account')
-  const connLabel = useLive ? 'live on-chain' : (connected ? 'connected' : 'disconnected')
+  const acctName = useLive ? 'Robinhood Chain' : (a.name || 'Agentic account')
   return (
     <header className="topbar">
       <span className="topbar-glow" aria-hidden="true" />
 
       <div className="brand">
-        <span className="logo" aria-hidden="true"><img src="/aelix-icon.png" alt="" /></span>
+        <span className="logo" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}aelix-icon.png`} alt="" /></span>
         <div className="brand-meta">
-          <div className="brand-title">Aelix</div>
-          <div className="brand-sub" title={useLive ? 'Live read from Robinhood Chain' : (connected ? 'Live connection to the Agentic account' : 'Not connected')}>
+          <h1 className="brand-title">Aelix</h1>
+          <div className="brand-sub">
             <span className={`dot ${connected ? 'on' : 'off'}`} />
             <span className="brand-acct">{acctName}</span>
-            <span className="brand-conn">{connLabel}</span>
           </div>
         </div>
       </div>
@@ -122,12 +110,7 @@ export function AccountHeader({ account, generatedAt, live, isDemo }) {
         </div>
       )}
 
-      <a className="vault-link" href={`${import.meta.env.BASE_URL}vault.html`} title="Open the investor vault dApp">Open Vault ↗</a>
-
-      <div className="asof" title={generatedAt || ''}>
-        <span className="asof-k">{useLive ? 'live' : 'as of'}</span>
-        <span className="asof-v">{useLive ? 'now' : timeAgo(generatedAt)}</span>
-      </div>
+      <a className="vault-link" href={`${import.meta.env.BASE_URL}vault.html`}>Vault</a>
     </header>
   )
 }
@@ -164,14 +147,8 @@ function Stat({ label, value, cls = '', mono = false }) {
 
 /* ---------- mono micro-index eyebrow (explanatory spine) ---------- */
 
-export function Eyebrow({ index, children }) {
-  return (
-    <span className="eyebrow">
-      {index != null && <span className="eyebrow-idx">{index}</span>}
-      {index != null && <span className="eyebrow-dash">—</span>}
-      <span className="eyebrow-label">{children}</span>
-    </span>
-  )
+export function Eyebrow({ children }) {
+  return <span className="eyebrow">{children}</span>
 }
 
 /* ---------- inline-SVG ring gauge (0–100, green arc) ---------- */
@@ -394,12 +371,12 @@ export function ProposedTrade({ trade }) {
       <p className="rationale">{t.rationale}</p>
 
       <div className="approve-bar">
-        <div className="approve-note">
+        <div className="approve-note" id="approve-note">
           ⏸ Approval happens in the Claude Code session — the desk never auto-places orders.
         </div>
         <div className="approve-btns">
-          <button className="btn ghost" disabled>Reject</button>
-          <button className="btn primary" disabled>Approve in session →</button>
+          <button className="btn ghost" disabled aria-disabled="true" aria-describedby="approve-note">Reject</button>
+          <button className="btn primary" disabled aria-disabled="true" aria-describedby="approve-note">Approve in session →</button>
         </div>
       </div>
     </section>
@@ -606,10 +583,7 @@ export function VaultPanel({ vault, network }) {
   const util = Math.max(0, Math.min(100, v.utilizationPct ?? 0))
   return (
     <section className="panel">
-      <h2>
-        RWA Vault <span className="tag">{v.symbol || 'vVLRA'}</span>
-        <PreviewBadge />
-      </h2>
+      <h2>RWA Vault {v.symbol && <span className="tag">{v.symbol}</span>}</h2>
 
       <div className="vault-hero">
         <div className="vault-nav">
@@ -634,13 +608,6 @@ export function VaultPanel({ vault, network }) {
         </div>
         <span className="risk-num">{util}%</span>
       </div>
-      <div className="oc-cap">
-        ERC-4626 vault wired to the on-chain Guardrails · APY {v.apyPct == null ? '— pending' : pct(v.apyPct)}
-        {v.live ? ' · live read from Robinhood Chain' : ' · preview / illustrative — not a live balance.'}
-      </div>
-      {network && !network.deployed && (
-        <div className="oc-cap dim">Contract address: — pending deploy</div>
-      )}
     </section>
   )
 }
@@ -649,7 +616,7 @@ export function GuardrailsOnChain({ guardrails }) {
   if (!guardrails || guardrails.length === 0) return null
   return (
     <section className="panel">
-      <h2>Guardrails-as-Code <span className="count">{guardrails.length}</span><PreviewBadge /></h2>
+      <h2>Guardrails-as-Code <span className="count">{guardrails.length}</span></h2>
       <div className="oc-rails">
         {guardrails.map((g) => (
           <div className="oc-rail" key={g.key}>
@@ -666,7 +633,6 @@ export function GuardrailsOnChain({ guardrails }) {
           </div>
         ))}
       </div>
-      <div className="oc-cap">Compiled from strategies/ into the on-chain Guardrails library (testnet).</div>
     </section>
   )
 }
@@ -677,7 +643,7 @@ export function TrackRecord({ trackRecord }) {
   const la = t.lastAttestation || {}
   return (
     <section className="panel">
-      <h2>Proof-of-Track-Record <PreviewBadge /></h2>
+      <h2>Track Record</h2>
       <div className="oc-perf">
         <RingGauge value={t.perfScore} max={100} label="PerfScore" />
         <div className="oc-perf-stats">
@@ -692,7 +658,7 @@ export function TrackRecord({ trackRecord }) {
           {timeAgo(la.ts)} · tx {la.txHash ? <span className="mono">{la.txHash}</span> : '— pending'}
         </span>
       </div>
-      <div className="oc-cap">Verifiable attestations — illustrative until deployed. Not a track record.</div>
+      <div className="oc-cap">Illustrative — not a track record.</div>
     </section>
   )
 }
@@ -702,7 +668,7 @@ export function ExecutorPanel({ executor }) {
   const e = executor
   return (
     <section className="panel">
-      <h2>Agent Executor <PreviewBadge /></h2>
+      <h2>Agent Executor</h2>
       <div className="oc-exec-head">
         <span className="chip flat">{e.type || 'Scoped session key (EOA)'}</span>
         <span className={`badge ${e.status === 'active' ? 'approve' : 'pending'}`}>{e.status || 'preview'}</span>
@@ -725,10 +691,7 @@ export function ExecutorPanel({ executor }) {
           <span className="oc-row-v">{e.lastAction || '—'}</span>
         </div>
       </div>
-      <div className="oc-cap warn-cap">
-        ⏸ Guardrail-bounded + approval-gated — the desk proposes, the session key cannot exceed the
-        Guardrails, and every order is still approved by you in-session. Never autonomous.
-      </div>
+      <div className="oc-cap warn-cap">Guardrail-bounded · approval-gated · never autonomous.</div>
     </section>
   )
 }
@@ -738,7 +701,7 @@ export function AutosavePanel({ autosave }) {
   const a = autosave
   return (
     <section className="panel">
-      <h2>Autosave / DCA <PreviewBadge /></h2>
+      <h2>Autosave / DCA</h2>
       <div className="oc-exec-head">
         <span className={`badge ${a.enabled ? 'approve' : 'pending'}`}>{a.enabled ? 'enabled' : 'off'}</span>
       </div>
@@ -756,7 +719,52 @@ export function AutosavePanel({ autosave }) {
           <span className="oc-row-v">{a.enabled && a.nextRun ? timeAgo(a.nextRun) : '—'}</span>
         </div>
       </div>
-      <div className="oc-cap">Optional recurring deposits / dollar-cost-averaging on the vault — preview.</div>
     </section>
+  )
+}
+
+/* ---------- loading skeletons (shown while data resolves, never faked data) ---------- */
+
+export function Skel({ w = '100%', h = 14, r = 8, className = '', style }) {
+  return <span className={`skel ${className}`} style={{ width: w, height: h, borderRadius: r, ...style }} aria-hidden="true" />
+}
+
+export function DashboardSkeleton() {
+  return (
+    <div className="app" aria-busy="true" aria-label="Loading desk">
+      <div className="skel-topbar">
+        <Skel w={34} h={34} r={10} />
+        <Skel w={110} h={22} />
+        <div className="skel-stats">
+          {[64, 64, 64, 64].map((w, i) => (
+            <span className="skel-stat" key={i}><Skel w={40} h={9} /><Skel w={w} h={16} /></span>
+          ))}
+        </div>
+        <Skel w={70} h={34} r={999} style={{ marginLeft: 'auto' }} />
+      </div>
+      <Skel h={300} r={16} style={{ margin: '18px 0 26px' }} />
+      <div className="skel-grid">
+        <div className="skel-col">
+          <Skel h={210} r={16} /><Skel h={150} r={16} />
+        </div>
+        <div className="skel-col">
+          <Skel h={230} r={16} /><Skel h={130} r={16} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Slots into the on-chain band while the first live contract read is in flight.
+export function OnchainSkeleton() {
+  return (
+    <div className="panel" aria-busy="true">
+      <Skel w={140} h={13} style={{ marginBottom: 18 }} />
+      <div className="skel-vault">
+        <Skel w={180} h={44} r={10} />
+        <div className="skel-mini">{[0, 1, 2, 3].map((i) => <Skel key={i} h={30} />)}</div>
+      </div>
+      <Skel h={8} r={6} style={{ marginTop: 18 }} />
+    </div>
   )
 }

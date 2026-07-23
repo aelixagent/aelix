@@ -78,7 +78,18 @@ contract DeployProduction is Script {
         c.stocks = vm.envOr("STOCKS", ",", new address[](0));
         c.feeds = vm.envOr("FEEDS", ",", new address[](0));
         c.staleness = uint32(vm.envOr("FEED_STALENESS", uint256(3600)));
-        c.owner = deployer;
+        // Ownership goes to OWNER (intended to be a multisig/timelock — see the NatSpec).
+        // If OWNER is unset we fall back to the deployer EOA but LOUDLY warn: a single hot
+        // key owning the whole stack is not an acceptable production posture.
+        address ownerEnv = vm.envOr("OWNER", address(0));
+        if (ownerEnv == address(0)) {
+            c.owner = deployer;
+            console2.log(
+                "WARNING: OWNER unset - deployer EOA will own ALL contracts. Set OWNER to a multisig/timelock for production."
+            );
+        } else {
+            c.owner = ownerEnv;
+        }
         c.agent = vm.envOr("AGENT", deployer);
         require(c.stocks.length == c.feeds.length, "STOCKS/FEEDS length mismatch");
 

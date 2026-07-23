@@ -16,6 +16,26 @@
 //   getEarningsCalendar(syms)-> [{ symbol, date, inDays }]
 //   getOrdersToday()        -> number
 
+// ── Typed broker errors ──────────────────────────────────────────────────────
+// BrokerError    : a broker could not answer (e.g. no price for a symbol).
+// McpSchemaError : the live MCP response did not match the shape we depend on.
+//                  We throw LOUDLY rather than fabricate zeros/prices, so mcp
+//                  mode can never quietly hand back fake account/position data.
+export class BrokerError extends Error {
+  constructor(message, code = 'broker_error') {
+    super(message)
+    this.name = 'BrokerError'
+    this.code = code
+  }
+}
+export class McpSchemaError extends BrokerError {
+  constructor(tool, detail) {
+    super(`MCP schema not finalized: ${tool}${detail ? ` (${detail})` : ''}`, 'mcp_schema')
+    this.name = 'McpSchemaError'
+    this.tool = tool
+  }
+}
+
 // ── Deterministic demo dataset (a plausible small Agentic account) ───────────
 const DEMO = {
   account: {
@@ -82,7 +102,12 @@ class MockBroker {
     return rows
   }
   async getQuote(symbol) {
-    const last = DEMO.quotes[symbol] ?? 100
+    // Never fabricate a price: an unknown symbol would feed a fake number into
+    // the Rule-Keeper's sizing/concentration math. Reject instead.
+    const last = DEMO.quotes[symbol]
+    if (last == null) {
+      throw new BrokerError(`no quote available for "${symbol}" (mock broker)`, 'no_quote')
+    }
     return { symbol, last, changePct: 0 }
   }
   async getFundamentals(symbol) {
@@ -153,16 +178,24 @@ class McpBroker {
   // the live tool response schemas are confirmed. Kept thin + explicit on purpose.
   async getAccount() {
     const p = await this._call(TOOL.portfolio, { account_type: 'agentic' })
-    return normalizeAccount(p)
+    // Wire the REAL daily order count into the account so the Rule-Keeper's
+    // daily-order-limit check operates on live data (not a hardcoded 0).
+    const ordersToday = await this.getOrdersToday()
+    return normalizeAccount(p, ordersToday)
   }
   async getPositions() {
     const p = await this._call(TOOL.positions, { account_type: 'agentic' })
-    return Array.isArray(p) ? p.map(normalizePosition) : []
+    if (!Array.isArray(p)) throw new McpSchemaError(TOOL.positions, 'expected an array of positions')
+    return p.map(normalizePosition)
   }
   async getQuote(symbol) {
     const q = await this._call(TOOL.quotes, { symbols: [symbol] })
     const row = Array.isArray(q) ? q[0] : q
-    return { symbol, last: Number(row?.last_price ?? row?.last ?? 0), changePct: Number(row?.change_pct ?? 0) }
+    const last = Number(row?.last_price ?? row?.last)
+    if (!row || !Number.isFinite(last)) {
+      throw new McpSchemaError(TOOL.quotes, `no finite last price for "${symbol}"`)
+    }
+    return { symbol, last, changePct: Number(row?.change_pct ?? 0) }
   }
   async getFundamentals(symbol) {
     const f = await this._call(TOOL.fundamentals, { symbols: [symbol] })
@@ -175,38 +208,72 @@ class McpBroker {
   }
   async getOrdersToday() {
     const o = await this._call(TOOL.orders, { account_type: 'agentic' })
-    if (!Array.isArray(o)) return 0
+    // A non-array here means the tool/response shape isn't what we expect. Do
+    // NOT silently report 0 orders — that would defeat the daily-order-limit
+    // guardrail. Fail loud.
+    if (!Array.isArray(o)) throw new McpSchemaError(TOOL.orders, 'expected an array of orders')
     const today = new Date().toISOString().slice(0, 10)
     return o.filter((x) => String(x.created_at || '').startsWith(today)).length
   }
 }
 
-function normalizeAccount(p) {
-  const equity = Number(p?.total_value ?? 0)
+// Pull the first present, finite numeric field among `keys`; throw if none are.
+function reqNum(obj, keys, tool) {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) {
+      const n = Number(obj[k])
+      if (Number.isFinite(n)) return n
+      throw new McpSchemaError(tool, `field "${k}" is not a finite number`)
+    }
+  }
+  throw new McpSchemaError(tool, `missing required field (one of: ${keys.join(', ')})`)
+}
+// Optional numeric field: default when absent, but still reject junk when present.
+function optNum(obj, keys, def, tool) {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) {
+      const n = Number(obj[k])
+      if (Number.isFinite(n)) return n
+      throw new McpSchemaError(tool, `field "${k}" is not a finite number`)
+    }
+  }
+  return def
+}
+
+function normalizeAccount(p, ordersToday) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) {
+    throw new McpSchemaError(TOOL.portfolio, 'expected an account/portfolio object')
+  }
+  if (!Number.isFinite(Number(ordersToday))) {
+    throw new McpSchemaError(TOOL.orders, 'ordersToday must be a finite number')
+  }
   return {
     name: 'Robinhood Agentic',
     connected: true,
-    equity,
-    cash: Number(p?.cash ?? p?.buying_power ?? 0),
-    buyingPower: Number(p?.buying_power ?? 0),
-    dayPnl: Number(p?.day_pnl ?? 0),
-    dayPnlPct: Number(p?.day_pnl_pct ?? 0),
-    openPositions: Number(p?.open_positions ?? 0),
-    ordersToday: 0,
+    equity: reqNum(p, ['total_value'], TOOL.portfolio),
+    cash: reqNum(p, ['cash', 'buying_power'], TOOL.portfolio),
+    buyingPower: reqNum(p, ['buying_power', 'cash'], TOOL.portfolio),
+    dayPnl: optNum(p, ['day_pnl'], 0, TOOL.portfolio),
+    dayPnlPct: optNum(p, ['day_pnl_pct'], 0, TOOL.portfolio),
+    openPositions: optNum(p, ['open_positions'], 0, TOOL.portfolio),
+    ordersToday: Number(ordersToday),
   }
 }
 function normalizePosition(x) {
+  if (!x || typeof x !== 'object' || !x.symbol || typeof x.symbol !== 'string') {
+    throw new McpSchemaError(TOOL.positions, 'each position needs a string symbol')
+  }
   return {
     symbol: x.symbol,
-    qty: Number(x.quantity ?? x.qty ?? 0),
-    avgCost: Number(x.average_cost ?? x.avg_cost ?? 0),
-    last: Number(x.last_price ?? x.last ?? 0),
-    value: Number(x.market_value ?? 0),
-    pnl: Number(x.unrealized_pnl ?? 0),
-    pnlPct: Number(x.unrealized_pnl_pct ?? 0),
-    weightPct: Number(x.weight_pct ?? 0),
-    stop: Number(x.stop ?? 0),
-    sector: x.sector ?? 'Unknown',
+    qty: reqNum(x, ['quantity', 'qty'], TOOL.positions),
+    avgCost: reqNum(x, ['average_cost', 'avg_cost'], TOOL.positions),
+    last: reqNum(x, ['last_price', 'last'], TOOL.positions),
+    value: optNum(x, ['market_value'], 0, TOOL.positions),
+    pnl: optNum(x, ['unrealized_pnl'], 0, TOOL.positions),
+    pnlPct: optNum(x, ['unrealized_pnl_pct'], 0, TOOL.positions),
+    weightPct: optNum(x, ['weight_pct'], 0, TOOL.positions),
+    stop: optNum(x, ['stop'], 0, TOOL.positions),
+    sector: typeof x.sector === 'string' ? x.sector : 'Unknown',
   }
 }
 

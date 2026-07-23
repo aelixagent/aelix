@@ -6,6 +6,7 @@ import { createStore } from './lib/store.mjs'
 import { createBroker } from './lib/broker.mjs'
 import { createCoach } from './lib/llm.mjs'
 import { vaultDecrypt } from './lib/crypto.mjs'
+import { HttpError } from './lib/http.mjs'
 import { runDesk } from './desk/research.mjs'
 import { DEFAULT_CAPS } from './desk/rules.mjs'
 
@@ -21,7 +22,15 @@ export function createServices(config) {
     if (config.brokerMode === 'mock') return createBroker({ mode: 'mock' })
     const tok = store.getToken(user.id)
     if (!tok) return null // not connected
-    const accessToken = vaultDecrypt(tok.vaultBlob, config.vaultKey)
+    let accessToken
+    try {
+      accessToken = vaultDecrypt(tok.vaultBlob, config.vaultKey)
+    } catch {
+      // The vault key was rotated / is ephemeral, so the stored token can no
+      // longer be decrypted. Surface a clear reconnect signal (409) instead of a
+      // 500 — the user must re-link their account.
+      throw new HttpError(409, 'stored account credentials could not be read — please reconnect your account', 'reconnect_account')
+    }
     return createBroker({ mode: 'mcp', url: config.brokerMcpUrl, accessToken })
   }
 

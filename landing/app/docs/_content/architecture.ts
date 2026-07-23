@@ -89,6 +89,11 @@ export const content: DocContent = {
       md: "Everything hangs off the one session. The PM loads the sub-agents from a folder, reads its contract and permissions from two files, enforces written strategy rules, and emits a snapshot the dashboard polls. The broker sits behind a single MCP hop.",
     },
     {
+      type: "arch3d",
+      title: "The desk, mapped",
+      caption: "Drag to rotate. The Portfolio Manager is the only role with order tools; everything else is read-only or advisory. The wiring in full is below.",
+    },
+    {
       type: "diagram",
       title: "Component wiring",
       ascii: `CLAUDE CODE  (host runtime)

@@ -316,8 +316,8 @@ body:has(.vx-root)::after {
   /* scroll-linked choreography (JS writes transform/opacity every frame) */
   will-change: transform, opacity;
 }
-.vx-h-hero { height: 130vh; }
-.vx-h-view { height: 220vh; }
+.vx-h-hero { height: 140vh; }
+.vx-h-view { height: 260vh; }
 /* soft local scrim behind the hero title — keeps the thin serif readable
    where the pale haze band crosses the letters */
 .vx-h-hero .vx-sec__inner::before {
@@ -331,9 +331,9 @@ body:has(.vx-root)::after {
   z-index: -1;
   pointer-events: none;
 }
-.vx-h-tall { height: 200vh; }
-.vx-h-mid  { height: 180vh; }
-.vx-h-last { height: 140vh; }
+.vx-h-tall { height: 250vh; }
+.vx-h-mid  { height: 230vh; }
+.vx-h-last { height: 170vh; }
 
 /* ── type: thin high-contrast serif over the bright world ─────────────── */
 .vx-kicker {

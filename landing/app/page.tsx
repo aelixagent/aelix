@@ -95,12 +95,15 @@ function useScrollChoreography(enabled: boolean) {
         const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0.5;
 
         // content drifts up through its act; eases in/out at the seams
-        const drift = (p - 0.5) * -46; // gentler travel, calmer read
-        // narrow fade edges + wide plateau → each act's copy HOLDS on screen much
-        // longer while scrolling instead of appearing and vanishing quickly
-        const F = 0.07;
-        const fadeIn = i === 0 ? 1 : Math.min(1, p / F);
-        const fadeOut = Math.min(1, (1 - p) / F);
+        const drift = (p - 0.5) * -40; // gentler travel, calmer read
+        // Asymmetric fades over a long plateau: the copy ARRIVES crisply (F_IN),
+        // holds at full opacity across most of the (now longer) runway, then
+        // LINGERS out slowly (F_OUT) instead of popping away when you scroll —
+        // this is the "disappears too fast on scroll" fix.
+        const F_IN = 0.06;
+        const F_OUT = 0.13;
+        const fadeIn = i === 0 ? 1 : Math.min(1, p / F_IN);
+        const fadeOut = Math.min(1, (1 - p) / F_OUT);
         let o = Math.max(0, Math.min(fadeIn, fadeOut));
         o = o * o * (3 - 2 * o); // smoothstep, soft in/out, no abrupt pop
         const scale = i === 0 ? 1 - p * 0.06 : 1; // hero gently recedes

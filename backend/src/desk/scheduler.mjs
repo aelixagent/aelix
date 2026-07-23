@@ -8,9 +8,19 @@ export function startScheduler({ services, config, log = console }) {
     return { stop() {} }
   }
 
-  const baseMs = Math.max(15, config.scanIntervalSec) * 1000
+  // The loop ticks on a fine granularity; each user is only refreshed once their
+  // OWN cadence has elapsed. Granularity is capped so we can honor per-user
+  // intervals down to the settings minimum (60s), without missing them.
+  const baseMs = Math.max(15, Math.min(config.scanIntervalSec, 60)) * 1000
   let running = false
   let stopped = false
+  const lastRun = new Map() // userId -> epoch ms of last refresh
+
+  // A user's effective cadence: their own scanIntervalSec, else the global one.
+  const userIntervalMs = (u) => {
+    const s = Number(u.settings?.scanIntervalSec)
+    return (Number.isFinite(s) && s > 0 ? s : config.scanIntervalSec) * 1000
+  }
 
   async function tick() {
     if (running || stopped) return
@@ -22,6 +32,10 @@ export function startScheduler({ services, config, log = console }) {
       for (const user of services.store.listUsers()) {
         if (user.settings?.autoScan === false) continue
         if (!services.isConnected(user)) continue
+        // Honor each user's own cadence (fall back to global when unset).
+        const last = lastRun.get(user.id) || 0
+        if (started - last < userIntervalMs(user)) continue
+        lastRun.set(user.id, started)
         try {
           const r = await services.refreshUser(user)
           if (r.ok) {

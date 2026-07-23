@@ -26,10 +26,10 @@ const intervalIx = process.argv.indexOf("--interval");
 const INTERVAL = intervalIx >= 0 ? Number(process.argv[intervalIx + 1]) : 0;
 
 const AUTOSAVE_ABI = [
-  "event PlanCreated(address indexed user, uint256 amountPerPeriod, uint64 period, uint32 totalPeriods)",
+  "event PlanCreated(address indexed user, uint256 amountPerPeriod, uint64 period, uint32 totalPeriods, uint16 maxDriftBps)",
   "function due(address) view returns (bool)",
   "function executeDue(address) returns (uint256)",
-  "function plans(address) view returns (uint256 amountPerPeriod, uint64 period, uint64 nextExec, uint32 totalPeriods, uint32 periodsDone, bool active)",
+  "function plans(address) view returns (uint256 amountPerPeriod, uint64 period, uint64 nextExec, uint32 totalPeriods, uint32 periodsDone, bool active, uint16 maxDriftBps, uint256 refSharePriceE18)",
 ];
 
 function load() {

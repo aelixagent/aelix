@@ -1,17 +1,29 @@
 // store.mjs — persistence. Default driver is a single JSON file (zero deps, runs
 // anywhere). The Store interface below is what a Postgres/Prisma driver must
 // implement for production; see backend/README "Going to production".
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs'
+import {
+  readFileSync,
+  existsSync,
+  mkdirSync,
+  renameSync,
+  openSync,
+  writeSync,
+  fsyncSync,
+  closeSync,
+} from 'node:fs'
 import { dirname } from 'node:path'
 import { newId } from './crypto.mjs'
 
 const EMPTY = { users: [], tokens: [], rules: [], deskStates: [], alerts: [] }
+const DESK_SIGNAL_CAP = 200
 
 class JsonStore {
   constructor(file) {
     this.file = file
     this.db = this._load()
+    this._dirty = false
     this._saveQueued = false
+    this._installExitFlush()
   }
 
   _load() {
@@ -23,17 +35,53 @@ class JsonStore {
     return structuredClone(EMPTY)
   }
 
-  // Atomic-ish write: temp file + rename. Debounced to coalesce bursts.
+  // Durable atomic write: write to a temp file, fsync it to disk, then rename
+  // over the DB file (rename is atomic on POSIX). This is what makes a partially
+  // written / crashed process never leave a torn DB file behind.
+  _writeNow() {
+    mkdirSync(dirname(this.file), { recursive: true })
+    const tmp = `${this.file}.tmp`
+    const data = JSON.stringify(this.db, null, 2)
+    const fd = openSync(tmp, 'w')
+    try {
+      writeSync(fd, data)
+      fsyncSync(fd) // flush to physical storage before we swap it in
+    } finally {
+      closeSync(fd)
+    }
+    renameSync(tmp, this.file)
+    this._dirty = false
+  }
+
+  // Debounced save to coalesce bursts. The pending write is guaranteed to land
+  // even on shutdown via the synchronous exit flush (_installExitFlush).
   _save() {
+    this._dirty = true
     if (this._saveQueued) return
     this._saveQueued = true
     queueMicrotask(() => {
       this._saveQueued = false
-      mkdirSync(dirname(this.file), { recursive: true })
-      const tmp = `${this.file}.tmp`
-      writeFileSync(tmp, JSON.stringify(this.db, null, 2))
-      renameSync(tmp, this.file)
+      if (this._dirty) this._writeNow()
     })
+  }
+
+  // Best-effort synchronous flush so a pending (debounced) write is not lost when
+  // the process is asked to exit. Idempotent — safe to fire from several signals.
+  flush() {
+    if (this._dirty) {
+      try {
+        this._writeNow()
+      } catch {
+        // best effort — never throw out of an exit handler
+      }
+    }
+  }
+
+  _installExitFlush() {
+    const flush = () => this.flush()
+    process.on('beforeExit', flush)
+    process.on('SIGINT', flush)
+    process.on('SIGTERM', flush)
   }
 
   // ── users ──
@@ -105,6 +153,11 @@ class JsonStore {
   saveDeskState(userId, state) {
     const existing = this.db.deskStates.find((s) => s.userId === userId)
     const rec = { userId, ...state }
+    // Bound growth like alerts: keep only the most recent DESK_SIGNAL_CAP signals
+    // so a pathological run can't grow the JSON file without limit.
+    if (Array.isArray(rec.signals) && rec.signals.length > DESK_SIGNAL_CAP) {
+      rec.signals = rec.signals.slice(-DESK_SIGNAL_CAP)
+    }
     if (existing) Object.assign(existing, rec)
     else this.db.deskStates.push(rec)
     this._save()

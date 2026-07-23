@@ -38,6 +38,10 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     error StalePrice();
     error SequencerDown();
     error GracePeriodNotOver();
+    /// @notice maxStaleness of 0 would silently disable the freshness guard — forbidden.
+    error ZeroStaleness();
+    /// @notice The aggregator reported an implausible decimals value.
+    error BadFeedDecimals();
 
     constructor(
         uint8 usdgDecimals_,
@@ -51,9 +55,15 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     }
 
     /// @notice Register/replace the Chainlink feed for a Stock Token.
-    /// @param maxStaleness Max age (seconds) of a round before {price} reverts.
+    /// @param maxStaleness Max age (seconds) of a round before {price} reverts. MUST be
+    ///        non-zero: a 0 here would silently disable the freshness guard the vault
+    ///        relies on to fail closed on a stalled feed.
     function setFeed(address token, address aggregator, uint32 maxStaleness) external onlyOwner {
+        if (maxStaleness == 0) revert ZeroStaleness();
         uint8 fd = IAggregatorV3(aggregator).decimals();
+        // A feed with 0 or >18 decimals is not a sane price feed (Chainlink USD feeds are
+        // typically 8-dec). Reject it rather than compute a nonsensical scaling in {price}.
+        if (fd == 0 || fd > 18) revert BadFeedDecimals();
         feeds[token] = Feed({
             aggregator: IAggregatorV3(aggregator), feedDecimals: fd, maxStaleness: maxStaleness
         });
@@ -85,7 +95,8 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
         if (answer <= 0) revert BadPrice();
         if (answeredInRound < roundId) revert StalePrice();
         if (updatedAt == 0) revert StalePrice();
-        // maxStaleness == 0 disables the age check (e.g. local/testnet feeds).
+        // maxStaleness is guaranteed non-zero at registration ({setFeed} rejects 0); the
+        // `!= 0` here is a defensive belt-and-braces so an unset feed never skips the check.
         // forge-lint: disable-next-line(block-timestamp) — heartbeat freshness check
         if (f.maxStaleness != 0 && block.timestamp - updatedAt > f.maxStaleness) {
             revert StalePrice();

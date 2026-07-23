@@ -4,9 +4,10 @@ import {
   ProposedTrade, ActivityLog, InjectionAlerts, RunControls,
   Backtests, DecisionTimeline, Eyebrow, PreviewBadge,
   NetworkBadge, VaultPanel, GuardrailsOnChain, TrackRecord, ExecutorPanel, AutosavePanel,
-  DeskRunGate,
+  DeskRunGate, DashboardSkeleton, OnchainSkeleton,
 } from './components.jsx'
 import { readOnchain } from './onchain.js'
+import { DeskField } from './desk-field.jsx'
 
 const POLL_MS = 5000
 const CHAIN_POLL_MS = 15000
@@ -63,7 +64,7 @@ export default function App() {
   }, [cfg?.chainId, cfg?.contracts?.vault])
 
   if (!state && !error) {
-    return <div className="loading">Loading desk state…</div>
+    return <DashboardSkeleton />
   }
   if (!state && error) {
     return (
@@ -74,15 +75,24 @@ export default function App() {
     )
   }
 
-  // "demo" = the sample file that ships in the repo, i.e. no real desk run in this env.
-  const isDemo = state.session === 'demo' || state._note != null
+  // "demo" = a snapshot with no real desk run in this env. Gate on the explicit session
+  // value only ('demo' or 'no-run') — a live snapshot may still carry a _note, so keying
+  // off _note alone would misclassify a real run as demo.
+  const isDemo = state.session === 'demo' || state.session === 'no-run'
   const onchain = oc
+
+  // On-chain read failures (per section) surfaced from the live reader, so a failed
+  // contract read shows a signal instead of silently blanking the panel.
+  const ocErr = live || {}
 
   // Prefer LIVE on-chain reads; fall back to whatever the snapshot carried.
   const vaultData = live?.vault || onchain?.vault
-  const guardrailsData = live?.guardrails || onchain?.guardrails
+  // Guardrails are shown as "enforced ON-CHAIN" — so ONLY ever from a real live read.
+  // Never fall back to the shipped sample caps (that would fake on-chain enforcement).
+  const guardrailsData = live?.guardrails
   const livePositions = live?.positions
   const liveTrades = live?.trades
+  const chainLive = !!live?.live // a real contract read actually succeeded
 
   // On-chain vault holdings are real; brokerage positions/orders are demo-only. When this
   // is the sample file, NEVER show the demo book — show the live on-chain holdings (empty
@@ -102,40 +112,44 @@ export default function App() {
 
   return (
     <div className="app">
-      <AccountHeader account={state.account} generatedAt={state.generatedAt} live={vaultData} isDemo={isDemo} />
+      <AccountHeader account={state.account} generatedAt={state.generatedAt} live={live?.vault} isDemo={isDemo} />
 
       {error && <div className="stale">⚠ Live refresh failed ({error}); showing last good state.</div>}
-      {isDemo && (
-        <div className="live-note">
-          <b>On-chain data is live</b> from Robinhood Chain. The AI-desk sections need the
-          {' '}<code>robinhood-trading</code> broker (MCP) — they stay empty until a real run, not faked.
-        </div>
-      )}
 
-      <div className="section-lead">
-        <Eyebrow index="01">{isDemo ? 'On-chain · live mirror' : 'The desk · read-only mirror'}</Eyebrow>
-        <span className="section-lead-rule" aria-hidden="true" />
-      </div>
+      <DeskField
+        nav={vaultData?.nav ?? state.account?.equity}
+        positions={positions}
+        guardrails={guardrailsData || []}
+        isDemo={isDemo}
+      />
 
       <main className="layout">
         <div className="col-main">
           {onchain && (
             <div className="oc-band">
               <div className="oc-band-head">
-                <Eyebrow index="02">On-chain · Robinhood Chain{live ? ' · live' : ''}</Eyebrow>
+                <Eyebrow>On-chain</Eyebrow>
                 <div className="oc-band-tail">
                   <PreviewBadge />
                   <NetworkBadge network={onchain.network} />
                 </div>
               </div>
-              <VaultPanel vault={vaultData} network={onchain.network} />
-              <GuardrailsOnChain guardrails={guardrailsData} />
-              <TrackRecord trackRecord={onchain.trackRecord} />
+              {cfg && !live ? (
+                <OnchainSkeleton />
+              ) : (
+                <>
+                  <VaultPanel vault={vaultData} network={onchain.network} />
+                  {ocErr.vaultError && <div className="oc-read-err">⚠ Live vault read failed: {ocErr.vaultError}</div>}
+                  <GuardrailsOnChain guardrails={guardrailsData} />
+                  {ocErr.guardrailsError && <div className="oc-read-err">⚠ Live guardrails read failed: {ocErr.guardrailsError}</div>}
+                  <TrackRecord trackRecord={onchain.trackRecord} />
+                </>
+              )}
             </div>
           )}
 
           <div className="pos-head">
-            <Eyebrow index="03">{positionsLabel}</Eyebrow>
+            <Eyebrow>{positionsLabel}</Eyebrow>
           </div>
           <Positions positions={positions} />
 
@@ -157,15 +171,12 @@ export default function App() {
           {onchain && <ExecutorPanel executor={onchain.executor} />}
           {onchain && <AutosavePanel autosave={onchain.autosave} />}
           <ActivityLog orders={orders} />
+          {ocErr.tradesError && <div className="oc-read-err">⚠ Live trade history read failed: {ocErr.tradesError}</div>}
           {!isDemo && state.decisionLog && <DecisionTimeline log={state.decisionLog} />}
         </aside>
       </main>
 
-      <footer className="foot">
-        {live ? 'Live on-chain mirror' : 'Read-only mirror of the desk'} · refreshes every {POLL_MS / 1000}s ·
-        last {lastLoad?.toLocaleTimeString() || '—'}
-        {' · '}orders are approved & placed only in the Claude Code session
-      </footer>
+      <footer className="foot">Read-only · orders are approved in your Claude Code session.</footer>
     </div>
   )
 }

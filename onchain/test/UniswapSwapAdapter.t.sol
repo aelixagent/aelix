@@ -78,4 +78,36 @@ contract UniswapSwapAdapterTest is Test {
         vm.expectRevert();
         adapter.setRouter(address(0xdead));
     }
+
+    // ------------------------------------------------------------------ deadline buffer
+
+    function test_defaultDeadlineBuffer() public view {
+        assertEq(adapter.deadlineBuffer(), 300); // sane 5-minute default
+    }
+
+    function test_setDeadlineBuffer_updates() public {
+        vm.prank(HUMAN);
+        adapter.setDeadlineBuffer(120);
+        assertEq(adapter.deadlineBuffer(), 120);
+        // A swap still routes fine with the new buffer.
+        router.setRate(0.02e18);
+        assertEq(_swap(address(usdg), address(stk), 1000e18, 0), 20e18);
+    }
+
+    function test_setDeadlineBuffer_bounds() public {
+        uint256 tooShort = adapter.MIN_DEADLINE_BUFFER() - 1; // no protection margin
+        uint256 tooLong = adapter.MAX_DEADLINE_BUFFER() + 1; // deadline meaningless
+        vm.startPrank(HUMAN);
+        vm.expectRevert(UniswapSwapAdapter.BadDeadlineBuffer.selector);
+        adapter.setDeadlineBuffer(tooShort);
+        vm.expectRevert(UniswapSwapAdapter.BadDeadlineBuffer.selector);
+        adapter.setDeadlineBuffer(tooLong);
+        vm.stopPrank();
+    }
+
+    function test_setDeadlineBuffer_onlyOwner() public {
+        vm.prank(VAULT);
+        vm.expectRevert();
+        adapter.setDeadlineBuffer(120);
+    }
 }
