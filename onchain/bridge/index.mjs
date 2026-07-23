@@ -42,7 +42,7 @@ const CFG_ABI = [
 const REG_ABI = [
   "function count(bytes32) view returns (uint256)",
   "function attesterOf(bytes32) view returns (address)",
-  "function attest(bytes32 subject,uint64 epoch,uint256 nav,int256 realizedPnl,bytes32 snapshotHash,string uri) returns (uint256)",
+  "function attestSelf(bytes32 label,uint64 epoch,uint256 nav,int256 realizedPnl,bytes32 snapshotHash,string uri) returns (uint256)",
   "function latest(bytes32) view returns (tuple(uint64 epoch,uint64 timestamp,uint256 nav,int256 realizedPnl,bytes32 snapshotHash,string uri))",
 ];
 const PERF_ABI = [
@@ -123,7 +123,9 @@ async function main() {
            : `Chain ${net.chainId}`,
       chainId: Number(net.chainId),
       deployed: true,
-      explorer: "https://explorer.testnet.chain.robinhood.com",
+      explorer: Number(net.chainId) === 4663
+        ? "https://explorer.chain.robinhood.com" // mainnet — confirm in docs
+        : "https://explorer.testnet.chain.robinhood.com",
     },
     contracts: {
       guardrails: d.guardrailConfig,
@@ -155,10 +157,14 @@ async function main() {
       status: managerIsExecutor ? "live" : "preview",
       scope: "guardrail-bounded swaps · approval-gated",
       sessionKey: null,
-      dailyCapPct: Number(caps.perTradeBps) / 100,
+      // The real per-session daily cap lives on SessionKeyExecutor and isn't read here;
+      // don't surface the guardrail per-trade cap mislabeled as a "daily cap".
+      dailyCapPct: null,
       lastAction: null,
     },
-    autosave: { enabled: false, cadence: "weekly", amount: 100, asset: "USDG", nextRun: null },
+    // Autosave/DCA plans are per-depositor (AelixAutosave.createPlan); there is no global
+    // desk plan to read, so show honest-empty rather than an invented cadence/amount.
+    autosave: { enabled: false, cadence: null, amount: null, asset: "USDG", nextRun: null },
   };
 
   // Optionally attest a fresh desk run (commits state).
@@ -166,10 +172,21 @@ async function main() {
     const pk = process.env.PRIVATE_KEY;
     if (!pk) throw new Error("--attest requires PRIVATE_KEY");
     const wallet = new ethers.Wallet(pk, provider);
+    // Canonical reads (count/latest/series/PerfScore) resolve STRICTLY to the self-log
+    // keyed by subjectFor(attester,label). A raw attest() lands in a namespace nobody
+    // reads, so the track record would never grow — use attestSelf(label).
+    const label = ethers.solidityPackedKeccak256(["string", "address"], ["aelix-vault:", d.vault]);
+    const writeSubject = ethers.solidityPackedKeccak256(["address", "bytes32"], [wallet.address, label]);
+    if (writeSubject.toLowerCase() !== String(d.subject).toLowerCase()) {
+      throw new Error(
+        `--attest wallet ${wallet.address} is not the seeded attester for this vault; its ` +
+        `attestation would land in a subject the dashboard never reads. Use the deployer/agent key.`
+      );
+    }
     const owner = reg.connect(wallet);
     const epoch = Number(count) + 1;
     const snapshotHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(onchain)));
-    const tx = await owner.attest(d.subject, epoch, nav, 0n, snapshotHash, "");
+    const tx = await owner.attestSelf(label, epoch, nav, 0n, snapshotHash, "");
     const rcpt = await tx.wait();
     onchain.trackRecord.attestations = epoch;
     onchain.trackRecord.lastAttestation = {

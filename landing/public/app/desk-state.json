@@ -116,13 +116,13 @@
       "status": "live",
       "scope": "guardrail-bounded swaps · approval-gated",
       "sessionKey": null,
-      "dailyCapPct": 15,
+      "dailyCapPct": null,
       "lastAction": null
     },
     "autosave": {
       "enabled": false,
-      "cadence": "weekly",
-      "amount": 100,
+      "cadence": null,
+      "amount": null,
       "asset": "USDG",
       "nextRun": null
     }
