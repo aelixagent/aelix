@@ -36,6 +36,12 @@ Tell the PM to write the snapshot, e.g.:
 ```jsonc
 {
   "generatedAt": "ISO-8601",            // timestamp shown in the header
+  "session": "live",                    // "demo" | "no-run" gates the AI-desk sections to
+                                        //   their honest empty state (DeskRunGate) and shows
+                                        //   the live on-chain figures instead; any other value
+                                        //   (e.g. "live") renders the full brokerage desk.
+  "_note": "string|omit",               // OPTIONAL human note about the snapshot; purely
+                                        //   informational — does NOT affect the demo/live gate.
   "account": {
     "name": "Robinhood Agentic", "connected": true,
     "equity": 0, "cash": 0, "buyingPower": 0,
@@ -80,7 +86,30 @@ Tell the PM to write the snapshot, e.g.:
   "decisionLog": [                       // OPTIONAL — omit and the panel hides itself
     { "ts": "ISO-8601", "event": "desk_run|approval|order_placed|order_filled|halt|injection",
       "summary": "one-line", "symbol": "MSFT|null", "tone": "pos|neg|flat|warn" }
-  ]
+  ],
+
+  "onchain": {                           // OPTIONAL — drives the whole on-chain band + the
+                                         //   demo gate's live figures. Omit and that band hides.
+    "network": {                         // Robinhood Chain target
+      "name": "Robinhood Chain Testnet", "chainId": 46630, "deployed": true,
+      "explorer": "https://explorer.testnet.chain.robinhood.com" },
+    "contracts": {                       // deployed addresses; `vault` is required for live reads
+      "guardrails": "0x…", "vault": "0x…", "attestor": "0x…",
+      "executor": "0x…", "autosave": "0x…" },
+    "vault": {                           // snapshot fallback; live reads override these when the RPC is up
+      "symbol": "vAELIX", "nav": 0, "totalAssets": 0, "totalShares": 0, "sharePrice": 0,
+      "yourShares": 0, "yourValue": 0, "utilizationPct": 0, "apyPct": null },
+    "guardrails": [                      // guardrails-as-code rows (live caps override when read)
+      { "key": "perTradePct", "label": "Per-trade cap", "value": "15%", "enforced": true } ],
+    "trackRecord": {                     // proof-of-track-record panel
+      "perfScore": 0, "attestations": 0, "verifiedPnlPct": null,
+      "lastAttestation": { "summary": "", "ts": "ISO-8601", "txHash": "0x…" } },
+    "executor": {                        // agent-executor panel
+      "type": "Scoped session key (EOA)", "status": "live|active|preview",
+      "scope": "", "sessionKey": "0x…|null", "dailyCapPct": 15, "lastAction": "" },
+    "autosave": {                        // autosave / DCA panel
+      "enabled": false, "cadence": "weekly", "amount": null, "asset": "USDG", "nextRun": null }
+  }
 }
 ```
 
@@ -100,3 +129,13 @@ absent or empty.
   one JSON object per line) flattened to the `{ ts, event, summary, symbol, tone }` shape
   the timeline renders. `tone` drives the badge/accent color
   (`pos`/`neg`/`flat`/`warn`).
+- **`onchain`** feeds the entire on-chain band (RWA vault, guardrails-as-code, track
+  record, executor, autosave) and the vault dApp at `/vault`. When `onchain.contracts.vault`
+  and `onchain.network.chainId` are present, the UI reads the **live** deployed contracts
+  over a public RPC (see `src/onchain.js`) and those live values take precedence over the
+  static `onchain.vault` / `onchain.guardrails` snapshot; the snapshot is only the fallback.
+  In the shipped `desk-state.example.json` (`session: "no-run"`) the brokerage sections stay
+  empty while this on-chain band renders live — so nothing on screen is faked.
+- **`session`** gates the view: `"demo"` or `"no-run"` shows the honest AI-desk empty state
+  (`DeskRunGate`) plus live on-chain figures; any other value renders the full brokerage desk.
+  **`_note`** is informational only and does not affect that gate.
