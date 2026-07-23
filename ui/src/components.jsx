@@ -117,14 +117,16 @@ export function AccountHeader({ account, generatedAt, live, isDemo }) {
 
 /// Honest empty-state for the brokerage/AI-desk sections when no real desk run exists in
 /// this environment. Shown INSTEAD of sample data so the dashboard never fakes a run.
-export function DeskRunGate() {
+export function DeskRunGate({ chainLive = false }) {
   return (
     <section className="panel gate">
       <h2>AI desk · not run here yet</h2>
       <p className="gate-lead">
         Candidates, risk verdicts, the proposed trade and account P&L come from a live desk
         cycle against the Robinhood Agentic (brokerage) account. That needs the{' '}
-        <code>robinhood-trading</code> MCP server connected — the on-chain vault below is already live.
+        <code>robinhood-trading</code> MCP server connected{chainLive
+          ? ' — the on-chain vault below is reading live.'
+          : ' — the on-chain vault below is deployed to testnet (showing its last snapshot).'}
       </p>
       <ol className="gate-steps">
         <li>Connect <code>robinhood-trading</code> MCP + set <code>RH_AGENTIC_ACCOUNT_NUMBER</code>.</li>
@@ -564,26 +566,32 @@ export function PreviewBadge({ label = 'TESTNET · PREVIEW' }) {
   return <span className="preview-badge" title="Not yet deployed — illustrative preview">{label}</span>
 }
 
-export function NetworkBadge({ network }) {
+// `live` = a real contract read succeeded this session (App gates on onchain.js `live`).
+// The dot + state track that, NOT the snapshot's `deployed` flag — a deployed vault whose
+// RPC we can't reach must not read as "live".
+export function NetworkBadge({ network, live = false }) {
   if (!network) return null
   const n = network
   return (
     <span className="net-badge" title={`chain-id ${n.chainId ?? '—'}`}>
-      <span className={`net-dot ${n.deployed ? 'on' : 'off'}`} />
+      <span className={`net-dot ${live ? 'on' : 'off'}`} />
       <span className="net-name">{n.name || 'Robinhood Chain'}</span>
-      <span className="net-state">{n.deployed ? 'TESTNET' : 'TESTNET · PREVIEW'}</span>
-      {!n.deployed && <span className="net-sub dim">not yet deployed</span>}
+      <span className="net-state">{live ? 'TESTNET · LIVE' : 'TESTNET · PREVIEW'}</span>
+      {!live && <span className="net-sub dim">not reading live</span>}
     </span>
   )
 }
 
-export function VaultPanel({ vault, network }) {
+// `live` gates whether these figures are a fresh on-chain read. When false the numbers are
+// the last-bridged snapshot (real, but stale) — we badge them SNAPSHOT so they're never
+// presented as a current live read (no-dummy-data rule).
+export function VaultPanel({ vault, network, live = false }) {
   if (!vault) return null
   const v = vault
   const util = Math.max(0, Math.min(100, v.utilizationPct ?? 0))
   return (
     <section className="panel">
-      <h2>RWA Vault {v.symbol && <span className="tag">{v.symbol}</span>}</h2>
+      <h2>RWA Vault {v.symbol && <span className="tag">{v.symbol}</span>}{!live && <PreviewBadge label="SNAPSHOT" />}</h2>
 
       <div className="vault-hero">
         <div className="vault-nav">
@@ -637,13 +645,13 @@ export function GuardrailsOnChain({ guardrails }) {
   )
 }
 
-export function TrackRecord({ trackRecord }) {
+export function TrackRecord({ trackRecord, live = false }) {
   if (!trackRecord) return null
   const t = trackRecord
   const la = t.lastAttestation || {}
   return (
     <section className="panel">
-      <h2>Track Record</h2>
+      <h2>Track Record {!live && <PreviewBadge label="SNAPSHOT" />}</h2>
       <div className="oc-perf">
         <RingGauge value={t.perfScore} max={100} label="PerfScore" />
         <div className="oc-perf-stats">
@@ -671,7 +679,7 @@ export function ExecutorPanel({ executor }) {
       <h2>Agent Executor</h2>
       <div className="oc-exec-head">
         <span className="chip flat">{e.type || 'Scoped session key (EOA)'}</span>
-        <span className={`badge ${e.status === 'active' ? 'approve' : 'pending'}`}>{e.status || 'preview'}</span>
+        <span className={`badge ${['active', 'live'].includes(e.status) ? 'approve' : 'pending'}`}>{e.status || 'preview'}</span>
       </div>
       <div className="oc-rows">
         <div className="oc-row">

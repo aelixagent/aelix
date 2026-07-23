@@ -130,19 +130,19 @@ export default function App() {
               <div className="oc-band-head">
                 <Eyebrow>On-chain</Eyebrow>
                 <div className="oc-band-tail">
-                  <PreviewBadge />
-                  <NetworkBadge network={onchain.network} />
+                  {!chainLive && <PreviewBadge />}
+                  <NetworkBadge network={onchain.network} live={chainLive} />
                 </div>
               </div>
               {cfg && !live ? (
                 <OnchainSkeleton />
               ) : (
                 <>
-                  <VaultPanel vault={vaultData} network={onchain.network} />
+                  <VaultPanel vault={vaultData} network={onchain.network} live={chainLive} />
                   {ocErr.vaultError && <div className="oc-read-err">⚠ Live vault read failed: {ocErr.vaultError}</div>}
                   <GuardrailsOnChain guardrails={guardrailsData} />
                   {ocErr.guardrailsError && <div className="oc-read-err">⚠ Live guardrails read failed: {ocErr.guardrailsError}</div>}
-                  <TrackRecord trackRecord={onchain.trackRecord} />
+                  <TrackRecord trackRecord={onchain.trackRecord} live={chainLive} />
                 </>
               )}
             </div>
@@ -154,7 +154,7 @@ export default function App() {
           <Positions positions={positions} />
 
           {isDemo ? (
-            <DeskRunGate />
+            <DeskRunGate chainLive={chainLive} />
           ) : (
             <>
               <RunControls />
