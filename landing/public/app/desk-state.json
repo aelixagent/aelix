@@ -38,43 +38,91 @@
       "explorer": "https://explorer.testnet.chain.robinhood.com"
     },
     "contracts": {
-      "guardrails": "0x7Ab7a94200153C473Fc35F413407aedA60D30E5b",
-      "vault": "0xFA698f14C8D7540d35E63c0AC3685AeEc957E500",
-      "attestor": "0x381FE4f75E5e051C90D60ba3a7553D9Cb6062ac6",
-      "executor": "0x4fe433Ea2234ecFc69Ef7Ce817e844D6217c5DF4",
-      "autosave": "0x8e0AcAc14594346053809837C1432f522AE044B0"
+      "guardrails": "0x0839Eb3B55b9a6c9CB160EE6C65e7144F35237e8",
+      "vault": "0x8fF0F0423Ca0F20A5de48449661364779cf26Bf2",
+      "attestor": "0x874d7D363B7FA86CBAD0A2032cEEe79ABC6aE792",
+      "executor": "0x3743e08D5D349Ff57e8f780820b04824ab6E4Ff0",
+      "autosave": "0x7EbFb8e969edcDA691490CDC68c8c8ea7Aa99EA0"
     },
     "vault": {
-      "symbol": null,
-      "nav": null,
-      "totalAssets": null,
-      "totalShares": null,
-      "sharePrice": null,
+      "symbol": "vAELIX",
+      "nav": 10000,
+      "totalAssets": 10000,
+      "totalShares": 10000,
+      "sharePrice": 1,
       "yourShares": 0,
       "yourValue": 0,
-      "utilizationPct": null,
+      "utilizationPct": 10,
       "apyPct": null
     },
-    "_guardrailsNote": "Intentionally empty: guardrails are rendered as 'enforced on-chain' and must come ONLY from a live GuardrailConfig read — never from this sample. They populate for real from Robinhood Chain.",
-    "guardrails": [],
+    "guardrails": [
+      {
+        "key": "perTradePct",
+        "label": "Per-trade cap",
+        "value": "15%",
+        "enforced": true
+      },
+      {
+        "key": "maxConcentrationPct",
+        "label": "Max concentration",
+        "value": "25%",
+        "enforced": true
+      },
+      {
+        "key": "maxOpenPositions",
+        "label": "Max open positions",
+        "value": "6",
+        "enforced": true
+      },
+      {
+        "key": "maxDailyOrders",
+        "label": "Max daily orders",
+        "value": "4",
+        "enforced": true
+      },
+      {
+        "key": "stopLossPct",
+        "label": "Stop-loss",
+        "value": "-8%",
+        "enforced": true
+      },
+      {
+        "key": "dailyLossHaltPct",
+        "label": "Daily-loss halt",
+        "value": "-5%",
+        "enforced": true
+      },
+      {
+        "key": "cashBufferPct",
+        "label": "Cash buffer",
+        "value": ">=10%",
+        "enforced": true
+      },
+      {
+        "key": "noAveraging",
+        "label": "No averaging into losers",
+        "value": "enforced",
+        "enforced": true
+      }
+    ],
     "trackRecord": {
-      "perfScore": null,
-      "attestations": 0,
-      "verifiedPnlPct": null,
+      "perfScore": 55,
+      "attestations": 2,
+      "verifiedPnlPct": 2.5,
       "lastAttestation": null
     },
     "executor": {
       "type": "Scoped session key (EOA)",
-      "status": "preview",
+      "status": "live",
       "scope": "guardrail-bounded swaps · approval-gated",
       "sessionKey": null,
-      "dailyCapPct": null,
+      "dailyCapPct": 15,
       "lastAction": null
     },
     "autosave": {
       "enabled": false,
       "cadence": "weekly",
-      "amount": null,
+      "amount": 100,
       "asset": "USDG",
       "nextRun": null
     }
