@@ -38,8 +38,12 @@ contract MockERC20D is ERC20 {
 contract MockOracle is IPriceOracle {
     mapping(address => uint256) public priceOf;
     mapping(address => bool) public willRevert;
+    /// @dev Simulates the production split: a 24/5 feed holding a closed-session price,
+    ///      where valuation still reads but execution must fail closed.
+    mapping(address => bool) public tradeHalted;
 
     error FeedDown();
+    error TradeFeedStale();
 
     function setPrice(address token, uint256 p) external {
         priceOf[token] = p;
@@ -49,9 +53,32 @@ contract MockOracle is IPriceOracle {
         willRevert[token] = r;
     }
 
+    /// @notice Make {priceForTrade} revert while {price} keeps returning.
+    function setTradeHalted(address token, bool h) external {
+        tradeHalted[token] = h;
+    }
+
     function price(address token) external view returns (uint256) {
         if (willRevert[token]) revert FeedDown();
         return priceOf[token];
+    }
+
+    function priceForTrade(address token) external view returns (uint256) {
+        if (willRevert[token]) revert FeedDown();
+        if (tradeHalted[token]) revert TradeFeedStale();
+        return priceOf[token];
+    }
+}
+
+/// @dev Robinhood Stock Token mock exposing the issuer's corporate-action flag.
+///      Robinhood pauses a token's oracle while a split / corporate action updates its
+///      multiplier; integrators must read `oraclePaused()` and treat true as
+///      "price temporarily unavailable".
+contract MockPausableStockToken {
+    bool public oraclePaused;
+
+    function setOraclePaused(bool p) external {
+        oraclePaused = p;
     }
 }
 
@@ -74,6 +101,12 @@ contract MockAggregator is IAggregatorV3 {
     function set(int256 a, uint256 updatedAt_) external {
         answer = a;
         updatedAt = updatedAt_;
+    }
+
+    /// @notice `startedAt == 0` marks an uninitialized round. Consumers must fail closed on
+    ///         it rather than treating `now - 0` as a trivially-elapsed grace window.
+    function setStartedAt(uint256 s) external {
+        startedAt = s;
     }
 
     function setRounds(uint80 rid, uint80 answeredIn) external {

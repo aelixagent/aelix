@@ -5,6 +5,7 @@ import { Script, console2 } from "forge-std/Script.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { IAggregatorV3 } from "../src/interfaces/IAggregatorV3.sol";
 import { Guardrails } from "../src/libraries/Guardrails.sol";
 import { GuardrailConfig } from "../src/GuardrailConfig.sol";
 import { DeskRegistry } from "../src/DeskRegistry.sol";
@@ -30,7 +31,9 @@ import { UniswapSwapAdapter } from "../src/UniswapSwapAdapter.sol";
 ///           SEQUENCER_GRACE  seconds                 (default 3600)
 ///           STOCKS           comma-sep Stock Token addresses
 ///           FEEDS            comma-sep Chainlink feeds (parallel to STOCKS)
-///           FEED_STALENESS   heartbeat seconds        (default 3600)
+///           FEED_STALENESS   in-session heartbeat sec (default 3600) — trade path
+///           FEED_STALENESS_OFFHOURS  valuation bound  (default 302400 = 3.5d) — NAV path,
+///                            must cover a weekend + holiday on a 24/5 equity feed
 ///           AGENT            desk agent key (session)  (default deployer)
 ///
 ///         forge script script/DeployProduction.s.sol \
@@ -57,6 +60,7 @@ contract DeployProduction is Script {
         address[] stocks;
         address[] feeds;
         uint32 staleness;
+        uint32 offHoursStaleness;
         address owner;
         address agent;
     }
@@ -85,6 +89,9 @@ contract DeployProduction is Script {
         c.stocks = vm.envOr("STOCKS", ",", new address[](0));
         c.feeds = vm.envOr("FEEDS", ",", new address[](0));
         c.staleness = uint32(vm.envOr("FEED_STALENESS", uint256(3600)));
+        // 3.5 days: long enough for a Fri-close -> Tue-open gap (weekend + holiday) on a
+        // 24/5 tokenized-equity feed, short enough to still fail closed on a dead feed.
+        c.offHoursStaleness = uint32(vm.envOr("FEED_STALENESS_OFFHOURS", uint256(302_400)));
         // Ownership goes to OWNER (intended to be a multisig/timelock — see the NatSpec).
         // If OWNER is unset we fall back to the deployer EOA but LOUDLY warn: a single hot
         // key owning the whole stack is not an acceptable production posture.
@@ -101,7 +108,7 @@ contract DeployProduction is Script {
         require(c.stocks.length == c.feeds.length, "STOCKS/FEEDS length mismatch");
 
         // Refuse an unsafe posture on MAINNET (hard revert, not a console warning).
-        _assertMainnetSafe(block.chainid, c, ownerEnv);
+        _assertMainnetSafe(block.chainid, c, ownerEnv, deployer);
 
         console2.log("chainId", block.chainid); // 46630 testnet, 4663 mainnet
         console2.log("USDG decimals (live)", c.usdgDecimals);
@@ -116,17 +123,83 @@ contract DeployProduction is Script {
     }
 
     /// @dev Refuse an UNSAFE deploy on Robinhood Chain mainnet (real funds). Each posture
-    ///      below is acceptable for a testnet preview but must never reach mainnet: a single
-    ///      hot EOA owning the whole stack, a disabled L2 sequencer-uptime check, the
-    ///      placeholder periphery addresses, or no Stock Token / feed wired. On any
+    ///      below is acceptable for a testnet preview but must never reach mainnet. On any
     ///      non-mainnet chain this is a no-op so the preview flow stays lenient.
-    function _assertMainnetSafe(uint256 chainId, Cfg memory c, address ownerEnv) internal pure {
+    ///
+    ///      `view`, not `pure`: several checks probe live chain state (does the address hold
+    ///      code, does the feed answer). An address typo that silently deploys a vault
+    ///      pointed at an empty address is exactly the class of mistake worth spending gas
+    ///      to prevent.
+    function _assertMainnetSafe(uint256 chainId, Cfg memory c, address ownerEnv, address deployer)
+        internal
+        view
+    {
         if (chainId != MAINNET_CHAIN_ID) return;
+
+        // --- Ownership: a hot EOA must never own the stack -----------------------------
         require(ownerEnv != address(0), "MAINNET: set OWNER to a multisig/timelock");
+        // The old check accepted any non-zero address, so a plain EOA passed a require
+        // whose message said "multisig". A Safe/timelock is a contract; enforce that.
+        require(ownerEnv.code.length > 0, "MAINNET: OWNER must be a contract (multisig/timelock), not an EOA");
+        require(ownerEnv != deployer, "MAINNET: OWNER must not be the deployer key");
+
+        // --- Agent key: scoped, and never the deployer ---------------------------------
+        // AGENT defaults to `deployer`. On mainnet that would hand the desk's hot trading
+        // key the same key that deployed the stack. Must be set explicitly and distinctly.
+        require(c.agent != deployer, "MAINNET: set AGENT to a dedicated key, not the deployer");
+        require(c.agent != ownerEnv, "MAINNET: AGENT must not be the owner multisig");
+
+        // --- Sequencer uptime feed: present AND actually answering ---------------------
         require(c.sequencerFeed != address(0), "MAINNET: set SEQUENCER_FEED (L2 uptime)");
+        require(c.sequencerFeed.code.length > 0, "MAINNET: SEQUENCER_FEED has no code");
+        (, int256 seqAnswer, uint256 seqStartedAt,,) =
+            IAggregatorV3(c.sequencerFeed).latestRoundData();
+        require(seqStartedAt != 0, "MAINNET: SEQUENCER_FEED round uninitialized");
+        require(seqAnswer == 0, "MAINNET: sequencer reported DOWN, refusing to deploy");
+        require(c.grace >= 1800, "MAINNET: SEQUENCER_GRACE too short (>= 1800s)");
+
+        // --- USDG: the documented look-alike trap -------------------------------------
         require(c.usdg != PLACEHOLDER_USDG, "MAINNET: set real USDG");
+        require(c.usdg.code.length > 0, "MAINNET: USDG has no code");
+        // A look-alike 18-decimal "Global Dollar" USDG exists. `usdgDecimals` is read live
+        // from the token, so pinning it to 6 here rejects the impostor by construction —
+        // the symbol is never trusted.
+        require(c.usdgDecimals == 6, "MAINNET: USDG decimals != 6, wrong token (18-dec look-alike?)");
+
+        // --- Router -------------------------------------------------------------------
         require(c.router != PLACEHOLDER_ROUTER, "MAINNET: set real ROUTER");
+        require(c.router.code.length > 0, "MAINNET: ROUTER has no code");
+        if (c.hop != address(0)) {
+            require(c.hop.code.length > 0, "MAINNET: HOP_TOKEN has no code");
+        }
+
+        // --- Stock tokens and their feeds ---------------------------------------------
         require(c.stocks.length > 0, "MAINNET: STOCKS/FEEDS required");
+        for (uint256 i; i < c.stocks.length; ++i) {
+            require(c.stocks[i] != address(0), "MAINNET: zero Stock Token");
+            require(c.stocks[i].code.length > 0, "MAINNET: Stock Token has no code");
+            require(c.feeds[i] != address(0), "MAINNET: zero feed");
+            require(c.feeds[i].code.length > 0, "MAINNET: feed has no code");
+            require(c.stocks[i] != c.usdg, "MAINNET: USDG listed as a Stock Token");
+            // A feed wired to the wrong token silently misprices a whole position; a
+            // duplicate entry means one of the intended tokens is missing its own feed.
+            for (uint256 j; j < i; ++j) {
+                require(c.stocks[i] != c.stocks[j], "MAINNET: duplicate Stock Token");
+                require(c.feeds[i] != c.feeds[j], "MAINNET: duplicate feed (wrong token wired?)");
+            }
+            // The feed must answer with a positive, initialized round before we trust it.
+            (, int256 answer,, uint256 updatedAt,) = IAggregatorV3(c.feeds[i]).latestRoundData();
+            require(answer > 0, "MAINNET: feed answer <= 0");
+            require(updatedAt != 0, "MAINNET: feed round uninitialized");
+        }
+
+        // --- Staleness bounds ---------------------------------------------------------
+        require(c.staleness >= 60, "MAINNET: FEED_STALENESS too short");
+        require(c.offHoursStaleness >= c.staleness, "MAINNET: off-hours bound < session bound");
+        // The off-hours bound is the window in which the vault will mint and redeem against
+        // a price held over a closed session. It must cover a weekend + holiday but must not
+        // become an open-ended licence to transact on a dead feed.
+        require(c.offHoursStaleness <= 7 days, "MAINNET: FEED_STALENESS_OFFHOURS too permissive (<= 7d)");
     }
 
     function _deploy(Cfg memory c) internal returns (Stack memory s) {
@@ -152,7 +225,7 @@ contract DeployProduction is Script {
     function _wire(Stack memory s, Cfg memory c) internal {
         s.vault.setManager(address(s.exec));
         for (uint256 i; i < c.stocks.length; ++i) {
-            s.oracle.setFeed(c.stocks[i], c.feeds[i], c.staleness);
+            s.oracle.setFeed(c.stocks[i], c.feeds[i], c.staleness, c.offHoursStaleness);
             s.vault.allowToken(c.stocks[i]);
         }
         if (c.stocks.length > 0) {

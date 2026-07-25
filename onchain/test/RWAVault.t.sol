@@ -120,6 +120,33 @@ contract RWAVaultTest is Test {
         assertEq(vault.openPositions(), 1);
     }
 
+    /// Closed-session behaviour on a 24/5 tokenized-equity feed: the price the feed holds
+    /// over the weekend is a valid MARK but not a valid EXECUTION price. Depositors and
+    /// redeemers must keep transacting at NAV while the agent is locked out of trading.
+    function test_closedSession_navAndFlowsLive_butTradesBlocked() public {
+        oracle.setTradeHalted(address(stk), true);
+
+        // Valuation path untouched.
+        assertEq(vault.navUsdg(), 100e18);
+        assertEq(vault.convertToAssets(vault.balanceOf(ALICE)), 100e18);
+
+        // Deposits and redemptions still work.
+        usdg.mint(ALICE, 10e18);
+        vm.prank(ALICE);
+        vault.deposit(10e18, ALICE);
+        assertEq(vault.navUsdg(), 110e18);
+        vm.prank(ALICE);
+        vault.withdraw(10e18, ALICE, ALICE);
+
+        // The agent cannot execute against the held price.
+        vm.expectRevert(MockOracle.TradeFeedStale.selector);
+        _buy(10e18, 45e18, false);
+
+        // Session reopens -> trading resumes.
+        oracle.setTradeHalted(address(stk), false);
+        assertEq(_buy(10e18, 45e18, false), 0.2e18);
+    }
+
     // ------------------------------------------------------------------ guardrails at custody
 
     function test_buy_overPerTradeCap_reverts() public {

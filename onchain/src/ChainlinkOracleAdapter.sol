@@ -21,7 +21,15 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     struct Feed {
         IAggregatorV3 aggregator;
         uint8 feedDecimals;
-        uint32 maxStaleness; // seconds; 0 disables the staleness check for this feed
+        /// @dev Freshness bound for the TRADE path. Should track the feed's in-session
+        ///      heartbeat — a trade must execute against a live price or not at all.
+        uint32 sessionStaleness;
+        /// @dev Freshness bound for the VALUATION path (NAV / deposit / redeem). Wider,
+        ///      because a 24/5 feed legitimately holds its last price through a closed
+        ///      session without a heartbeat. Must cover the longest expected close
+        ///      (a weekend plus a Monday holiday ≈ 72h) with headroom, while still
+        ///      failing closed on a feed that has genuinely died.
+        uint32 offHoursStaleness;
     }
 
     uint8 public immutable usdgDecimals;
@@ -30,16 +38,20 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     uint256 public immutable sequencerGracePeriod;
 
     mapping(address => Feed) public feeds;
-    /// @dev Owner circuit breaker per token. Chainlink's Robinhood feeds PAUSE during a
-    ///      stock split / corporate action, and a split-aware price needs the ERC-8056
-    ///      `uiMultiplier` (interface not yet published). Until then, the owner freezes the
-    ///      affected token for the event window: {price} fails closed, so NAV — and every
-    ///      mint/redeem that depends on it — reverts rather than transacting at a mispriced
-    ///      raw feed. `redeemInKind` (oracle-free, pro-rata) still exits. Unfreeze once the
-    ///      feed reflects the post-action price.
+    /// @dev Owner circuit breaker per token, retained as a manual backstop. The PRIMARY
+    ///      corporate-action guard is now the issuer's own `oraclePaused()` flag, read
+    ///      live in {_read} — Robinhood pauses a Stock Token's oracle while a split or
+    ///      other corporate action is processed and its multiplier is updated, and
+    ///      integrators are told to treat that as "price temporarily unavailable".
+    ///      This mapping covers anything the issuer flag does not (e.g. a feed the owner
+    ///      distrusts for another reason). When either trips, {price} fails closed, so
+    ///      NAV and every mint/redeem revert; `redeemInKind` (oracle-free, pro-rata)
+    ///      still exits.
     mapping(address => bool) public feedFrozen;
 
-    event FeedSet(address indexed token, address aggregator, uint32 maxStaleness);
+    event FeedSet(
+        address indexed token, address aggregator, uint32 sessionStaleness, uint32 offHoursStaleness
+    );
     event FeedFreezeSet(address indexed token, bool frozen);
 
     error NoFeed();
@@ -48,10 +60,17 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     error StalePrice();
     error SequencerDown();
     error GracePeriodNotOver();
-    /// @notice maxStaleness of 0 would silently disable the freshness guard — forbidden.
+    /// @notice A staleness bound of 0 would silently disable the freshness guard — forbidden.
     error ZeroStaleness();
+    /// @notice offHoursStaleness must be >= sessionStaleness; the valuation bound is the
+    ///         looser of the two by construction.
+    error BadStalenessOrder();
     /// @notice The aggregator reported an implausible decimals value.
     error BadFeedDecimals();
+    /// @notice The issuer paused this token's oracle for a corporate action. Per Robinhood
+    ///         Chain guidance this means "price temporarily unavailable" — not zero, and
+    ///         not a stale price to transact against.
+    error OraclePausedByIssuer();
 
     constructor(
         uint8 usdgDecimals_,
@@ -65,19 +84,32 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     }
 
     /// @notice Register/replace the Chainlink feed for a Stock Token.
-    /// @param maxStaleness Max age (seconds) of a round before {price} reverts. MUST be
-    ///        non-zero: a 0 here would silently disable the freshness guard the vault
-    ///        relies on to fail closed on a stalled feed.
-    function setFeed(address token, address aggregator, uint32 maxStaleness) external onlyOwner {
-        if (maxStaleness == 0) revert ZeroStaleness();
+    /// @param sessionStaleness Max round age (seconds) before {priceForTrade} reverts —
+    ///        set from the feed's in-session heartbeat.
+    /// @param offHoursStaleness Max round age before {price} reverts. Must be >=
+    ///        `sessionStaleness` and should exceed the longest market close, because a
+    ///        24/5 feed publishes no heartbeat while the session is shut.
+    /// @dev   Both MUST be non-zero: a 0 would silently disable the freshness guard the
+    ///        vault relies on to fail closed on a stalled feed.
+    function setFeed(
+        address token,
+        address aggregator,
+        uint32 sessionStaleness,
+        uint32 offHoursStaleness
+    ) external onlyOwner {
+        if (sessionStaleness == 0 || offHoursStaleness == 0) revert ZeroStaleness();
+        if (offHoursStaleness < sessionStaleness) revert BadStalenessOrder();
         uint8 fd = IAggregatorV3(aggregator).decimals();
         // A feed with 0 or >18 decimals is not a sane price feed (Chainlink USD feeds are
         // typically 8-dec). Reject it rather than compute a nonsensical scaling in {price}.
         if (fd == 0 || fd > 18) revert BadFeedDecimals();
         feeds[token] = Feed({
-            aggregator: IAggregatorV3(aggregator), feedDecimals: fd, maxStaleness: maxStaleness
+            aggregator: IAggregatorV3(aggregator),
+            feedDecimals: fd,
+            sessionStaleness: sessionStaleness,
+            offHoursStaleness: offHoursStaleness
         });
-        emit FeedSet(token, aggregator, maxStaleness);
+        emit FeedSet(token, aggregator, sessionStaleness, offHoursStaleness);
     }
 
     /// @notice Owner circuit breaker: freeze/unfreeze a token's price. Use during a stock
@@ -100,14 +132,36 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
         if (block.timestamp - startedAt <= sequencerGracePeriod) revert GracePeriodNotOver();
     }
 
-    /// @inheritdoc IPriceOracle
-    function price(address token) external view returns (uint256) {
+    /// @notice Read the issuer's own corporate-action pause flag on the Stock Token.
+    /// @dev    Low-level staticcall, not `try/catch`: a token that does not implement
+    ///         `oraclePaused()` may return empty or undecodable data, which `try/catch`
+    ///         would NOT catch. Absent or malformed => treated as "not paused", so mock
+    ///         and non-Robinhood tokens keep working; a clean `true` fails closed.
+    function _checkIssuerPause(address token) internal view {
+        (bool ok, bytes memory ret) =
+            token.staticcall(abi.encodeWithSignature("oraclePaused()"));
+        if (ok && ret.length == 32 && abi.decode(ret, (bool))) revert OraclePausedByIssuer();
+    }
+
+    /// @dev Shared read path. `staleness` is the caller's freshness budget — tight for
+    ///      execution, wide for valuation. Every other guard is identical, so a trade and
+    ///      a NAV read can never disagree about whether a feed is usable for any reason
+    ///      other than age.
+    ///
+    ///      Note the returned answer is the feed's **Total Return Value**: Robinhood's
+    ///      Chainlink feeds combine the underlying equity price with the multiplier read
+    ///      from the token contract. A split therefore moves price and multiplier together
+    ///      and leaves this series continuous — there is no separate multiplier to apply
+    ///      here, and NAV, stop-loss reference levels and PerfScore all inherit the same
+    ///      basis by reading through this adapter.
+    function _read(address token, uint32 staleness) internal view returns (uint256) {
         _checkSequencer();
 
         Feed memory f = feeds[token];
         if (address(f.aggregator) == address(0)) revert NoFeed();
-        // Owner-tripped circuit breaker for corporate actions / splits — fail closed.
+        // Owner backstop, then the issuer's live corporate-action flag — both fail closed.
         if (feedFrozen[token]) revert FeedFrozen();
+        _checkIssuerPause(token);
 
         (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) =
             f.aggregator.latestRoundData();
@@ -115,15 +169,25 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
         if (answer <= 0) revert BadPrice();
         if (answeredInRound < roundId) revert StalePrice();
         if (updatedAt == 0) revert StalePrice();
-        // maxStaleness is guaranteed non-zero at registration ({setFeed} rejects 0); the
+        // Both bounds are guaranteed non-zero at registration ({setFeed} rejects 0); the
         // `!= 0` here is a defensive belt-and-braces so an unset feed never skips the check.
         // forge-lint: disable-next-line(block-timestamp) — heartbeat freshness check
-        if (f.maxStaleness != 0 && block.timestamp - updatedAt > f.maxStaleness) {
+        if (staleness != 0 && block.timestamp - updatedAt > staleness) {
             revert StalePrice();
         }
 
         // USDG-native value of ONE WHOLE token = answer * 10^usdgDecimals / 10^feedDecimals.
         // forge-lint: disable-next-line(unsafe-typecast) — answer > 0 checked above
         return (uint256(answer) * (10 ** usdgDecimals)) / (10 ** f.feedDecimals);
+    }
+
+    /// @inheritdoc IPriceOracle
+    function price(address token) external view returns (uint256) {
+        return _read(token, feeds[token].offHoursStaleness);
+    }
+
+    /// @inheritdoc IPriceOracle
+    function priceForTrade(address token) external view returns (uint256) {
+        return _read(token, feeds[token].sessionStaleness);
     }
 }

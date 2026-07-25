@@ -12,7 +12,18 @@ pragma solidity ^0.8.28;
 ///         Example: token worth 50 USDG, USDG has 18 decimals -> returns 50e18;
 ///         USDG has 6 decimals -> returns 50e6.
 interface IPriceOracle {
+    /// @notice Valuation price — used for NAV, deposits and redemptions.
+    /// @dev    Robinhood Chain's tokenized-equity feeds are **24/5**: they may hold the
+    ///         last published price through a closed session with no heartbeat. A NAV
+    ///         that reverted on that would freeze the vault every night and weekend, so
+    ///         this accessor tolerates a held price up to the feed's off-hours bound.
+    ///         A held close price IS the correct mark while there is no venue to trade on.
     function price(address token) external view returns (uint256 priceE18);
+
+    /// @notice Execution price — used only on the trade path.
+    /// @dev    Strict freshness: a trade must never execute against a price held over a
+    ///         closed session. Reverts where {price} would still return.
+    function priceForTrade(address token) external view returns (uint256 priceE18);
 }
 
 /// @title ISwapAdapter

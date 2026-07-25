@@ -235,8 +235,13 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         return _allowed;
     }
 
+    /// @dev Execution price, used only on the trade path (guardrail evaluation, notional
+    ///      sizing, stop-loss comparison and the oracle-relative fill bound). Strict
+    ///      freshness: never execute against a price the feed held over a closed session.
+    ///      NAV/deposit/redeem deliberately read `oracle.price` instead, which tolerates a
+    ///      held close price so the vault does not freeze nightly on a 24/5 feed.
     function _price(address token) internal view returns (uint256) {
-        return oracle.price(token);
+        return oracle.priceForTrade(token);
     }
 
     /// @dev `_price` returns the USDG-native value of ONE WHOLE token, so we divide
