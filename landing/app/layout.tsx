@@ -8,7 +8,6 @@ import "./globals.css";
 const display = Archivo_Black({ weight: "400", subsets: ["latin"], variable: "--font-archivo", display: "swap" });
 const pixel = Press_Start_2P({ weight: "400", subsets: ["latin"], variable: "--font-press", display: "swap" });
 const mono = Space_Mono({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-space", display: "swap" });
-// cinematic homepage type: thin high-contrast serif + clean sans
 const serif = Cormorant_Garamond({
   weight: ["300", "400", "500"],
   style: ["normal", "italic"],
