@@ -255,6 +255,8 @@ contract RWAVaultTest is Test {
     }
 
     function test_redeemInKind_proRataAcrossCashAndTokens() public {
+        vm.prank(HUMAN);
+        cfg.setExitFeeBps(0); // isolate the pro-rata math from the exit fee (tested separately)
         _buy(15e18, 45e18, false); // 0.3 STK (within 25% cap), 85 USDG cash
         // Alice redeems half her shares in kind.
         uint256 half = vault.balanceOf(ALICE) / 2; // 50e18 of 100e18

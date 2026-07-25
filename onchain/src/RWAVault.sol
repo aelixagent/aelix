@@ -92,6 +92,7 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
     error Slippage();
     error ExecSlippage();
     error DailySellCap();
+    error TokenDecimalsChanged();
     error StillHeld();
     error FeedDown();
     error GuardrailViolation(Guardrails.Violation violation);
@@ -469,6 +470,12 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
     {
         if (!isAllowed[o.stockToken]) revert TokenNotAllowed();
         if (o.amountIn == 0) revert ZeroAmount();
+        // audit HIGH #5: pin the token's decimals. The oracle-relative exec bound and the
+        // sell-notional math use the decimals cached at allowlist time; a token that changes
+        // its reported decimals afterwards would miscalibrate them. Fail closed on any drift.
+        if (IERC20Metadata(o.stockToken).decimals() != tokenDecimals[o.stockToken]) {
+            revert TokenDecimalsChanged();
+        }
         _refreshDay();
 
         Guardrails.TradeContext memory c = _context(o);
@@ -575,13 +582,20 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         uint256 supply = totalSupply();
         _burn(msg.sender, shares); // reverts if caller lacks the shares
 
+        // audit HIGH #1: an EXIT FEE retained in the vault makes a deposit->redeemInKind
+        // round-trip against a heartbeat-lagged oracle NAV unprofitable — the arb gain on a
+        // small mispricing is smaller than the fee. The retained value accrues to the LPs who
+        // stay. Owner-set (agent can't reach it), capped at 1%.
+        uint256 feeBps = guardrailConfig.exitFeeBps();
         IERC20 usdg = IERC20(asset());
         uint256 usdgOut = (usdg.balanceOf(address(this)) * shares) / supply;
+        if (feeBps != 0) usdgOut -= (usdgOut * feeBps) / BPS;
 
         uint256 len = _allowed.length;
         uint256[] memory amts = new uint256[](len);
         for (uint256 i; i < len; ++i) {
-            amts[i] = (IERC20(_allowed[i]).balanceOf(address(this)) * shares) / supply;
+            uint256 gross = (IERC20(_allowed[i]).balanceOf(address(this)) * shares) / supply;
+            amts[i] = feeBps != 0 ? gross - (gross * feeBps) / BPS : gross;
         }
 
         if (usdgOut > 0) usdg.safeTransfer(receiver, usdgOut);

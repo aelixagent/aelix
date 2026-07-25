@@ -20,15 +20,17 @@ contract GuardrailConfig {
     /// @dev Default BUY execution-slippage tolerance: a buy's realized fill may sit at
     ///      most 2% below the oracle price. Owner-tunable via {setExecSlippageBps}.
     uint16 internal constant DEFAULT_EXEC_SLIPPAGE_BPS = 200;
-    /// @dev Default SELL tolerance is WIDER (15%): a de-risking sell must clear even when
-    ///      the pool trades a few % under a heartbeat-lagged oracle in a gap-down, so a
-    ///      guardrail never traps capital. Still blocks a catastrophic/attacker fill.
-    uint16 internal constant DEFAULT_SELL_SLIPPAGE_BPS = 1500;
+    /// @dev Default SELL tolerance 5% (audit HIGH #2/#3: 15% was too wide a drain surface —
+    ///      a self-sandwiching MEV bot / compromised agent could capture up to 15% per fill).
+    ///      5% still clears an ordinary de-risking sell when the pool trades a few % under a
+    ///      heartbeat-lagged oracle during a gap-down, while cutting the per-fill drain 3x.
+    ///      The aggregate per-day sell cap (maxDailySellBps) bounds cumulative selling on top.
+    uint16 internal constant DEFAULT_SELL_SLIPPAGE_BPS = 500;
     /// @dev The BUY tolerance can never be widened past 50% — it must stay a real bound.
     uint16 internal constant MAX_EXEC_SLIPPAGE_BPS = 5000;
-    /// @dev The SELL tolerance has a TIGHTER ceiling (20%): it is only a fill-QUALITY bound,
-    ///      not an aggregate/sizing cap, so it must not be openable to a book-dumping 50%.
-    uint16 internal constant MAX_SELL_SLIPPAGE_BPS = 2000;
+    /// @dev SELL tolerance ceiling 7% — even the owner cannot re-open the old wide drain
+    ///      surface. It is a fill-QUALITY bound, not a sizing cap (that is maxDailySellBps).
+    uint16 internal constant MAX_SELL_SLIPPAGE_BPS = 700;
     /// @dev Default per-day AGGREGATE sell cap: cumulative agent sell notional may not
     ///      exceed 50% of NAV in a single day. This is the SIZING/aggregate cap the
     ///      per-fill sell bound above is deliberately NOT — it bounds how much a
@@ -40,6 +42,12 @@ contract GuardrailConfig {
     ///      floor but never below it (never trap capital). Ceiling 100% for a deliberate
     ///      full liquidation. The agent can never reach the setter.
     uint16 internal constant MIN_DAILY_SELL_BPS = 2500;
+    /// @dev Default EXIT fee 0.2% (audit HIGH #1): retained in the vault on redeemInKind so a
+    ///      deposit->redeem round-trip against a heartbeat-lagged oracle NAV is unprofitable —
+    ///      the arb gain on a small mispricing is smaller than the fee. The retained value
+    ///      accrues to the REMAINING LPs. Owner-settable up to 1%.
+    uint16 internal constant DEFAULT_EXIT_FEE_BPS = 20;
+    uint16 internal constant MAX_EXIT_FEE_BPS = 100;
 
     address public owner;
     address public pendingOwner; // two-step handoff target (guards against fat-fingers)
@@ -47,6 +55,7 @@ contract GuardrailConfig {
     uint16 private _execSlippageBps;
     uint16 private _sellSlippageBps;
     uint16 private _dailySellBps;
+    uint16 private _exitFeeBps;
 
     event OwnerTransferred(address indexed from, address indexed to);
     event OwnershipTransferStarted(address indexed from, address indexed to);
@@ -54,6 +63,7 @@ contract GuardrailConfig {
     event ExecSlippageUpdated(uint16 bps);
     event SellSlippageUpdated(uint16 bps);
     event DailySellCapUpdated(uint16 bps);
+    event ExitFeeUpdated(uint16 bps);
 
     error NotOwner();
     error ZeroAddress();
@@ -72,11 +82,13 @@ contract GuardrailConfig {
         _execSlippageBps = DEFAULT_EXEC_SLIPPAGE_BPS;
         _sellSlippageBps = DEFAULT_SELL_SLIPPAGE_BPS;
         _dailySellBps = DEFAULT_DAILY_SELL_BPS;
+        _exitFeeBps = DEFAULT_EXIT_FEE_BPS;
         emit OwnerTransferred(address(0), owner_);
         emit CapsUpdated(caps_);
         emit ExecSlippageUpdated(DEFAULT_EXEC_SLIPPAGE_BPS);
         emit SellSlippageUpdated(DEFAULT_SELL_SLIPPAGE_BPS);
         emit DailySellCapUpdated(DEFAULT_DAILY_SELL_BPS);
+        emit ExitFeeUpdated(DEFAULT_EXIT_FEE_BPS);
     }
 
     /// @notice The active caps, consumed by the vault / executor before every order.
@@ -106,6 +118,13 @@ contract GuardrailConfig {
     ///         change; the agent can never widen it. `redeemInKind` is NOT subject to it.
     function maxDailySellBps() external view returns (uint16) {
         return _dailySellBps;
+    }
+
+    /// @notice Exit fee (bps) retained in the vault on `redeemInKind` — the anti-arbitrage
+    ///         guard against oracle-lag deposit/redeem round-trips (audit HIGH #1). The
+    ///         retained value accrues to remaining LPs. Owner-only to change; agent can't.
+    function exitFeeBps() external view returns (uint16) {
+        return _exitFeeBps;
     }
 
     /// @notice Owner-only cap update. The agent can never reach this.
@@ -138,6 +157,13 @@ contract GuardrailConfig {
         if (bps < MIN_DAILY_SELL_BPS || bps > 10_000) revert InvalidCaps();
         _dailySellBps = bps;
         emit DailySellCapUpdated(bps);
+    }
+
+    /// @notice Owner-only exit-fee update, capped at 1% (agent can never reach it).
+    function setExitFeeBps(uint16 bps) external onlyOwner {
+        if (bps > MAX_EXIT_FEE_BPS) revert InvalidCaps();
+        _exitFeeBps = bps;
+        emit ExitFeeUpdated(bps);
     }
 
     /// @notice Start a two-step ownership handoff. Ownership only moves once `to`

@@ -164,7 +164,7 @@ contract HardeningTest is Test {
         uint256 held = stk.balanceOf(address(vault));
         assertGt(held, 0);
 
-        adapter.setSlippage(1000); // 10% out — inside the 15% sell tolerance
+        adapter.setSlippage(400); // 4% out — inside the tightened 5% sell tolerance
         vm.prank(MANAGER);
         uint256 out =
             vault.executeTrade(RWAVault.TradeOrder(address(stk), false, held, 0, 0, false));
@@ -186,18 +186,18 @@ contract HardeningTest is Test {
 
     /// Sell tolerance is owner-set and wider than the buy tolerance by default.
     function test_sellSlippage_default_and_ownerOnly() public {
-        assertEq(cfg.maxSellSlippageBps(), 1500);
+        assertEq(cfg.maxSellSlippageBps(), 500); // tightened default (audit HIGH #2/#3)
         assertGt(cfg.maxSellSlippageBps(), cfg.maxExecSlippageBps());
         vm.prank(MANAGER);
         vm.expectRevert(GuardrailConfig.NotOwner.selector);
-        cfg.setSellSlippageBps(2000);
+        cfg.setSellSlippageBps(700);
         vm.prank(HUMAN);
-        cfg.setSellSlippageBps(2000);
-        assertEq(cfg.maxSellSlippageBps(), 2000);
-        // ...but it has a TIGHTER ceiling than buys (can't be opened to a 50% book-dump).
+        cfg.setSellSlippageBps(700);
+        assertEq(cfg.maxSellSlippageBps(), 700);
+        // ...and even the owner cannot re-open the old wide drain surface (7% ceiling).
         vm.prank(HUMAN);
         vm.expectRevert(GuardrailConfig.InvalidCaps.selector);
-        cfg.setSellSlippageBps(2001);
+        cfg.setSellSlippageBps(701);
     }
 
     /// Owner can tighten the bound; agent (manager) cannot touch it.
@@ -354,6 +354,25 @@ contract HardeningTest is Test {
         assertLt(v.convertToAssets(v.balanceOf(ATTACKER)), 1_000e18);
     }
 
+    // ──────────── H1d (audit HIGH #1): exit fee defeats the oracle-lag round-trip arb ────────────
+
+    /// The exit fee makes a deposit -> redeemInKind round-trip a guaranteed LOSS (the fee), so
+    /// the oracle-lag arbitrage — mint shares at a stale-low NAV, then extract real pro-rata
+    /// assets — cannot profit on a small mispricing. The retained fee stays for the LPs.
+    function test_exitFee_defeats_depositRedeemRoundTripArb() public {
+        // setUp funded ALICE with a 100e18 deposit (all cash). BOB round-trips deposit->redeem.
+        usdg.mint(BOB, 100e18);
+        vm.startPrank(BOB);
+        usdg.approve(address(vault), type(uint256).max);
+        uint256 shares = vault.deposit(100e18, BOB);
+        uint256 before = usdg.balanceOf(BOB);
+        vault.redeemInKind(shares, BOB);
+        vm.stopPrank();
+        uint256 back = usdg.balanceOf(BOB) - before;
+        assertLt(back, 100e18); // round-trip is a loss (the 0.2% exit fee) -> arb defeated
+        assertGe(back, 99e18); // but the fee is small, not punitive to honest redeemers
+    }
+
     // ───────────────────────── H2 — one bad feed can't brick the vault ─────────────────────────
 
     /// A zero-balance allowlisted token whose feed has died is skipped in NAV, so
@@ -430,6 +449,8 @@ contract HardeningTest is Test {
     /// redeemInKind is the always-solvent exit and uses raw balances only — it must
     /// keep working even when an oracle feed is down.
     function test_redeemInKind_worksWhenFeedDown() public {
+        vm.prank(HUMAN);
+        cfg.setExitFeeBps(0); // isolate the feed-down exit path from the exit fee
         oracle.setRevert(address(other), true);
         uint256 shares = vault.balanceOf(ALICE);
         vm.prank(ALICE);
