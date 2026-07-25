@@ -68,6 +68,35 @@ contract ChainlinkOracleAdapterTest is Test {
         assertEq(a.price(STK), 50e18);
     }
 
+    // ---------------------------------------------- corporate-action circuit breaker
+
+    /// Owner can freeze a token's price for a split / corporate action: price() then fails
+    /// closed (NAV, and every mint/redeem, reverts), and unfreezing restores it.
+    function test_freezeFeed_failsClosed_thenUnfreeze() public {
+        ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
+        MockAggregator feed = new MockAggregator(8, 50e8);
+        feed.set(50e8, block.timestamp);
+        vm.prank(HUMAN);
+        a.setFeed(STK, address(feed), 1 hours);
+        assertEq(a.price(STK), 50e18); // priced normally
+
+        vm.prank(HUMAN);
+        a.setFeedFrozen(STK, true);
+        vm.expectRevert(ChainlinkOracleAdapter.FeedFrozen.selector);
+        a.price(STK); // frozen -> fail closed
+
+        vm.prank(HUMAN);
+        a.setFeedFrozen(STK, false);
+        assertEq(a.price(STK), 50e18); // restored after the event
+    }
+
+    /// The circuit breaker is owner-only; the agent can never trip or clear it.
+    function test_freezeFeed_ownerOnly() public {
+        ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
+        vm.expectRevert(); // Ownable: caller is not the owner
+        a.setFeedFrozen(STK, true);
+    }
+
     function test_badPrice_reverts() public {
         ChainlinkOracleAdapter a = _adapter(18, address(0), 0);
         MockAggregator feed = new MockAggregator(8, 0);

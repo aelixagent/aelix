@@ -30,10 +30,20 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
     uint256 public immutable sequencerGracePeriod;
 
     mapping(address => Feed) public feeds;
+    /// @dev Owner circuit breaker per token. Chainlink's Robinhood feeds PAUSE during a
+    ///      stock split / corporate action, and a split-aware price needs the ERC-8056
+    ///      `uiMultiplier` (interface not yet published). Until then, the owner freezes the
+    ///      affected token for the event window: {price} fails closed, so NAV — and every
+    ///      mint/redeem that depends on it — reverts rather than transacting at a mispriced
+    ///      raw feed. `redeemInKind` (oracle-free, pro-rata) still exits. Unfreeze once the
+    ///      feed reflects the post-action price.
+    mapping(address => bool) public feedFrozen;
 
     event FeedSet(address indexed token, address aggregator, uint32 maxStaleness);
+    event FeedFreezeSet(address indexed token, bool frozen);
 
     error NoFeed();
+    error FeedFrozen();
     error BadPrice();
     error StalePrice();
     error SequencerDown();
@@ -70,6 +80,14 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
         emit FeedSet(token, aggregator, maxStaleness);
     }
 
+    /// @notice Owner circuit breaker: freeze/unfreeze a token's price. Use during a stock
+    ///         split / corporate action (raw feed mispriced) so NAV fails closed for the
+    ///         event window. Owner-only; the agent can never reach it.
+    function setFeedFrozen(address token, bool frozen) external onlyOwner {
+        feedFrozen[token] = frozen;
+        emit FeedFreezeSet(token, frozen);
+    }
+
     function _checkSequencer() internal view {
         if (address(sequencerUptimeFeed) == address(0)) return;
         (, int256 answer, uint256 startedAt,,) = sequencerUptimeFeed.latestRoundData();
@@ -88,6 +106,8 @@ contract ChainlinkOracleAdapter is IPriceOracle, Ownable2Step {
 
         Feed memory f = feeds[token];
         if (address(f.aggregator) == address(0)) revert NoFeed();
+        // Owner-tripped circuit breaker for corporate actions / splits — fail closed.
+        if (feedFrozen[token]) revert FeedFrozen();
 
         (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) =
             f.aggregator.latestRoundData();

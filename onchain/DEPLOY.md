@@ -100,8 +100,18 @@ Addresses are written to `deployments/latest.json` (consumed by the bridge).
 
 ## Known limitations (before real funds)
 
-- **Corporate actions:** the Robinhood Chainlink oracle *pauses* during splits/actions
-  and exposes an ERC-8056 `uiMultiplier`. `ChainlinkOracleAdapter` reads the raw price;
-  a split-aware version should apply the multiplier. Not handled in v1.
+- **Corporate actions / splits:** the Robinhood Chainlink oracle *pauses* during
+  splits/actions and exposes an ERC-8056 `uiMultiplier`. `ChainlinkOracleAdapter` reads the
+  raw price and does not yet apply the multiplier (its interface isn't published). Interim
+  mitigation shipped: the owner freezes the affected token with
+  `ChainlinkOracleAdapter.setFeedFrozen(token, true)` for the event window — `price()` then
+  fails closed, so NAV and every mint/redeem revert rather than transacting at a mispriced
+  raw feed (`redeemInKind` still exits pro-rata). Unfreeze once the feed reflects the
+  post-action price. A fully split-aware adapter follows once the ERC-8056 feed is confirmed.
+- **Oracle-latency entry/exit:** deposits value the stock leg via a heartbeat-lagged feed
+  while `redeemInKind` returns real pro-rata assets, so a stale window is arbitrageable.
+  Mitigated by a tight per-feed `maxStaleness` (set `FEED_STALENESS` to the feed's real
+  heartbeat, not the 3600s default) plus the freeze breaker above; a full fix (entry/exit
+  fee or TWAP) is a deliberate economics change, out of scope for v1.
 - **Sequencer feed** may be unavailable on testnet (see blocker #4).
 - **Not audited.** See `README.md` roadmap.
