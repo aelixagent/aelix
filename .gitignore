@@ -35,3 +35,7 @@ node_modules/
 .next/
 dist/
 out/
+
+# Local draft articles (not part of the shipped repo)
+article.md
+article-clean.md
