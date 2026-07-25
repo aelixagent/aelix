@@ -8,6 +8,10 @@
 *.pem
 .env
 .env.*
+# Filled-in production env (secrets) — keep local / set in the host dashboard
+.env.production
+.env.production.local
+**/.env.production
 
 # Secrets
 secrets/

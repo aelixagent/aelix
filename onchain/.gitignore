@@ -1,7 +1,7 @@
 # Foundry
 out/
 cache/
-broadcast/*/dry-run/
+broadcast/**/dry-run/
 .env
 
 # Vendored deps are checked in (plain, no submodules) for reproducibility;

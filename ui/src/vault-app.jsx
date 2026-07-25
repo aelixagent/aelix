@@ -62,8 +62,21 @@ const ERC20_ABI = parseAbi([
   'function approve(address,uint256) returns (bool)',
   'function decimals() view returns (uint8)',
   'function symbol() view returns (string)',
+  'function name() view returns (string)',
   'function mint(address,uint256)', // testnet mock only — no-op path on mainnet USDG
 ])
+
+// A small honesty badge: the testnet asset is a permissionless mock, not the
+// canonical Paxos USDG. Detect it from the token's own name() ("… (demo)") so
+// a future real-USDG testnet wire drops the badge automatically — no hardcoding.
+function DemoBadge() {
+  return (
+    <span
+      title="Mock USDG — testnet only, permissionless mint. Production wires the real Robinhood Chain USDG (Paxos, 6-dec)."
+      style={{ marginLeft: 6, fontSize: '0.6em', fontWeight: 800, letterSpacing: '0.08em', color: '#0b0b0b', background: '#c9f24d', borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', verticalAlign: 'middle' }}
+    >demo</span>
+  )
+}
 const AUTOSAVE_ABI = parseAbi([
   'function createPlan(uint256 amountPerPeriod, uint64 period, uint32 totalPeriods, uint16 maxDriftBps)',
   'function cancelPlan()',
@@ -170,9 +183,10 @@ export default function VaultApp() {
         pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'totalSupply' }),
         pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'maxWithdraw', args: [acct] }),
       ])
-      const [uDec, uSym, uBal, value] = await Promise.all([
+      const [uDec, uSym, uName, uBal, value] = await Promise.all([
         pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'decimals' }),
         pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'symbol' }),
+        pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'name' }).catch(() => ''),
         pc.readContract({ address: asset, abi: ERC20_ABI, functionName: 'balanceOf', args: [acct] }),
         pc.readContract({ address: vault, abi: VAULT_ABI, functionName: 'convertToAssets', args: [shares] }).catch(() => 0n),
       ])
@@ -183,7 +197,7 @@ export default function VaultApp() {
           plan = { amountPerPeriod: p[0], period: p[1], nextExec: p[2], totalPeriods: p[3], periodsDone: p[4], active: p[5] }
         } catch { /* no plan */ }
       }
-      setPos({ symbol, vdec, asset, shares, value, nav, supply, maxWd, uDec, uSym, uBal, plan })
+      setPos({ symbol, vdec, asset, shares, value, nav, supply, maxWd, uDec, uSym, uName, uBal, plan })
     } catch (e) {
       // A failed contract read must surface, not reject unhandled and leave stale/empty state.
       setErr((e.shortMessage || e.message || 'Could not read vault state').slice(0, 200))
@@ -334,6 +348,8 @@ export default function VaultApp() {
   const uSym = pos?.uSym || 'USDG'
   // real share-token symbol from the vault's symbol() read; never invent a ticker
   const vSym = pos?.symbol || 'shares'
+  // true when the vault asset is the testnet mock (name contains "demo"/"mock")
+  const isDemoAsset = /\(demo\)|demo|mock/i.test(pos?.uName || '')
 
   // per-tab field wiring (Deposit / Withdraw / Redeem share one field UI)
   let field = null
@@ -400,7 +416,7 @@ export default function VaultApp() {
                     value={field.value} disabled={!account}
                     onChange={(e) => field.set(e.target.value.replace(/[^0-9.]/g, ''))}
                   />
-                  <span className="vfield-token"><span className="tk">{field.token.replace(/^v/, '')[0]}</span>{field.token}</span>
+                  <span className="vfield-token"><span className="tk">{field.token.replace(/^v/, '')[0]}</span>{field.token}{field.token === uSym && isDemoAsset && <DemoBadge />}</span>
                 </div>
                 <div className="vfield-bottom">
                   <span className="vfield-bal">{field.balLabel}:{' '}
@@ -437,7 +453,7 @@ export default function VaultApp() {
                       <input className="vfield-input" inputMode="decimal" placeholder="0" value={saveAmt} disabled={!account}
                         aria-label={`Auto-deposit amount each period in ${uSym}`}
                         onChange={(e) => setSaveAmt(e.target.value.replace(/[^0-9.]/g, ''))} />
-                      <span className="vfield-token"><span className="tk">U</span>{uSym}</span>
+                      <span className="vfield-token"><span className="tk">U</span>{uSym}{isDemoAsset && <DemoBadge />}</span>
                     </div>
                   </div>
                   <div className="vauto-row">
@@ -492,7 +508,7 @@ export default function VaultApp() {
             </div>
           )}
 
-          <div className="vdisc">Testnet preview · not audited · not for US persons · not investment advice.</div>
+          <div className="vdisc">Testnet preview · not audited · not for US persons · not investment advice.{isDemoAsset ? ' · USDG is a testnet mock (permissionless mint)' : ''}</div>
         </div>
       </main>
 
