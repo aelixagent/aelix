@@ -65,6 +65,7 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
     mapping(address => uint256) public stopPriceE18; //  last stop set per token
 
     uint8 public ordersToday;
+    uint256 public soldTodayUsdg; // cumulative agent SELL notional (USDG) today; resets daily
     uint256 public currentDay;
     uint256 public dayStartPps; // price-per-share at day start — the flow-invariant halt baseline
     uint256 public lastPps; // last observed price-per-share; carried into the next day's baseline
@@ -80,6 +81,7 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         address indexed token, bool isBuy, uint256 amountIn, uint256 amountOut, uint8 ordersToday
     );
     event RedeemedInKind(address indexed owner, address indexed receiver, uint256 shares);
+    event RedeemLegSkipped(address indexed token, uint256 amount);
     event Halted(uint256 indexed day);
 
     error NotManager();
@@ -89,6 +91,7 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
     error InsufficientPosition();
     error Slippage();
     error ExecSlippage();
+    error DailySellCap();
     error StillHeld();
     error FeedDown();
     error GuardrailViolation(Guardrails.Violation violation);
@@ -434,6 +437,7 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         if (today != currentDay) {
             currentDay = today;
             ordersToday = 0;
+            soldTodayUsdg = 0; // aggregate sell cap is per-day; reset with the day roll
             // M1 (fixed): anchor to the prior day's last-observed price-per-share, which
             // is invariant to deposits/withdrawals. An overnight/weekend drawdown is
             // still counted (per-share value moved), but ordinary share flows can neither
@@ -486,6 +490,16 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
             IERC20 token = IERC20(o.stockToken);
             uint256 qtyBefore = token.balanceOf(address(this));
             if (qtyBefore < o.amountIn) revert InsufficientPosition();
+            // H-1 (audit HIGH): aggregate per-day sell cap — the SIZING bound the per-fill
+            // exec guard is deliberately not. Bounds how much a compromised manager key can
+            // bleed via self-sandwiched sells in one day. Ordinary de-risking and the
+            // uncapped in-kind `redeemInKind` exit stay open, so capital is never trapped.
+            uint256 soldAfter = soldTodayUsdg
+                + (o.amountIn * _price(o.stockToken)) / (10 ** tokenDecimals[o.stockToken]);
+            if (soldAfter * BPS > uint256(guardrailConfig.maxDailySellBps()) * c.nav) {
+                revert DailySellCap();
+            }
+            soldTodayUsdg = soldAfter;
             token.forceApprove(address(swapAdapter), o.amountIn);
             amountOut = swapAdapter.swap(
                 o.stockToken, address(asset()), o.amountIn, o.minAmountOut, address(this)
@@ -561,9 +575,25 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
 
         if (usdgOut > 0) usdg.safeTransfer(receiver, usdgOut);
         for (uint256 i; i < len; ++i) {
-            uint256 cb = costBasisUsdg[_allowed[i]];
-            if (cb > 0) costBasisUsdg[_allowed[i]] = cb - (cb * shares) / supply;
-            if (amts[i] > 0) IERC20(_allowed[i]).safeTransfer(receiver, amts[i]);
+            address tok = _allowed[i];
+            uint256 amt = amts[i];
+            if (amt == 0) continue;
+            // M-1 (audit MEDIUM): a single transfer-restricted / paused / blacklisting Stock
+            // Token must NEVER brick the flagship always-solvent exit for everyone. Do a
+            // BEST-EFFORT per-leg transfer: mirror SafeERC20's success test (call didn't
+            // revert AND (empty return OR returns true)); a leg that reverts or returns false
+            // is SKIPPED, not propagated. The holder still receives cash + every transferable
+            // token; a skipped token stays in the vault, so costBasis is only reduced on a
+            // leg that actually left (no accounting drift).
+            (bool success, bytes memory ret) =
+                tok.call(abi.encodeWithSelector(IERC20.transfer.selector, receiver, amt));
+            bool ok = success && (ret.length == 0 || (ret.length >= 32 && abi.decode(ret, (bool))));
+            if (ok) {
+                uint256 cb = costBasisUsdg[tok];
+                if (cb > 0) costBasisUsdg[tok] = cb - (cb * shares) / supply;
+            } else {
+                emit RedeemLegSkipped(tok, amt);
+            }
         }
         emit RedeemedInKind(msg.sender, receiver, shares);
     }

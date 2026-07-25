@@ -151,9 +151,14 @@ contract Deploy is Script {
         // Two desk-run attestations so PerfScore has a series. Seed via the SQUAT-PROOF
         // self-namespace (attestSelf) — canonical reads (PerfScore) only see the self-log
         // after M6, so a raw attest() here would be invisible to every consumer.
+        // HONESTY: attest the REAL live vault NAV, never a hand-picked number. A fresh demo
+        // has made no profit, so the seeded series is FLAT (+0%). The track record must never
+        // show a fabricated return — real P&L only accrues once the desk actually trades and
+        // the bridge attests live NAV over time (onchain/bridge/index.mjs --attest).
         bytes32 label = _label(address(s.vault));
-        s.registry.attestSelf(label, 1, 10_000e18, int256(0), keccak256("run-1"), "");
-        s.registry.attestSelf(label, 2, 10_250e18, int256(250e18), keccak256("run-2"), "");
+        uint256 realNav = s.vault.navUsdg();
+        s.registry.attestSelf(label, 1, realNav, int256(0), keccak256("run-1"), "");
+        s.registry.attestSelf(label, 2, realNav, int256(0), keccak256("run-2"), "");
     }
 
     function _label(address vault) internal pure returns (bytes32) {

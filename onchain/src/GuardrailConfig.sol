@@ -29,18 +29,31 @@ contract GuardrailConfig {
     /// @dev The SELL tolerance has a TIGHTER ceiling (20%): it is only a fill-QUALITY bound,
     ///      not an aggregate/sizing cap, so it must not be openable to a book-dumping 50%.
     uint16 internal constant MAX_SELL_SLIPPAGE_BPS = 2000;
+    /// @dev Default per-day AGGREGATE sell cap: cumulative agent sell notional may not
+    ///      exceed 50% of NAV in a single day. This is the SIZING/aggregate cap the
+    ///      per-fill sell bound above is deliberately NOT — it bounds how much a
+    ///      compromised manager key can bleed via self-sandwiched sells per day, while
+    ///      leaving ordinary de-risking and the uncapped in-kind exit fully open.
+    uint16 internal constant DEFAULT_DAILY_SELL_BPS = 5000;
+    /// @dev Floor 25%: a single position is capped at 25% concentration, so one full
+    ///      position can always be exited in a day — the owner may tighten toward this
+    ///      floor but never below it (never trap capital). Ceiling 100% for a deliberate
+    ///      full liquidation. The agent can never reach the setter.
+    uint16 internal constant MIN_DAILY_SELL_BPS = 2500;
 
     address public owner;
     address public pendingOwner; // two-step handoff target (guards against fat-fingers)
     Guardrails.RiskCaps private _caps;
     uint16 private _execSlippageBps;
     uint16 private _sellSlippageBps;
+    uint16 private _dailySellBps;
 
     event OwnerTransferred(address indexed from, address indexed to);
     event OwnershipTransferStarted(address indexed from, address indexed to);
     event CapsUpdated(Guardrails.RiskCaps caps);
     event ExecSlippageUpdated(uint16 bps);
     event SellSlippageUpdated(uint16 bps);
+    event DailySellCapUpdated(uint16 bps);
 
     error NotOwner();
     error ZeroAddress();
@@ -58,10 +71,12 @@ contract GuardrailConfig {
         _caps = caps_;
         _execSlippageBps = DEFAULT_EXEC_SLIPPAGE_BPS;
         _sellSlippageBps = DEFAULT_SELL_SLIPPAGE_BPS;
+        _dailySellBps = DEFAULT_DAILY_SELL_BPS;
         emit OwnerTransferred(address(0), owner_);
         emit CapsUpdated(caps_);
         emit ExecSlippageUpdated(DEFAULT_EXEC_SLIPPAGE_BPS);
         emit SellSlippageUpdated(DEFAULT_SELL_SLIPPAGE_BPS);
+        emit DailySellCapUpdated(DEFAULT_DAILY_SELL_BPS);
     }
 
     /// @notice The active caps, consumed by the vault / executor before every order.
@@ -85,6 +100,14 @@ contract GuardrailConfig {
         return _sellSlippageBps;
     }
 
+    /// @notice Max cumulative SELL notional (bps of NAV) the agent may execute per day.
+    ///         The per-fill sell bound is a fill-QUALITY guard; THIS is the aggregate
+    ///         SIZING cap that bounds a compromised key's daily bleed. Owner-only to
+    ///         change; the agent can never widen it. `redeemInKind` is NOT subject to it.
+    function maxDailySellBps() external view returns (uint16) {
+        return _dailySellBps;
+    }
+
     /// @notice Owner-only cap update. The agent can never reach this.
     function setCaps(Guardrails.RiskCaps calldata caps_) external onlyOwner {
         _validate(caps_);
@@ -106,6 +129,15 @@ contract GuardrailConfig {
         if (bps == 0 || bps > MAX_SELL_SLIPPAGE_BPS) revert InvalidCaps();
         _sellSlippageBps = bps;
         emit SellSlippageUpdated(bps);
+    }
+
+    /// @notice Owner-only per-day aggregate SELL cap update (agent can never reach it).
+    ///         Bounded to [25%, 100%] of NAV: never below one full position (no capital
+    ///         trap), never removed entirely.
+    function setDailySellBps(uint16 bps) external onlyOwner {
+        if (bps < MIN_DAILY_SELL_BPS || bps > 10_000) revert InvalidCaps();
+        _dailySellBps = bps;
+        emit DailySellCapUpdated(bps);
     }
 
     /// @notice Start a two-step ownership handoff. Ownership only moves once `to`

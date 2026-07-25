@@ -11,6 +11,21 @@ import { MockERC20, MockOracle, MockSwapAdapter } from "../src/mocks/Mocks.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { SessionKeyExecutor } from "../src/SessionKeyExecutor.sol";
 import { DeskRegistry } from "../src/DeskRegistry.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/// @dev A Stock Token whose transfer() always reverts — simulates a paused / blacklisting /
+///      transfer-restricted RWA token that must never be able to brick redeemInKind.
+contract RevertingOnTransfer is ERC20 {
+    constructor() ERC20("Blacklist Token", "BLK") { }
+
+    function mint(address to, uint256 amt) external {
+        _mint(to, amt);
+    }
+
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert("blacklisted");
+    }
+}
 
 /// @notice Regression tests for the audit HIGH findings:
 ///   H1 — a trade's realized fill is bounded to the ORACLE price, independent of the
@@ -216,6 +231,86 @@ contract HardeningTest is Test {
         vm.expectRevert(GuardrailConfig.InvalidCaps.selector);
         cfg.setExecSlippageBps(6000); // > 50% => rejected
         vm.stopPrank();
+    }
+
+    // ────────── H1b (audit HIGH): aggregate per-day sell cap bounds a compromised key ──────────
+
+    /// The per-fill exec bound is a fill-QUALITY guard, not a sizing cap. This test proves
+    /// the added AGGREGATE cap: a compromised manager cannot dump more than 50% of NAV in
+    /// sell notional per day — even with every fill inside the per-fill bound. De-risking
+    /// within the cap still clears, and the aggregate resets the next day.
+    function test_dailySellCap_blocksBookDump_butResetsNextDay() public {
+        _buy(15e18); // 0.3 stk @ 50 = 15 USDG; NAV stays 100
+        oracle.setPrice(address(stk), 500e18); // position now 0.3*500 = 150 USDG; NAV 235
+        // Daily sell cap = 50% * 235 = 117.5 USDG; dumping the whole 0.3 stk (150) exceeds it.
+        vm.prank(MANAGER);
+        vm.expectRevert(RWAVault.DailySellCap.selector);
+        vault.executeTrade(RWAVault.TradeOrder(address(stk), false, 0.3e18, 0, 0, false));
+
+        // A sell within the cap clears (100 USDG < 117.5)...
+        _sell(0.2e18);
+        // ...but one that pushes the day's cumulative over the cap reverts (100 + 25 > 117.5).
+        vm.prank(MANAGER);
+        vm.expectRevert(RWAVault.DailySellCap.selector);
+        vault.executeTrade(RWAVault.TradeOrder(address(stk), false, 0.05e18, 0, 0, false));
+
+        // Next day the aggregate resets, so the same de-risking sell clears.
+        vm.warp(block.timestamp + 1 days);
+        uint256 out = _sell(0.05e18);
+        assertGt(out, 0);
+        assertEq(vault.soldTodayUsdg(), 25e18); // fresh day: only this sell counted
+    }
+
+    /// The cap bounds the AGENT, never the depositor: even with the day's cap fully spent,
+    /// redeemInKind still exits in-kind — capital is never trapped.
+    function test_dailySellCap_doesNotTrap_redeemInKind() public {
+        _buy(15e18);
+        oracle.setPrice(address(stk), 500e18);
+        vm.prank(MANAGER); // the agent's book-dump is blocked
+        vm.expectRevert(RWAVault.DailySellCap.selector);
+        vault.executeTrade(RWAVault.TradeOrder(address(stk), false, 0.3e18, 0, 0, false));
+
+        uint256 shares = vault.balanceOf(ALICE);
+        vm.prank(ALICE);
+        vault.redeemInKind(shares, ALICE); // the holder still exits fully
+        assertEq(vault.balanceOf(ALICE), 0);
+        assertGt(stk.balanceOf(ALICE), 0); // received the stock leg pro-rata
+    }
+
+    /// The daily sell cap is owner-only and bounded to [25%, 100%]; the agent can't touch it.
+    function test_dailySellCap_ownerOnly_andBounded() public {
+        assertEq(cfg.maxDailySellBps(), 5000);
+        vm.prank(MANAGER);
+        vm.expectRevert(GuardrailConfig.NotOwner.selector);
+        cfg.setDailySellBps(3000);
+        vm.startPrank(HUMAN);
+        vm.expectRevert(GuardrailConfig.InvalidCaps.selector);
+        cfg.setDailySellBps(2000); // below the 25% floor => rejected (would trap capital)
+        vm.expectRevert(GuardrailConfig.InvalidCaps.selector);
+        cfg.setDailySellBps(11000); // above 100% => rejected
+        cfg.setDailySellBps(3000); // 30% ok
+        assertEq(cfg.maxDailySellBps(), 3000);
+        vm.stopPrank();
+    }
+
+    /// M-1 (audit MEDIUM): a single transfer-restricted Stock Token must not brick the
+    /// always-solvent exit — the reverting leg is skipped, the holder still gets cash and
+    /// every transferable token, and the restricted token stays in the vault.
+    function test_redeemInKind_skipsRestrictedToken_neverBricks() public {
+        RevertingOnTransfer bad = new RevertingOnTransfer();
+        oracle.setPrice(address(bad), PRICE);
+        vm.prank(HUMAN);
+        vault.allowToken(address(bad));
+        bad.mint(address(vault), 1e18); // vault now holds a restricted token
+
+        uint256 usdgBefore = usdg.balanceOf(ALICE);
+        uint256 shares = vault.balanceOf(ALICE);
+        vm.prank(ALICE);
+        vault.redeemInKind(shares, ALICE); // MUST NOT revert despite the bad leg
+        assertEq(vault.balanceOf(ALICE), 0);
+        assertGt(usdg.balanceOf(ALICE), usdgBefore); // cash leg delivered
+        assertEq(bad.balanceOf(ALICE), 0); // restricted leg skipped...
+        assertEq(bad.balanceOf(address(vault)), 1e18); // ...and stays in the vault
     }
 
     // ───────────────────────── H2 — one bad feed can't brick the vault ─────────────────────────

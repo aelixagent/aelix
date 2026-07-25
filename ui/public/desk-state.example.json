@@ -38,11 +38,11 @@
       "explorer": "https://explorer.testnet.chain.robinhood.com"
     },
     "contracts": {
-      "guardrails": "0x89E695256371EBfa50b2543d3159E252EA7B12D9",
-      "vault": "0xdDff78f232131A3D5B40cC6dEfAfeed3266394FB",
-      "attestor": "0x69fb5257FBbf8d4Eb4f38Fce225b3EEb2397F6fC",
-      "executor": "0xbAD2D89f7c7684A19d0feF1D46602B8Bd673f495",
-      "autosave": "0x0813f9766692b51F96bcEf3E23d04D968a2Fa48f"
+      "guardrails": "0x65858D9513BF65757aeFca2d50af18E7CAdA355a",
+      "vault": "0x9b1dde1cf66Ce7567D49511dE1e2396658A6D212",
+      "attestor": "0x107c0f4E51138d512751093D80719196D09E6B9F",
+      "executor": "0xdd0d95160b43726EE2B764f5549EAFCEfbfc73dD",
+      "autosave": "0x8F099C77Da2a7f159af67518d6dfb378b6657723"
     },
     "vault": {
       "symbol": null,

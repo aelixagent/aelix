@@ -7,27 +7,30 @@ in [`../CLAUDE.md`](../CLAUDE.md) and [`../strategies/README.md`](../strategies/
 are **enforced by the contract, not merely promised by a prompt** — and every desk
 run leaves a tamper-proof track record.
 
-> **Status: testnet / preview.** 122 passing tests (unit + fuzz + invariant) and a
+> **Status: testnet / preview.** 148 passing tests (unit + fuzz + invariant) and a
 > **live deployment on Robinhood Chain testnet** (chain 46630). The periphery (USDG,
 > Stock Token, price oracle, swap adapter) is **mocked** for this demo; a production
-> deploy points the vault at real Robinhood Chain addresses. **Not audited. Do not use
-> with real funds.**
+> deploy points the vault at real Robinhood Chain addresses. **No third-party audit yet.
+> Do not use with real funds.**
 
 ## Live on Robinhood Chain testnet (preview)
 
 Deployed & verified on chain **46630** — the guardrails were confirmed enforcing live
 (an over-cap buy reverts `PerTradeCap`, a stop-less buy reverts `MissingStop`, a
-compliant buy is allowed). Periphery is **mock** (demo USDG/oracle/swap), so this is a
+compliant buy is allowed). Hardened after an internal audit: an aggregate **per-day
+sell cap** bounds a compromised manager key, `redeemInKind` is resilient to a
+transfer-restricted token, and the seeded track record attests **real** NAV (no
+fabricated return). Periphery is **mock** (demo USDG/oracle/swap), so this is a
 functional preview, **not** real RWA exposure.
 
 | Contract | Address |
 |---|---|
-| RWAVault (vAELIX) | [`0xFA69…E500`](https://explorer.testnet.chain.robinhood.com/address/0xFA698f14C8D7540d35E63c0AC3685AeEc957E500) |
-| GuardrailConfig | [`0x7Ab7…0E5b`](https://explorer.testnet.chain.robinhood.com/address/0x7Ab7a94200153C473Fc35F413407aedA60D30E5b) |
-| DeskRegistry | [`0x381F…2ac6`](https://explorer.testnet.chain.robinhood.com/address/0x381FE4f75E5e051C90D60ba3a7553D9Cb6062ac6) |
-| PerfScore | [`0xda51…8fD0`](https://explorer.testnet.chain.robinhood.com/address/0xda5114a29B6D1C865e204AbCd9Bd39dc8d718fD0) |
-| SessionKeyExecutor | [`0x4fe4…5DF4`](https://explorer.testnet.chain.robinhood.com/address/0x4fe433Ea2234ecFc69Ef7Ce817e844D6217c5DF4) |
-| AelixAutosave | [`0x8e0A…44B0`](https://explorer.testnet.chain.robinhood.com/address/0x8e0AcAc14594346053809837C1432f522AE044B0) |
+| RWAVault (vAELIX) | [`0x9b1d…D212`](https://explorer.testnet.chain.robinhood.com/address/0x9b1dde1cf66Ce7567D49511dE1e2396658A6D212) |
+| GuardrailConfig | [`0x6585…355a`](https://explorer.testnet.chain.robinhood.com/address/0x65858D9513BF65757aeFca2d50af18E7CAdA355a) |
+| DeskRegistry | [`0x107c…6B9F`](https://explorer.testnet.chain.robinhood.com/address/0x107c0f4E51138d512751093D80719196D09E6B9F) |
+| PerfScore | [`0x91F0…8fdF`](https://explorer.testnet.chain.robinhood.com/address/0x91F07Ee8ecbb4849a213d76F33ecD22380ff8fdF) |
+| SessionKeyExecutor | [`0xdd0d…73dD`](https://explorer.testnet.chain.robinhood.com/address/0xdd0d95160b43726EE2B764f5549EAFCEfbfc73dD) |
+| AelixAutosave | [`0x8F09…7723`](https://explorer.testnet.chain.robinhood.com/address/0x8F099C77Da2a7f159af67518d6dfb378b6657723) |
 
 Mainnet: **not deployed** — pending real periphery wiring + audit.
 
@@ -114,7 +117,7 @@ CLAUDE.md's "present a preview, then get approval".
 
 ```bash
 cd onchain
-forge test            # 122 tests across 11 suites
+forge test            # 148 tests across 12 suites
 forge test --gas-report
 ```
 
