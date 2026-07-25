@@ -193,12 +193,50 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         return super.redeem(shares, receiver, owner_);
     }
 
+    /// @notice Cap total assets under management, in USDG. 0 == uncapped.
+    /// @dev    The staged-rollout control: open with a small ceiling and raise it in steps,
+    ///         so a bug that survived review is bounded by what the vault was allowed to
+    ///         hold rather than by how much the internet decided to deposit. Enforced
+    ///         through {maxDeposit}/{maxMint}, which ERC-4626's own `deposit`/`mint` check,
+    ///         so there is no path around it.
+    ///
+    ///         Deliberately does NOT restrict the exit side: lowering the cap below current
+    ///         NAV simply stops new money, it never traps existing depositors.
+    uint256 public depositCap;
+
+    event DepositCapSet(uint256 cap);
+
+    /// @notice Set (or lift, with 0) the total-assets ceiling. Owner-only.
+    function setDepositCap(uint256 cap) external onlyOwner {
+        depositCap = cap;
+        emit DepositCapSet(cap);
+    }
+
+    /// @dev USDG still accepted before the cap binds. Uses {totalAssets} (NAV), so the cap is
+    ///      a true value ceiling rather than a count of deposits, and it tightens
+    ///      automatically as positions appreciate.
+    function remainingCapacity() public view returns (uint256) {
+        uint256 cap = depositCap;
+        if (cap == 0) return type(uint256).max;
+        uint256 nav = totalAssets();
+        return nav >= cap ? 0 : cap - nav;
+    }
+
     function maxDeposit(address receiver) public view override returns (uint256) {
-        return paused() ? 0 : super.maxDeposit(receiver);
+        if (paused()) return 0;
+        uint256 max = super.maxDeposit(receiver);
+        uint256 room = remainingCapacity();
+        return room < max ? room : max;
     }
 
     function maxMint(address receiver) public view override returns (uint256) {
-        return paused() ? 0 : super.maxMint(receiver);
+        if (paused()) return 0;
+        uint256 max = super.maxMint(receiver);
+        if (depositCap == 0) return max;
+        // Convert the remaining USDG headroom into shares so mint() is capped consistently
+        // with deposit(); rounding down keeps the cap from being nudged over by a rounding.
+        uint256 room = convertToShares(remainingCapacity());
+        return room < max ? room : max;
     }
 
     function allowToken(address token) external onlyOwner {

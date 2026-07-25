@@ -76,9 +76,16 @@ contract MockOracle is IPriceOracle {
 ///      "price temporarily unavailable".
 contract MockPausableStockToken {
     bool public oraclePaused;
+    /// @dev ERC-8056 Scaled UI Amount Extension. 1e18 == neutral, which is what every live
+    ///      Robinhood Stock Token reads today; a corporate action moves it.
+    uint256 public uiMultiplier = 1e18;
 
     function setOraclePaused(bool p) external {
         oraclePaused = p;
+    }
+
+    function setUiMultiplier(uint256 m) external {
+        uiMultiplier = m;
     }
 }
 

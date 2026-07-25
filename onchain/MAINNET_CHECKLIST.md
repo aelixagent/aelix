@@ -31,33 +31,48 @@ Postures the gate additionally refuses, beyond the five below:
 - **Duplicate Stock Token or duplicate feed** — a repeated feed means one token is priced
   by another's feed, silently mispricing a whole position.
 - USDG listed as a Stock Token.
-- `FEED_STALENESS < 60s`, inverted staleness bounds, or
-  `FEED_STALENESS_OFFHOURS > 7d` (an open-ended licence to transact on a dead feed).
+- `FEED_STALENESS < 3600s` (below the live feeds' own 24h heartbeat), inverted staleness
+  bounds, `FEED_STALENESS_OFFHOURS < 3d` (breaks NAV every weekend) or `> 7d` (an
+  open-ended licence to transact on a dead feed).
 
 - [ ] **`OWNER`** — Safe multisig (2-of-3 min) + timelock (24–48h) on chain 4663.
       Owns `GuardrailConfig`; the only party that may change caps. Never an EOA.
-- [ ] **Network access to Robinhood Chain.** On the current connection every
-      `*.robinhood.com` host resolves to `103.123.248.32`
-      (`trustpositif.moratelindo.io`) and refuses the connection — an ISP-level DNS
-      block, not a project problem. Mainnet RPC and the docs are both unreachable, so
-      no on-chain verification can be done from here. Needs a VPN or a resolver such as
-      1.1.1.1 / 8.8.8.8 before any address can be confirmed or any deploy broadcast.
-- [ ] **`SEQUENCER_FEED`** — Chainlink L2 Sequencer Uptime Feed on RH Chain.
-      RH docs reference the pattern (`latestRoundData()`, require status `0` + grace),
-      but the **proxy address is not published in the public docs**; it is not on
-      Chainlink's general L2-sequencer-feeds page either. Source it from the Chainlink
-      feed registry or via `chainlink_data_feeds@smartcontract.com` before deploying.
-      Adapter side is already implemented (`_checkSequencer`).
-      ⚠️ Do not invent this address. No feed → no mainnet deploy.
-- [ ] **`USDG`** — `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` (6-dec).
-      Confirm `decimals()` on-chain; an 18-dec look-alike "Global Dollar" exists.
-      Script already reads it live rather than trusting the symbol.
-- [ ] **`ROUTER`** — Uniswap V2 Router02 `0x89e5db8b5aa49aa85ac63f691524311aeb649eba`.
-      Additionally verify each pair actually has depth; thin pools defeat the slippage band.
-- [ ] **`STOCKS` + `FEEDS`** — real Stock Token addresses and their Chainlink feed
-      proxies, equal length ([:101](script/DeployProduction.s.sol#L101)).
-      Start narrow: 3–5 of the deepest names only.
-- [ ] **`FEED_STALENESS`** — must NOT stay at the 3600s default. See item C1.
+- [x] **Network access to Robinhood Chain.** Was blocked at ISP level (every
+      `*.robinhood.com` host resolved to `trustpositif.moratelindo.io`). Resolved via VPN;
+      `eth_chainId` on the mainnet RPC now returns `0x1237` (4663). Note the deploy machine
+      needs the same access, or `--broadcast` will fail to connect.
+- [x] **`SEQUENCER_FEED`** — **no longer a blocker.** Replaced by a 24/7 crypto-feed
+      liveness quorum (see `ChainlinkOracleAdapter.livenessRefs` and MAINNET_ADDRESSES.md).
+      The gate now requires `SEQUENCER_FEED` **or** >= 2 liveness refs, and refuses neither.
+      Original finding, still accurate and worth chasing with Chainlink: Confirmed absent:
+      Chainlink's `feeds-robinhood-mainnet.json` holds 56 feeds and **zero**
+      sequencer/uptime entries, and RH Chain is absent from Chainlink's L2-sequencer-feeds
+      page. RH docs describe the consume pattern but publish no address. Needs an answer
+      from Chainlink (`chainlink_data_feeds@smartcontract.com`) — it cannot be resolved by
+      reading the chain. Adapter and gate are both ready (`_checkSequencer`; the gate also
+      refuses to deploy while the sequencer reads DOWN).
+      ⚠️ Do not substitute an unrelated feed and do not weaken the gate to route around
+      it — this check is what stops the vault trading against a frozen price in an outage.
+- [x] **`USDG`** — `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`. **Verified on-chain:**
+      `decimals()` = 6, `symbol()` = `USDG`, `name()` = `Global Dollar`. The gate now pins
+      decimals to 6, so the 18-dec look-alike is rejected by construction.
+- [~] **`ROUTER`** — `0x89e5db8b5aa49aa85ac63f691524311aeb649eba`. **Verified on-chain:**
+      43.8KB code, `factory()` = `0x8bcEaA40…7937f`, and `WETH()` returns exactly the
+      documented WETH — a strong cross-check that this is the right router.
+      Still outstanding: confirm each intended pair actually has depth. Thin pools defeat
+      the slippage band regardless of how correct the router is.
+- [x] **`STOCKS` + `FEEDS`** — resolved. 33 Chainlink equity feed proxies and the
+      matching Stock Token addresses are recorded in
+      [MAINNET_ADDRESSES.md](MAINNET_ADDRESSES.md), read live from chain 4663.
+      Tokens verified 18-dec and exposing both `oraclePaused()` and `uiMultiplier()`.
+      Two traps found in the process: use the feed **`proxyAddress`** (it differs from
+      `contractAddress` on several feeds), and match tokens by **address, not symbol** —
+      the chain hosts unaffiliated tokens with confusable tickers/names.
+      Still a judgement call: start narrow with the deepest names.
+- [x] **`FEED_STALENESS`** — recalibrated against live feeds. All 33 equity feeds are
+      8-dec, heartbeat **86400s**, deviation 0.5%. The old 3600s default sat *below* the
+      feed's own heartbeat guarantee. Now 14400s (execution) and 302400s (valuation), with
+      the gate enforcing `>= 3600s` and `3d <= offhours <= 7d`.
 
 ## B. Keys and gas
 
@@ -85,23 +100,45 @@ Postures the gate additionally refuses, beyond the five below:
       staticcall (not `try/catch`, which does not catch an undecodable return), so a
       token without the flag still prices while a clean `true` fails both paths closed.
       The owner `feedFrozen` breaker is retained as a manual backstop.
-- [x] **C3 — Total-Return multiplier.** Resolved as a no-op after checking the docs: the
-      feed already reports Total Return Value (equity price combined with the multiplier
-      read from the token contract), so a split moves price and multiplier together and
-      leaves the series continuous. There is no separate multiplier to apply, and NAV,
-      stop-loss levels and `PerfScore` all inherit one basis by reading through this
-      adapter. Documented in `_read` so nobody "fixes" it by multiplying twice.
+- [x] **C3 — Total-Return multiplier.** Docs say the feed already reports Total Return
+      Value (equity price combined with the token's ERC-8056 `uiMultiplier()`), so a
+      whole-token price times a raw balance is correct and applying the multiplier again
+      would double-count. **But that is unverifiable today**: every live token reads
+      `uiMultiplier() == 1e18` (neutral, checked on mainnet), so the first real split is the
+      first time the assumption is exercised — on real funds, untestable beforehand.
+      Rather than guess, the multiplier is now **pinned at `setFeed` and re-checked on every
+      read**: the moment it moves, both price paths fail closed until the owner verifies how
+      the feed actually responded and re-pins via `ackMultiplier(token, expected)`. The ack
+      takes the expected value explicitly so a second action landing mid-inspection cannot
+      be waved through. `redeemInKind` (oracle-free, pro-rata) keeps exits open throughout.
 
-  > Tests: 164 passing (was 159). New coverage — held-close-session prices value but
-  > cannot trade, dead feed fails both paths, issuer pause fails closed and recovers,
-  > token without `oraclePaused()` still prices, staleness-order validation, and a
-  > vault-level test that deposits/withdrawals survive a closed session while buys revert.
-  > **Still unaudited**, and C1's two-tier bound is a new trust surface: `offHoursStaleness`
-  > is the window in which the vault will mint and redeem against a held price.
+  > Tests: **190 passing** (was 159). New coverage — held-close-session prices value but
+  > cannot trade, dead feed fails both paths, issuer pause fails closed and recovers, token
+  > without `oraclePaused()`/`uiMultiplier()` still prices, multiplier move halts until
+  > acked, ack rejects an unexpected value and is owner-only, staleness validation, a
+  > vault-level test that deposits/withdrawals survive a closed session while buys revert,
+  > and 30 gate tests.
+  > **Still unaudited.** Two new trust surfaces to put in front of auditors:
+  > `offHoursStaleness` is the window in which the vault mints and redeems against a held
+  > price, and the multiplier pin converts an unresolved pricing ambiguity into a halt
+  > rather than resolving it.
+- [x] **C6 — Deploy-ownership ordering (found by preflight audit).** `_deploy` constructed
+      every contract owned by the multisig, then `_wire` called `onlyOwner` functions as the
+      DEPLOYER — so all wiring reverted *after* eight contract deployments had been paid for.
+      A real mainnet run would have burned the gas and left an unusable, half-configured
+      stack. Fixed: vault/oracle/executor are born deployer-owned, wired, then handed over via
+      `Ownable2Step` (pending until the Safe accepts); GuardrailConfig and the swap adapter are
+      born multisig-owned and never pass through the hot key. Pinned by
+      `test/DeployHandover.t.sol` (6 tests).
 - [ ] **C4 — Purge mocks.** Assert nothing under `src/mocks/` is reachable from the
       mainnet deploy path.
-- [ ] **C5 — Initial deposit cap.** Ship with a small TVL ceiling (e.g. $10k) and
-      raise it in steps. Cheapest available mitigation for a bug that survives audit.
+- [x] **C5 — Initial deposit cap.** *This checklist item previously described a control that
+      did not exist* — `RWAVault` had no cap mechanism at all, so "set a small TVL cap" was
+      not actionable. Now implemented: `RWAVault.depositCap` + `setDepositCap` (owner-only),
+      enforced through `maxDeposit`/`maxMint`, which ERC-4626's own `deposit`/`mint` check,
+      so there is no bypass. Applied during `_wire` (default 10,000 USDG) rather than left as
+      a manual follow-up, and mainnet **refuses `DEPOSIT_CAP=0`**. Lowering the cap below
+      current NAV stops new money without trapping existing depositors.
 
 ## D. Assurance
 

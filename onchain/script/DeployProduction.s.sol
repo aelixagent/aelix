@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { Script, console2 } from "forge-std/Script.sol";
+import { VmSafe } from "forge-std/Vm.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -27,8 +28,13 @@ import { UniswapSwapAdapter } from "../src/UniswapSwapAdapter.sol";
 ///           USDG_DECIMALS    e.g. 6 or 18            (default 6)
 ///           ROUTER           Uniswap/Pleiades V2 router
 ///           HOP_TOKEN        optional routing hop    (default 0)
-///           SEQUENCER_FEED   Chainlink L2 uptime feed (default 0 = disabled)
+///           SEQUENCER_FEED   Chainlink L2 uptime feed (default 0 = disabled; RH Chain
+///                            publishes none as of 2026-07-25)
 ///           SEQUENCER_GRACE  seconds                 (default 3600)
+///           LIVENESS_FEEDS   comma-sep 24/7 CRYPTO feeds used as chain-liveness
+///                            witnesses; stands in for the missing sequencer feed.
+///                            Mainnet requires SEQUENCER_FEED or >=2 of these.
+///           LIVENESS_BOUND   seconds                 (default 43200 = 12h)
 ///           STOCKS           comma-sep Stock Token addresses
 ///           FEEDS            comma-sep Chainlink feeds (parallel to STOCKS)
 ///           FEED_STALENESS   in-session heartbeat sec (default 3600) — trade path
@@ -57,11 +63,18 @@ contract DeployProduction is Script {
         address hop;
         address sequencerFeed;
         uint256 grace;
+        address[] livenessRefs;
+        uint32 livenessBound;
         address[] stocks;
         address[] feeds;
         uint32 staleness;
         uint32 offHoursStaleness;
+        /// @dev Total-assets ceiling in USDG native units. 0 == uncapped (refused on mainnet).
+        uint256 depositCap;
         address owner;
+        /// @dev The broadcasting key. Temporarily owns the contracts that {_wire} configures,
+        ///      because only this account can sign during the broadcast. See {_deploy}.
+        address deployer;
         address agent;
     }
 
@@ -85,13 +98,26 @@ contract DeployProduction is Script {
         c.router = vm.envOr("ROUTER", PLACEHOLDER_ROUTER);
         c.hop = vm.envOr("HOP_TOKEN", address(0));
         c.sequencerFeed = vm.envOr("SEQUENCER_FEED", address(0));
+        // 24/7 crypto feeds acting as chain-liveness witnesses. See ChainlinkOracleAdapter.
+        c.livenessRefs = vm.envOr("LIVENESS_FEEDS", ",", new address[](0));
+        c.livenessBound = uint32(vm.envOr("LIVENESS_BOUND", uint256(43_200))); // 12h
         c.grace = vm.envOr("SEQUENCER_GRACE", uint256(3600));
         c.stocks = vm.envOr("STOCKS", ",", new address[](0));
         c.feeds = vm.envOr("FEEDS", ",", new address[](0));
-        c.staleness = uint32(vm.envOr("FEED_STALENESS", uint256(3600)));
-        // 3.5 days: long enough for a Fri-close -> Tue-open gap (weekend + holiday) on a
-        // 24/5 tokenized-equity feed, short enough to still fail closed on a dead feed.
+        // Calibrated against the LIVE mainnet feeds (verified 2026-07-25): every Robinhood
+        // equity feed publishes with heartbeat 86400s (24h) and a 0.5% deviation trigger,
+        // 8 decimals. In-session a liquid name crosses 0.5% within minutes, so 4h is a
+        // generous execution bound that still refuses a feed which has gone quiet. A 1h
+        // bound (the previous default) is BELOW the feed's own heartbeat guarantee and
+        // would reject legitimately quiet names.
+        c.staleness = uint32(vm.envOr("FEED_STALENESS", uint256(14_400)));
+        // 3.5 days: covers a Fri-close -> Tue-open gap (weekend + holiday). Measured on
+        // mainnet on a Saturday, live feed ages were 24.6h-28.9h — already past the 24h
+        // heartbeat — so the valuation bound must be multi-day or NAV breaks every weekend.
         c.offHoursStaleness = uint32(vm.envOr("FEED_STALENESS_OFFHOURS", uint256(302_400)));
+        // Default 10,000 USDG (6-dec). An unaudited vault gets a bounded blast radius by
+        // default; raising it is a deliberate owner action, not the absence of one.
+        c.depositCap = vm.envOr("DEPOSIT_CAP", uint256(10_000e6));
         // Ownership goes to OWNER (intended to be a multisig/timelock — see the NatSpec).
         // If OWNER is unset we fall back to the deployer EOA but LOUDLY warn: a single hot
         // key owning the whole stack is not an acceptable production posture.
@@ -104,6 +130,7 @@ contract DeployProduction is Script {
         } else {
             c.owner = ownerEnv;
         }
+        c.deployer = deployer;
         c.agent = vm.envOr("AGENT", deployer);
         require(c.stocks.length == c.feeds.length, "STOCKS/FEEDS length mismatch");
 
@@ -116,10 +143,11 @@ contract DeployProduction is Script {
         vm.startBroadcast(pk);
         Stack memory s = _deploy(c);
         _wire(s, c);
+        _handover(s, c);
         vm.stopBroadcast();
 
         _report(s, c);
-        _persist(s);
+        _persist(s, c);
     }
 
     /// @dev Refuse an UNSAFE deploy on Robinhood Chain mainnet (real funds). Each posture
@@ -149,14 +177,58 @@ contract DeployProduction is Script {
         require(c.agent != deployer, "MAINNET: set AGENT to a dedicated key, not the deployer");
         require(c.agent != ownerEnv, "MAINNET: AGENT must not be the owner multisig");
 
-        // --- Sequencer uptime feed: present AND actually answering ---------------------
-        require(c.sequencerFeed != address(0), "MAINNET: set SEQUENCER_FEED (L2 uptime)");
-        require(c.sequencerFeed.code.length > 0, "MAINNET: SEQUENCER_FEED has no code");
-        (, int256 seqAnswer, uint256 seqStartedAt,,) =
-            IAggregatorV3(c.sequencerFeed).latestRoundData();
-        require(seqStartedAt != 0, "MAINNET: SEQUENCER_FEED round uninitialized");
-        require(seqAnswer == 0, "MAINNET: sequencer reported DOWN, refusing to deploy");
-        require(c.grace >= 1800, "MAINNET: SEQUENCER_GRACE too short (>= 1800s)");
+        // --- Chain-liveness: a sequencer feed OR a 24/7 quorum, never neither ----------
+        // Robinhood Chain publishes no Chainlink sequencer uptime feed (verified
+        // 2026-07-25: 56 feeds in the directory, zero uptime entries), so requiring one
+        // outright made a mainnet deploy impossible. Instead, demand at least one working
+        // liveness mechanism. Silently allowing neither is the one thing forbidden.
+        bool haveSeq = c.sequencerFeed != address(0);
+        bool haveQuorum = c.livenessRefs.length > 0;
+        require(haveSeq || haveQuorum, "MAINNET: set SEQUENCER_FEED or LIVENESS_FEEDS");
+
+        if (haveSeq) {
+            require(c.sequencerFeed.code.length > 0, "MAINNET: SEQUENCER_FEED has no code");
+            (, int256 seqAnswer, uint256 seqStartedAt,,) =
+                IAggregatorV3(c.sequencerFeed).latestRoundData();
+            require(seqStartedAt != 0, "MAINNET: SEQUENCER_FEED round uninitialized");
+            require(seqAnswer == 0, "MAINNET: sequencer reported DOWN, refusing to deploy");
+            require(c.grace >= 1800, "MAINNET: SEQUENCER_GRACE too short (>= 1800s)");
+        }
+
+        if (haveQuorum) {
+            // More than one witness: a single quiet feed must not be able to halt the vault.
+            require(c.livenessRefs.length >= 2, "MAINNET: LIVENESS_FEEDS needs >= 2 refs");
+            require(c.livenessBound >= 3600, "MAINNET: LIVENESS_BOUND too short (>= 3600s)");
+            require(c.livenessBound <= 1 days, "MAINNET: LIVENESS_BOUND too permissive (<= 1d)");
+            // Freshness must match the RUNTIME quorum rule, which needs only ONE live
+            // witness (ChainlinkOracleAdapter._checkLiveness returns on the first fresh ref).
+            // Requiring every ref fresh here was strictly stricter than the contract itself,
+            // so one quiet-but-healthy feed would refuse a deploy the vault would have run
+            // fine with. Count instead, and demand at least one.
+            uint256 fresh;
+            for (uint256 i; i < c.livenessRefs.length; ++i) {
+                address r = c.livenessRefs[i];
+                require(r.code.length > 0, "MAINNET: liveness ref has no code");
+                (, int256 a,, uint256 u,) = IAggregatorV3(r).latestRoundData();
+                require(a > 0 && u != 0, "MAINNET: liveness ref not answering");
+                if (block.timestamp - u <= c.livenessBound) ++fresh;
+                for (uint256 j; j < i; ++j) {
+                    require(r != c.livenessRefs[j], "MAINNET: duplicate liveness ref");
+                }
+                // A liveness ref that is also a position's price feed is not an independent
+                // witness — it goes stale with the market it prices.
+                for (uint256 j; j < c.feeds.length; ++j) {
+                    require(r != c.feeds[j], "MAINNET: liveness ref must not be an equity feed");
+                }
+            }
+            // Zero fresh witnesses means the vault would fail closed from block one — either
+            // 24/5 equity feeds were passed as 24/7 refs, or the chain really is stalled.
+            // Either way, do not deploy into it.
+            require(
+                fresh > 0,
+                "MAINNET: no liveness ref is fresh (equity feeds used as 24/7 refs, or chain stalled)"
+            );
+        }
 
         // --- USDG: the documented look-alike trap -------------------------------------
         require(c.usdg != PLACEHOLDER_USDG, "MAINNET: set real USDG");
@@ -194,36 +266,79 @@ contract DeployProduction is Script {
         }
 
         // --- Staleness bounds ---------------------------------------------------------
-        require(c.staleness >= 60, "MAINNET: FEED_STALENESS too short");
+        // Live mainnet feeds publish on a 24h heartbeat / 0.5% deviation. A bound under an
+        // hour would reject a quiet-but-healthy feed and brick the trade path.
+        // An unaudited vault must launch with a bounded ceiling. The checklist used to say
+        // "set a small TVL cap" while no such mechanism existed; now it exists and is enforced.
+        require(c.depositCap > 0, "MAINNET: set DEPOSIT_CAP (staged rollout; 0 = uncapped is refused)");
+
+        require(c.staleness >= 3600, "MAINNET: FEED_STALENESS too short (>= 3600s)");
         require(c.offHoursStaleness >= c.staleness, "MAINNET: off-hours bound < session bound");
+        // Measured on a Saturday, live feed ages already exceeded 24h. Anything under 3 days
+        // means NAV, deposits and redemptions break every weekend.
+        require(c.offHoursStaleness >= 3 days, "MAINNET: FEED_STALENESS_OFFHOURS too short (>= 3d, must survive a weekend)");
         // The off-hours bound is the window in which the vault will mint and redeem against
         // a price held over a closed session. It must cover a weekend + holiday but must not
         // become an open-ended licence to transact on a dead feed.
         require(c.offHoursStaleness <= 7 days, "MAINNET: FEED_STALENESS_OFFHOURS too permissive (<= 7d)");
     }
 
+    /// @dev Ownership during deploy is deliberately split.
+    ///
+    ///      `_wire` must call onlyOwner functions (`setManager`, `setLiveness`, `setFeed`,
+    ///      `allowToken`, `grantSession`) and the only account that can sign during
+    ///      `vm.startBroadcast` is the DEPLOYER. Constructing those three contracts already
+    ///      owned by the multisig makes every wiring call revert — after eight contract
+    ///      deployments have already been paid for. So vault / oracle / executor are born
+    ///      deployer-owned, wired, then handed over in {_handover}.
+    ///
+    ///      GuardrailConfig and the swap adapter are never touched by `_wire`, so they are
+    ///      born owned by the multisig and never pass through deployer control at all —
+    ///      which matters most for GuardrailConfig, the contract holding the risk caps.
     function _deploy(Cfg memory c) internal returns (Stack memory s) {
         s.cfg = new GuardrailConfig(c.owner, _caps());
         s.registry = new DeskRegistry();
         s.perf = new PerfScore(s.registry);
-        s.oracle = new ChainlinkOracleAdapter(c.usdgDecimals, c.sequencerFeed, c.grace, c.owner);
+        s.oracle =
+            new ChainlinkOracleAdapter(c.usdgDecimals, c.sequencerFeed, c.grace, c.deployer);
         s.swap = new UniswapSwapAdapter(c.router, c.hop, c.owner);
         s.vault = new RWAVault(
             IERC20(c.usdg),
             "Aelix RWA Vault",
             "vAELIX",
-            c.owner,
+            c.deployer,
             s.cfg,
             s.oracle,
             s.swap,
             address(0)
         );
-        s.exec = new SessionKeyExecutor(s.vault, c.owner);
+        s.exec = new SessionKeyExecutor(s.vault, c.deployer);
         s.save = new AelixAutosave(s.vault);
+    }
+
+    /// @dev Hand the three wired contracts to the multisig. All are `Ownable2Step`, so this
+    ///      only STARTS the transfer: the deployer stays owner until the Safe calls
+    ///      `acceptOwnership()` on each. That is a feature, not a gap — a typo'd OWNER cannot
+    ///      lock the stack away from you. But the handover is NOT complete until those three
+    ///      acceptances land, and {_report} prints the exact calls.
+    function _handover(Stack memory s, Cfg memory c) internal {
+        if (c.owner == c.deployer) return; // preview/testnet run: nothing to hand over
+        s.vault.transferOwnership(c.owner);
+        s.oracle.transferOwnership(c.owner);
+        s.exec.transferOwnership(c.owner);
     }
 
     function _wire(Stack memory s, Cfg memory c) internal {
         s.vault.setManager(address(s.exec));
+        // Staged rollout, applied at deploy rather than left as a manual follow-up: an
+        // unaudited vault must not be able to accept unbounded deposits, and a checklist item
+        // is not a control. Set DEPOSIT_CAP=0 to launch uncapped (mainnet refuses that).
+        if (c.depositCap > 0) {
+            s.vault.setDepositCap(c.depositCap);
+        }
+        if (c.livenessRefs.length > 0) {
+            s.oracle.setLiveness(c.livenessRefs, c.livenessBound);
+        }
         for (uint256 i; i < c.stocks.length; ++i) {
             s.oracle.setFeed(c.stocks[i], c.feeds[i], c.staleness, c.offHoursStaleness);
             s.vault.allowToken(c.stocks[i]);
@@ -261,7 +376,7 @@ contract DeployProduction is Script {
         });
     }
 
-    function _report(Stack memory s, Cfg memory c) internal pure {
+    function _report(Stack memory s, Cfg memory c) internal view {
         console2.log("=============== Aelix PRODUCTION deploy ===============");
         console2.log("owner            ", c.owner);
         console2.log("USDG             ", c.usdg);
@@ -275,10 +390,36 @@ contract DeployProduction is Script {
         console2.log("SessionKeyExec   ", address(s.exec));
         console2.log("AelixAutosave   ", address(s.save));
         console2.log("stocks allowlisted", c.stocks.length);
+        console2.log("deposit cap (USDG)", c.depositCap);
+        console2.log("=======================================================");
+
+        if (c.owner == c.deployer) return;
+        // The handover is HALF DONE at this point. Ownable2Step means the deployer still owns
+        // vault/oracle/executor until the multisig accepts. Until these three land, the hot
+        // deploy key retains control of the stack — this is the single most important
+        // post-deploy step, so print it as an explicit checklist rather than burying it.
+        console2.log("");
+        console2.log("!! ACTION REQUIRED - ownership transfer is PENDING, not complete !!");
+        console2.log("The deployer still owns vault/oracle/executor until the Safe calls");
+        console2.log("acceptOwnership() on each. Execute these THREE txs from the Safe:");
+        console2.log("  1. acceptOwnership() on RWAVault        ", address(s.vault));
+        console2.log("  2. acceptOwnership() on ChainlinkOracle ", address(s.oracle));
+        console2.log("  3. acceptOwnership() on SessionKeyExec  ", address(s.exec));
+        console2.log("Then confirm owner() == the Safe on all three, and retire the deployer key.");
+        console2.log("GuardrailConfig and UniswapSwapAdapter are ALREADY owned by the Safe.");
         console2.log("=======================================================");
     }
 
-    function _persist(Stack memory s) internal {
+    /// @dev Writes the address book the dashboard/bridge reads.
+    ///      Skipped on a simulation-only run: `forge script` without `--broadcast` still
+    ///      executes everything, so persisting there would overwrite `latest.json` with
+    ///      addresses that were never deployed — including on the dry-run that the operator
+    ///      then declines. The dashboard would point at contracts that do not exist.
+    function _persist(Stack memory s, Cfg memory c) internal {
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            console2.log("(simulation) deployments/latest.json left untouched");
+            return;
+        }
         string memory o = "aelix";
         vm.serializeUint(o, "chainId", block.chainid);
         vm.serializeAddress(o, "guardrailConfig", address(s.cfg));
@@ -289,9 +430,22 @@ contract DeployProduction is Script {
         vm.serializeAddress(o, "vault", address(s.vault));
         vm.serializeAddress(o, "executor", address(s.exec));
         vm.serializeAddress(o, "autosave", address(s.save));
-        string memory out = vm.serializeBytes32(
-            o, "subject", keccak256(abi.encodePacked("aelix-vault:", address(s.vault)))
-        );
+        // bridge/index.mjs dereferences `usdg` unconditionally to read the vault's cash
+        // balance; omitting it crashed the dashboard against a production deploy.
+        vm.serializeAddress(o, "usdg", c.usdg);
+        vm.serializeAddress(o, "owner", c.owner);
+        vm.serializeAddress(o, "agent", c.agent);
+
+        // `subject` MUST be subjectFor(attester, label), not the bare label.
+        // DeskRegistry.attestSelf writes _selfLog[subjectFor(msg.sender, label)] and every
+        // read resolves the same way, so storing the raw label points the dashboard at a
+        // namespace no key can ever write to — the track record would sit at zero forever and
+        // `bridge --attest` would reject every wallet. The attester is the AGENT: the deployer
+        // key is retired right after handover, so it must not be the one bound here.
+        bytes32 label = keccak256(abi.encodePacked("aelix-vault:", address(s.vault)));
+        vm.serializeBytes32(o, "label", label);
+        string memory out =
+            vm.serializeBytes32(o, "subject", s.registry.subjectFor(c.agent, label));
         vm.writeJson(out, "./deployments/latest.json");
     }
 }
