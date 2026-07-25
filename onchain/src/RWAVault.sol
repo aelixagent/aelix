@@ -308,6 +308,17 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
         return navUsdg();
     }
 
+    /// @dev Virtual-shares defense (OpenZeppelin) against the ERC-4626 first-depositor /
+    ///      donation inflation attack (audit HIGH #4). A nonzero offset backs the vault
+    ///      with 1e6 virtual shares against 1 virtual asset, so an attacker can no longer
+    ///      round a victim's deposit to ZERO shares by front-running + donating into an
+    ///      empty/near-empty vault: stealing a deposit would require donating ~1e6x it,
+    ///      which is never profitable. Share price stays ~1; only the raw share COUNT is
+    ///      scaled by 1e6 (cosmetic — the UI shows share price, not the raw count).
+    function _decimalsOffset() internal pure override returns (uint8) {
+        return 6;
+    }
+
     /// @dev Price-per-share = NAV / shares (scaled). Invariant to deposits/withdrawals
     ///      (they mint/burn shares at exactly this ratio), so it is the correct anchor
     ///      for a daily-loss halt that must ignore capital flows and react only to real

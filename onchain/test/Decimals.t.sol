@@ -81,7 +81,7 @@ contract DecimalsTest is Test {
         uint256 shares = vault.deposit(1000e6, ALICE);
         vm.stopPrank();
 
-        assertEq(shares, 1000e6); // 1:1 into an empty vault
+        assertEq(shares, 1000e6 * 1e6); // shares = assets x 1e6 virtual-share offset (inflation defense)
         assertEq(vault.totalAssets(), 1000e6);
         assertEq(vault.navUsdg(), 1000e6);
     }

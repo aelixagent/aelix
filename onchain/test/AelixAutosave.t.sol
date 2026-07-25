@@ -96,8 +96,8 @@ contract AelixAutosaveTest is Test {
         vm.prank(KEEPER);
         uint256 shares = save.executeDue(ALICE);
 
-        assertEq(shares, 10e18); // first deposit into empty vault -> 1:1
-        assertEq(vault.balanceOf(ALICE), 10e18); // shares minted to Alice, not keeper
+        assertEq(shares, 10e18 * 1e6); // first deposit into empty vault -> 1:1
+        assertEq(vault.balanceOf(ALICE), 10e18 * 1e6); // shares minted to Alice, not keeper
         assertEq(usdg.balanceOf(address(vault)), 10e18);
         assertEq(usdg.balanceOf(address(save)), 0); // never retains funds
     }
@@ -112,7 +112,7 @@ contract AelixAutosaveTest is Test {
         vm.warp(block.timestamp + 1 weeks);
         assertTrue(save.due(ALICE));
         save.executeDue(ALICE); // period 2
-        assertEq(vault.balanceOf(ALICE), 20e18);
+        assertEq(vault.balanceOf(ALICE), 20e18 * 1e6);
     }
 
     function test_completesAfterTotalPeriods() public {
@@ -137,7 +137,7 @@ contract AelixAutosaveTest is Test {
             save.executeDue(ALICE);
             vm.warp(block.timestamp + 1 days);
         }
-        assertEq(vault.balanceOf(ALICE), 25e18);
+        assertEq(vault.balanceOf(ALICE), 25e18 * 1e6);
         assertTrue(save.due(ALICE)); // still going
     }
 
@@ -188,8 +188,8 @@ contract AelixAutosaveTest is Test {
         vault.unpause();
         vm.prank(KEEPER);
         uint256 shares = save.executeDue(ALICE);
-        assertEq(shares, 10e18);
-        assertEq(vault.balanceOf(ALICE), 10e18);
+        assertEq(shares, 10e18 * 1e6);
+        assertEq(vault.balanceOf(ALICE), 10e18 * 1e6);
     }
 
     // ------------------------------------------------------------------ NAV-drift guard
@@ -202,7 +202,11 @@ contract AelixAutosaveTest is Test {
         // drift reference.
         vm.prank(KEEPER);
         save.executeDue(ALICE);
-        assertEq(vault.balanceOf(ALICE), 10e18);
+        assertEq(vault.balanceOf(ALICE), 10e18 * 1e6);
+        // Anchor the reference share price in the vault's ACTUAL units: the 1e6 decimals
+        // offset (inflation defense) scales convertToAssets(1e18), so probe it live rather
+        // than assuming a 1e18 share price. The drift guard is relative, so it still works.
+        uint256 refPrice = vault.convertToAssets(1e18);
 
         vm.warp(block.timestamp + 1 weeks);
         assertTrue(save.due(ALICE));
@@ -211,20 +215,20 @@ contract AelixAutosaveTest is Test {
         // donating USDG straight into the vault. Share price jumps ~11x, so Alice's 10 USDG
         // would mint far fewer shares. The per-plan drift guard blocks the deposit.
         usdg.mint(address(vault), 100e18);
-        assertGt(vault.convertToAssets(1e18), 10e18); // share price moved way past tolerance
+        assertGt(vault.convertToAssets(1e18), refPrice * 11 / 10); // moved way past the 10% tol
 
         vm.prank(KEEPER);
         vm.expectRevert(
             abi.encodeWithSelector(
                 AelixAutosave.NavDrift.selector,
                 vault.convertToAssets(1e18),
-                1e18 + (1e18 * 1000) / 10_000 // ref 1e18 + 10%
+                refPrice + (refPrice * 1000) / 10_000 // ref + 10%
             )
         );
         save.executeDue(ALICE);
 
         // Nothing was pulled from Alice; the plan did not advance.
-        assertEq(vault.balanceOf(ALICE), 10e18);
+        assertEq(vault.balanceOf(ALICE), 10e18 * 1e6);
         (,,,, uint32 done,,,) = save.plans(ALICE);
         assertEq(done, 1);
     }

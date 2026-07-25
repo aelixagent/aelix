@@ -313,6 +313,47 @@ contract HardeningTest is Test {
         assertEq(bad.balanceOf(address(vault)), 1e18); // ...and stays in the vault
     }
 
+    // ──────────── H1c (audit HIGH #4): ERC-4626 inflation attack is defeated ────────────
+
+    /// The classic first-depositor / donation inflation attack: an attacker front-runs into
+    /// an EMPTY vault with 1 wei, donates a large amount to spike the share price, then the
+    /// victim's deposit rounds to ~0 shares and the attacker redeems the lot. The 1e6 decimals
+    /// offset defeats it: the victim still gets fair shares and recovers ~their whole deposit,
+    /// and the attacker cannot profit (they forfeit their donation).
+    function test_inflationAttack_firstDepositor_defeated() public {
+        GuardrailConfig cfg2 = new GuardrailConfig(HUMAN, _caps());
+        RWAVault v = new RWAVault(
+            IERC20(address(usdg)), "V", "V", HUMAN, cfg2,
+            IPriceOracle(address(oracle)), ISwapAdapter(address(adapter)), MANAGER
+        );
+        address ATTACKER = address(0xA77ACC);
+        address VICTIM = address(0x7C71);
+        usdg.mint(ATTACKER, 2_000e18);
+        usdg.mint(VICTIM, 1_000e18);
+
+        // 1) Attacker front-runs the empty vault with the smallest possible deposit...
+        vm.startPrank(ATTACKER);
+        usdg.approve(address(v), type(uint256).max);
+        v.deposit(1, ATTACKER);
+        // 2) ...then donates straight into the vault to spike the share price.
+        usdg.transfer(address(v), 1_000e18);
+        vm.stopPrank();
+
+        // 3) Victim deposits 1,000 USDG.
+        vm.startPrank(VICTIM);
+        usdg.approve(address(v), type(uint256).max);
+        uint256 vShares = v.deposit(1_000e18, VICTIM);
+        vm.stopPrank();
+
+        // Victim's shares do NOT round to zero, and their claim is ~the full deposit.
+        assertGt(vShares, 0);
+        assertGe(v.convertToAssets(vShares), 999e18); // recovers >99.9% of the 1,000 deposited
+
+        // Attacker cannot walk away with the victim's deposit: their redeemable value is far
+        // below what they put in (1 wei + 1,000 donation) — the attack is a LOSS, not theft.
+        assertLt(v.convertToAssets(v.balanceOf(ATTACKER)), 1_000e18);
+    }
+
     // ───────────────────────── H2 — one bad feed can't brick the vault ─────────────────────────
 
     /// A zero-balance allowlisted token whose feed has died is skipped in NAV, so

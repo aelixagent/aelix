@@ -101,7 +101,7 @@ contract IntegrationTest is Test {
         vm.warp(block.timestamp + 1 weeks);
         save.executeDue(ALICE); // week 2
 
-        assertEq(vault.balanceOf(ALICE), 10_000e18); // 1:1 while all cash
+        assertEq(vault.balanceOf(ALICE), 10_000e18 * 1e6); // 1e6 virtual-share offset (inflation defense)
         assertEq(vault.navUsdg(), 10_000e18);
 
         // --- 2. The desk (agent session key) builds a position within guardrails ---

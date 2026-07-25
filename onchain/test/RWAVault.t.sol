@@ -101,7 +101,8 @@ contract RWAVaultTest is Test {
     // ------------------------------------------------------------------ deposit / nav
 
     function test_deposit_mintsSharesOneToOne() public view {
-        assertEq(vault.balanceOf(ALICE), 100e18);
+        assertEq(vault.balanceOf(ALICE), 100e18 * 1e6); // 1e6 virtual-share offset (inflation defense)
+        assertEq(vault.convertToAssets(vault.balanceOf(ALICE)), 100e18); // share VALUE still 1:1
         assertEq(vault.totalAssets(), 100e18);
         assertEq(vault.navUsdg(), 100e18);
     }
