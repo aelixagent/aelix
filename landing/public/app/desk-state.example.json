@@ -1,7 +1,7 @@
 {
   "generatedAt": null,
   "session": "no-run",
-  "_note": "No live desk run in this environment. The brokerage sections (account, positions, candidates, orders, backtests) stay EMPTY on purpose — nothing here is simulated or faked. On-chain figures below are read live from Robinhood Chain testnet contracts. A real run (or a connected account via the backend) fills the rest.",
+  "_note": "SAMPLE — this is the committed fallback file so a fresh clone renders; it is NOT a desk run and NOT a state snapshot. Every brokerage section (account, positions, candidates, orders, backtests) is EMPTY on purpose and every on-chain figure is null, so nothing here is simulated or faked. The only real data in this file is the deployed contract addresses on Robinhood Chain mainnet (chainId 4663): the dashboard reads those contracts live and populates the on-chain band from that read alone — if the read fails, the band stays empty instead of showing a number. Mainnet · no third-party audit · deposits capped at 10,000 USDG · no deposits and no trades yet, so there is no track record. A real desk run (or a connected account via the backend) fills the rest.",
   "account": {
     "name": "Robinhood Agentic",
     "type": "agentic",
@@ -32,17 +32,18 @@
   "decisionLog": [],
   "onchain": {
     "network": {
-      "name": "Robinhood Chain Testnet",
-      "chainId": 46630,
+      "name": "Robinhood Chain",
+      "chainId": 4663,
       "deployed": true,
-      "explorer": "https://explorer.testnet.chain.robinhood.com"
+      "explorer": "https://explorer.mainnet.chain.robinhood.com"
     },
+    "_contractsNote": "Real Robinhood Chain mainnet (4663) deployment — mirrors onchain/deployments/latest.json. Ownership handover is still pending: GuardrailConfig and UniswapSwapAdapter are owned by the 2-of-3 Safe, while RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor are Ownable2Step with the Safe as pendingOwner and the deployer EOA still owner until the Safe calls acceptOwnership(). Contracts are not yet verified on the block explorer.",
     "contracts": {
-      "guardrails": "0x7Ab7a94200153C473Fc35F413407aedA60D30E5b",
-      "vault": "0xFA698f14C8D7540d35E63c0AC3685AeEc957E500",
-      "attestor": "0x381FE4f75E5e051C90D60ba3a7553D9Cb6062ac6",
-      "executor": "0x4fe433Ea2234ecFc69Ef7Ce817e844D6217c5DF4",
-      "autosave": "0x8e0AcAc14594346053809837C1432f522AE044B0"
+      "guardrails": "0x68cf24994d0363Be7688e96B69dDacC290c766C0",
+      "vault": "0x0e500E390cC599055f1e54194e1e611Cf64c5047",
+      "attestor": "0x68cc84d722E2d613cAc36c62167B177656e2C983",
+      "executor": "0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7",
+      "autosave": "0x5b0778E8561EA31490588D21bd44419803DC709b"
     },
     "vault": {
       "symbol": null,
@@ -50,19 +51,21 @@
       "totalAssets": null,
       "totalShares": null,
       "sharePrice": null,
-      "yourShares": 0,
-      "yourValue": 0,
+      "yourShares": null,
+      "yourValue": null,
       "utilizationPct": null,
       "apyPct": null
     },
-    "_guardrailsNote": "Intentionally empty: guardrails are rendered as 'enforced on-chain' and must come ONLY from a live GuardrailConfig read — never from this sample. They populate for real from Robinhood Chain.",
+    "_guardrailsNote": "Intentionally empty: guardrails are rendered as 'enforced on-chain' and must come ONLY from a live GuardrailConfig read — never from this sample. They populate for real from Robinhood Chain mainnet.",
     "guardrails": [],
+    "_trackRecordNote": "Intentionally all-null: there is no track record. No deposits, no trades, no attestations — never seed a number here.",
     "trackRecord": {
       "perfScore": null,
-      "attestations": 0,
+      "attestations": null,
       "verifiedPnlPct": null,
       "lastAttestation": null
     },
+    "_executorNote": "SessionKeyExecutor is deployed on mainnet 4663, but no session key has been granted and no trade has been executed — hence status 'preview', not 'live'. It is also still Ownable2Step-pending: the deployer EOA remains owner until the Safe calls acceptOwnership().",
     "executor": {
       "type": "Scoped session key (EOA)",
       "status": "preview",
@@ -73,7 +76,7 @@
     },
     "autosave": {
       "enabled": false,
-      "cadence": "weekly",
+      "cadence": null,
       "amount": null,
       "asset": "USDG",
       "nextRun": null

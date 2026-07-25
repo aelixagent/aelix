@@ -14,12 +14,13 @@ export function Token() {
               <GlitchText text="$AELIX, a roadmap experiment" mode="hover" />
             </h3>
             <p>
-              A planned utility token on Robinhood Chain (L2) for premium research access, governance
-              over risk parameters, and fee discounts, deployed testnet-first via a launchpad.
+              A planned utility token on Robinhood Chain (chainId 4663) for premium research access,
+              governance over risk parameters, and fee discounts. The vault and guardrail contracts
+              are deployed on mainnet; the token is not. No sale, no price, no listing.
             </p>
             <p>
-              It is a Web3 experiment, not a fundraising or investment vehicle. Chain details, launchpad
-              terms, and legal status are unverified open items pending review.
+              It is a Web3 experiment, not a fundraising or investment vehicle. Launchpad terms and
+              legal status remain unverified open items pending review.
             </p>
           </div>
           <div style={{ display: "grid", gap: "20px" }}>
@@ -30,7 +31,7 @@ export function Token() {
               <br />
               NOT INVESTMENT ADVICE.
               <br />
-              TESTNET-FIRST · SUBJECT TO REVIEW.
+              TOKEN UNLAUNCHED · SUBJECT TO REVIEW.
             </div>
           </div>
         </Reveal>

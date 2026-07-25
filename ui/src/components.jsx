@@ -93,7 +93,7 @@ export function AccountHeader({ account, generatedAt, live, isDemo }) {
           <Stat label="Share price" value={usd(live.sharePrice, 4)} mono />
           <Stat label="Cash" value={usd(live.cash)} mono />
           <Stat label="Total shares" value={num(live.totalShares)} mono />
-          <Stat label="Utilization" value={`${live.utilizationPct ?? 0}%`} mono />
+          <Stat label="Utilization" value={live.utilizationPct == null ? '—' : `${live.utilizationPct}%`} mono />
         </div>
       ) : (
         <div className="topstats">
@@ -126,7 +126,7 @@ export function DeskRunGate({ chainLive = false }) {
         cycle against the Robinhood Agentic (brokerage) account. That needs the{' '}
         <code>robinhood-trading</code> MCP server connected{chainLive
           ? ' — the on-chain vault below is reading live.'
-          : ' — the on-chain vault below is deployed to testnet (showing its last snapshot).'}
+          : ' — the on-chain vault below is live on Robinhood Chain mainnet (unaudited; figures only appear once read).'}
       </p>
       <ol className="gate-steps">
         <li>Connect <code>robinhood-trading</code> MCP + set <code>RH_AGENTIC_ACCOUNT_NUMBER</code>.</li>
@@ -559,11 +559,21 @@ export function DecisionTimeline({ log }) {
   )
 }
 
-/* ---------- on-chain layer (Robinhood Chain · testnet preview) ---------- */
+/* ---------- on-chain layer (Robinhood Chain mainnet · unaudited) ----------
+   Deployed on chain 4663 against real periphery. Figures here must be real reads or
+   honestly empty — see the no-dummy-data rule in ui/README.md. */
+
+/** Chain label from the chainId, so the badge can never contradict the network it read. */
+function netLabel(chainId) {
+  if (chainId === 4663) return 'MAINNET'
+  if (chainId === 46630) return 'TESTNET'
+  if (chainId === 31337) return 'LOCAL'
+  return 'UNKNOWN CHAIN'
+}
 
 // Muted, dashed "preview / not-yet-deployed" marker reused across on-chain panels.
-export function PreviewBadge({ label = 'TESTNET · PREVIEW' }) {
-  return <span className="preview-badge" title="Not yet deployed — illustrative preview">{label}</span>
+export function PreviewBadge({ label = 'NOT READING', title = 'Not a live on-chain read' }) {
+  return <span className="preview-badge" title={title}>{label}</span>
 }
 
 // `live` = a real contract read succeeded this session (App gates on onchain.js `live`).
@@ -576,22 +586,24 @@ export function NetworkBadge({ network, live = false }) {
     <span className="net-badge" title={`chain-id ${n.chainId ?? '—'}`}>
       <span className={`net-dot ${live ? 'on' : 'off'}`} />
       <span className="net-name">{n.name || 'Robinhood Chain'}</span>
-      <span className="net-state">{live ? 'TESTNET · LIVE' : 'TESTNET · PREVIEW'}</span>
+      <span className="net-state">{netLabel(n.chainId)}{live ? ' · LIVE' : ' · NOT READING'}</span>
       {!live && <span className="net-sub dim">not reading live</span>}
     </span>
   )
 }
 
-// `live` gates whether these figures are a fresh on-chain read. When false the numbers are
-// the last-bridged snapshot (real, but stale) — we badge them SNAPSHOT so they're never
-// presented as a current live read (no-dummy-data rule).
+// `live` gates whether these figures are a fresh on-chain read. When false we badge the panel
+// NOT READING rather than SNAPSHOT: with the state file honestly empty there is no snapshot to
+// show, and calling nothing a "snapshot" implied stale-but-real data that does not exist.
 export function VaultPanel({ vault, network, live = false }) {
   if (!vault) return null
   const v = vault
-  const util = Math.max(0, Math.min(100, v.utilizationPct ?? 0))
+  // Unread must stay unread: `?? 0` would print "Utilization 0%" as if it were a measurement.
+  const utilRaw = v.utilizationPct
+  const util = utilRaw == null ? null : Math.max(0, Math.min(100, utilRaw))
   return (
     <section className="panel">
-      <h2>RWA Vault {v.symbol && <span className="tag">{v.symbol}</span>}{!live && <PreviewBadge label="SNAPSHOT" />}</h2>
+      <h2>RWA Vault {v.symbol && <span className="tag">{v.symbol}</span>}{!live && <PreviewBadge label="NOT READING" />}</h2>
 
       <div className="vault-hero">
         <div className="vault-nav">
@@ -611,10 +623,10 @@ export function VaultPanel({ vault, network, live = false }) {
 
       <div className="oc-meter-row">
         <span className="oc-meter-label dim">Utilization</span>
-        <div className="meter" title={`Vault utilization ${util}%`}>
-          <div className={`meter-fill ${util >= 80 ? 'warn' : 'ok'}`} style={{ width: `${Math.max(4, util)}%` }} />
+        <div className="meter" title={util == null ? 'Vault utilization not read' : `Vault utilization ${util}%`}>
+          <div className={`meter-fill ${(util ?? 0) >= 80 ? 'warn' : 'ok'}`} style={{ width: `${util == null ? 0 : Math.max(4, util)}%` }} />
         </div>
-        <span className="risk-num">{util}%</span>
+        <span className="risk-num">{util == null ? '—' : `${util}%`}</span>
       </div>
     </section>
   )
@@ -651,7 +663,7 @@ export function TrackRecord({ trackRecord, live = false }) {
   const la = t.lastAttestation || {}
   return (
     <section className="panel">
-      <h2>Track Record {!live && <PreviewBadge label="SNAPSHOT" />}</h2>
+      <h2>Track Record {!live && <PreviewBadge label="NOT READING" />}</h2>
       <div className="oc-perf">
         <RingGauge value={t.perfScore} max={100} label="PerfScore" />
         <div className="oc-perf-stats">

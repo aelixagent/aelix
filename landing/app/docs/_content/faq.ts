@@ -40,7 +40,23 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` utility token is an **out-of-scope, aspirational, testnet-first roadmap idea**, a Web3 experiment, **not** an investment product, and the token itself is **not built**. The broader on-chain layer (an ERC-4626 vault + guardrails-as-code) exists only as **testnet-first, unaudited code in `onchain/`**, nothing is on mainnet, and it stays gated behind legal/securities review. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` token is **not built**, **unlaunched, and speculative**: no sale, no price, no allocation, **not** an investment product. The separate on-chain layer (an ERC-4626 vault + guardrails-as-code) **is** now deployed, to Robinhood Chain mainnet, chainId 4663, but it is **unaudited**, deposits are capped at 10,000 USDG, TVL is **0**, and it stays gated behind legal/securities review. See [Safety & Disclaimer](/docs/disclaimer).",
+    },
+    {
+      type: "heading",
+      text: "Is the on-chain vault audited? Does it touch my Robinhood account?",
+    },
+    {
+      type: "prose",
+      md: "**No, and no.** There is **no third-party audit**, two internal audit passes and a 42-agent preflight review are not an audit, and the contracts are not yet verified on the block explorer. The vault is a **separate system**: it holds no customer money, has no depositors and no trades, and there is no path between it and your Robinhood account. The ownership handover is also incomplete, three of the deployed contracts are **still owned by the deployer EOA** with the 2-of-3 Safe only as `pendingOwner()`. Per-contract detail is in [Architecture](/docs/architecture#the-separate-on-chain-module).",
+    },
+    {
+      type: "heading",
+      text: "Does the mainnet deploy make the desk autonomous?",
+    },
+    {
+      type: "prose",
+      md: "**No.** The equities desk is unchanged: Claude Code plus the Robinhood MCP, with your explicit in-session approval required for **every** order. Nothing on chain can trigger a trade in your Agentic account, and nothing in the desk moves funds on chain. The deploy changed what exists on Robinhood Chain, not what the desk is allowed to do.",
     },
     {
       type: "heading",

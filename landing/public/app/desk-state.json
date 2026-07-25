@@ -1,7 +1,7 @@
 {
   "generatedAt": null,
   "session": "no-run",
-  "_note": "No live desk run in this environment. The brokerage sections (account, positions, candidates, orders, backtests) stay EMPTY on purpose — nothing here is simulated or faked. On-chain figures below are read live from Robinhood Chain testnet contracts. A real run (or a connected account via the backend) fills the rest.",
+  "_note": "NO-RUN — the PM session overwrites this file after a real desk run; until then it is deliberately empty. It is NOT a desk run and NOT a live on-chain snapshot: every brokerage section (account, positions, candidates, orders, backtests) is EMPTY and every on-chain figure is null, so nothing here is simulated or faked. The only real data in this file is the deployed contract addresses on Robinhood Chain mainnet (chainId 4663): the dashboard reads those contracts live and shows a figure only when the read succeeds — otherwise the panel stays empty. Mainnet · no third-party audit · deposits capped at 10,000 USDG · no deposits and no trades yet, so there is no track record.",
   "account": {
     "name": "Robinhood Agentic",
     "type": "agentic",
@@ -32,88 +32,44 @@
   "decisionLog": [],
   "onchain": {
     "network": {
-      "name": "Robinhood Chain Testnet",
-      "chainId": 46630,
+      "name": "Robinhood Chain",
+      "chainId": 4663,
       "deployed": true,
-      "explorer": "https://explorer.testnet.chain.robinhood.com"
+      "explorer": "https://explorer.mainnet.chain.robinhood.com"
     },
+    "_contractsNote": "Real Robinhood Chain mainnet (4663) deployment — mirrors onchain/deployments/latest.json. Ownership handover is still pending: GuardrailConfig and UniswapSwapAdapter are owned by the 2-of-3 Safe, while RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor are Ownable2Step with the Safe as pendingOwner and the deployer EOA still owner until the Safe calls acceptOwnership(). Contracts are not yet verified on the block explorer.",
     "contracts": {
-      "guardrails": "0x0839Eb3B55b9a6c9CB160EE6C65e7144F35237e8",
-      "vault": "0x8fF0F0423Ca0F20A5de48449661364779cf26Bf2",
-      "attestor": "0x874d7D363B7FA86CBAD0A2032cEEe79ABC6aE792",
-      "executor": "0x3743e08D5D349Ff57e8f780820b04824ab6E4Ff0",
-      "autosave": "0x7EbFb8e969edcDA691490CDC68c8c8ea7Aa99EA0"
+      "guardrails": "0x68cf24994d0363Be7688e96B69dDacC290c766C0",
+      "vault": "0x0e500E390cC599055f1e54194e1e611Cf64c5047",
+      "attestor": "0x68cc84d722E2d613cAc36c62167B177656e2C983",
+      "executor": "0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7",
+      "autosave": "0x5b0778E8561EA31490588D21bd44419803DC709b"
     },
+    "_vaultNote": "All-null on purpose. NAV, supply, share price and utilization must come from a live RWAVault read; the vault currently holds nothing (totalAssets 0, totalSupply 0), so there is no figure to seed here.",
     "vault": {
-      "symbol": "vAELIX",
-      "nav": 10000,
-      "totalAssets": 10000,
-      "totalShares": 10000,
-      "sharePrice": 1,
-      "yourShares": 0,
-      "yourValue": 0,
-      "utilizationPct": 10,
+      "symbol": null,
+      "nav": null,
+      "totalAssets": null,
+      "totalShares": null,
+      "sharePrice": null,
+      "yourShares": null,
+      "yourValue": null,
+      "utilizationPct": null,
       "apyPct": null
     },
-    "guardrails": [
-      {
-        "key": "perTradePct",
-        "label": "Per-trade cap",
-        "value": "15%",
-        "enforced": true
-      },
-      {
-        "key": "maxConcentrationPct",
-        "label": "Max concentration",
-        "value": "25%",
-        "enforced": true
-      },
-      {
-        "key": "maxOpenPositions",
-        "label": "Max open positions",
-        "value": "6",
-        "enforced": true
-      },
-      {
-        "key": "maxDailyOrders",
-        "label": "Max daily orders",
-        "value": "4",
-        "enforced": true
-      },
-      {
-        "key": "stopLossPct",
-        "label": "Stop-loss",
-        "value": "-8%",
-        "enforced": true
-      },
-      {
-        "key": "dailyLossHaltPct",
-        "label": "Daily-loss halt",
-        "value": "-5%",
-        "enforced": true
-      },
-      {
-        "key": "cashBufferPct",
-        "label": "Cash buffer",
-        "value": ">=10%",
-        "enforced": true
-      },
-      {
-        "key": "noAveraging",
-        "label": "No averaging into losers",
-        "value": "enforced",
-        "enforced": true
-      }
-    ],
+    "_guardrailsNote": "Intentionally empty: guardrails are rendered as 'enforced on-chain' and must come ONLY from a live GuardrailConfig read — never from this file. They populate for real from Robinhood Chain mainnet.",
+    "guardrails": [],
+    "_trackRecordNote": "Intentionally all-null: there is no track record. No deposits, no trades, no attestations — never seed a number here.",
     "trackRecord": {
-      "perfScore": 55,
-      "attestations": 2,
-      "verifiedPnlPct": 2.5,
+      "perfScore": null,
+      "attestations": null,
+      "verifiedPnlPct": null,
       "lastAttestation": null
     },
+    "_executorNote": "SessionKeyExecutor is deployed on mainnet 4663, but no session key has been granted and no trade has been executed — hence status 'preview', not 'live'. It is also still Ownable2Step-pending: the deployer EOA remains owner until the Safe calls acceptOwnership().",
     "executor": {
       "type": "Scoped session key (EOA)",
-      "status": "live",
+      "status": "preview",
       "scope": "guardrail-bounded swaps · approval-gated",
       "sessionKey": null,
       "dailyCapPct": null,

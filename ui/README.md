@@ -13,7 +13,11 @@ npm install
 npm run dev          # opens http://localhost:5180
 ```
 
-A demo `public/desk-state.example.json` ships so the UI looks alive immediately.
+A `public/desk-state.example.json` ships so a fresh clone renders. It is a **SAMPLE**:
+every brokerage section is empty and every on-chain figure is `null`. The only real data
+in it is the deployed contract addresses on **Robinhood Chain mainnet (chainId 4663)** —
+the on-chain band fills in from a live read of those contracts, or stays empty if the read
+fails. It never ships a number of its own.
 
 ## How data flows
 
@@ -23,10 +27,17 @@ Claude Code (PM) ── runs the desk, writes ──▶ ui/public/desk-state.jso
 ```
 
 The app fetches `desk-state.json` first and **falls back to `desk-state.example.json`**
-when it is absent — so a fresh clone renders the demo, while your real run renders live.
+when it is absent — so a fresh clone renders the sample, while your real run renders live.
 `desk-state.json` is **gitignored** (it holds real balances/positions) and is never
 committed; only the sanitized example is. The UI cache-busts each poll, so writes show
 up within ~5s without a reload.
+
+> **No invented figures.** Every number the dashboard shows must be a real read, an honest
+> empty (`null` → renders `—`), or explicitly labelled sample. Never seed a plausible-looking
+> NAV, PerfScore, attestation count or P&L into either JSON to make a panel look populated —
+> an empty panel is the correct output when there is nothing to read. The vault currently
+> holds nothing (`totalAssets` 0, `totalSupply` 0) and there are no attestations, so the
+> committed files carry `null` throughout.
 
 Tell the PM to write the snapshot, e.g.:
 > "After the desk run, write the state to ui/public/desk-state.json."
@@ -42,6 +53,11 @@ Tell the PM to write the snapshot, e.g.:
                                         //   (e.g. "live") renders the full brokerage desk.
   "_note": "string|omit",               // OPTIONAL human note about the snapshot; purely
                                         //   informational — does NOT affect the demo/live gate.
+                                        //   Any key starting with "_" is a comment the UI
+                                        //   ignores (`_contractsNote`, `_vaultNote`,
+                                        //   `_guardrailsNote`, `_trackRecordNote`,
+                                        //   `_executorNote` are used to record WHY a block is
+                                        //   deliberately empty, so nobody backfills it).
   "account": {
     "name": "Robinhood Agentic", "connected": true,
     "equity": 0, "cash": 0, "buyingPower": 0,
@@ -90,25 +106,32 @@ Tell the PM to write the snapshot, e.g.:
 
   "onchain": {                           // OPTIONAL — drives the whole on-chain band + the
                                          //   demo gate's live figures. Omit and that band hides.
-    "network": {                         // Robinhood Chain target
-      "name": "Robinhood Chain Testnet", "chainId": 46630, "deployed": true,
-      "explorer": "https://explorer.testnet.chain.robinhood.com" },
+    "network": {                         // Robinhood Chain target — mainnet is chainId 4663
+      "name": "Robinhood Chain", "chainId": 4663, "deployed": true,
+      "explorer": "https://explorer.mainnet.chain.robinhood.com" },
     "contracts": {                       // deployed addresses; `vault` is required for live reads
-      "guardrails": "0x…", "vault": "0x…", "attestor": "0x…",
-      "executor": "0x…", "autosave": "0x…" },
-    "vault": {                           // snapshot fallback; live reads override these when the RPC is up
-      "symbol": "vAELIX", "nav": 0, "totalAssets": 0, "totalShares": 0, "sharePrice": 0,
-      "yourShares": 0, "yourValue": 0, "utilizationPct": 0, "apyPct": null },
-    "guardrails": [                      // guardrails-as-code rows (live caps override when read)
+      "guardrails": "0x…",               //   GuardrailConfig  — caps read live for the rails panel
+      "vault": "0x…",                    //   RWAVault (vAELIX) — NAV/supply/positions + the dApp
+      "attestor": "0x…",                 //   DeskRegistry     — desk-run attestations
+      "executor": "0x…",                 //   SessionKeyExecutor
+      "autosave": "0x…" },               //   AelixAutosave    — omit and the DCA tab hides
+    "vault": {                           // snapshot fallback; live reads override these when the RPC is up.
+                                         //   Use null — NOT 0 — for anything unread: null renders '—',
+                                         //   while 0 reads as a real measurement of zero.
+      "symbol": null, "nav": null, "totalAssets": null, "totalShares": null, "sharePrice": null,
+      "yourShares": null, "yourValue": null, "utilizationPct": null, "apyPct": null },
+    "guardrails": [                      // guardrails-as-code rows. Ship this EMPTY: the panel
+                                         //   labels rows "enforced on-chain", so they may only come
+                                         //   from a live GuardrailConfig read, never from the file.
       { "key": "perTradePct", "label": "Per-trade cap", "value": "15%", "enforced": true } ],
-    "trackRecord": {                     // proof-of-track-record panel
-      "perfScore": 0, "attestations": 0, "verifiedPnlPct": null,
+    "trackRecord": {                     // proof-of-track-record panel — all null today
+      "perfScore": null, "attestations": null, "verifiedPnlPct": null,
       "lastAttestation": { "summary": "", "ts": "ISO-8601", "txHash": "0x…" } },
     "executor": {                        // agent-executor panel
       "type": "Scoped session key (EOA)", "status": "live|active|preview",
       "scope": "", "sessionKey": "0x…|null", "dailyCapPct": 15, "lastAction": "" },
     "autosave": {                        // autosave / DCA panel
-      "enabled": false, "cadence": "weekly", "amount": null, "asset": "USDG", "nextRun": null }
+      "enabled": false, "cadence": null, "amount": null, "asset": "USDG", "nextRun": null }
   }
 }
 ```
@@ -134,8 +157,62 @@ absent or empty.
   and `onchain.network.chainId` are present, the UI reads the **live** deployed contracts
   over a public RPC (see `src/onchain.js`) and those live values take precedence over the
   static `onchain.vault` / `onchain.guardrails` snapshot; the snapshot is only the fallback.
-  In the shipped `desk-state.example.json` (`session: "no-run"`) the brokerage sections stay
-  empty while this on-chain band renders live — so nothing on screen is faked.
+  `readOnchain()` starts at `live: false` and only flips to `true` after a contract read
+  actually returns, so a resolved-but-failed read can never be badged live. In the shipped
+  `desk-state.example.json` (`session: "no-run"`) the brokerage sections stay empty and the
+  on-chain snapshot is all-`null`, so anything the band shows came from a live read.
 - **`session`** gates the view: `"demo"` or `"no-run"` shows the honest AI-desk empty state
   (`DeskRunGate`) plus live on-chain figures; any other value renders the full brokerage desk.
   **`_note`** is informational only and does not affect that gate.
+
+## On-chain target: Robinhood Chain mainnet (4663)
+
+The addresses in the committed JSONs point at the mainnet deployment; `src/onchain.js` and
+`src/vault-app.jsx` carry the chain table (4663 mainnet, 46630 testnet, 31337 anvil) and pick
+the RPC from `onchain.network.chainId`. `onchain/deployments/latest.json` is the source of
+truth for the address set — copy from there, don't hand-edit addresses.
+
+| | |
+|---|---|
+| Chain | Robinhood Chain **mainnet**, chainId **4663** (`https://rpc.mainnet.chain.robinhood.com`) |
+| RWAVault (vAELIX) | `0x0e500E390cC599055f1e54194e1e611Cf64c5047` — 12 decimals (6 USDG + 6 offset) |
+| GuardrailConfig | `0x68cf24994d0363Be7688e96B69dDacC290c766C0` |
+| DeskRegistry (`attestor`) | `0x68cc84d722E2d613cAc36c62167B177656e2C983` |
+| SessionKeyExecutor | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` |
+| AelixAutosave | `0x5b0778E8561EA31490588D21bd44419803DC709b` |
+| Asset | real USDG `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` — `decimals() == 6` |
+
+Standing caveats the dashboard copy must keep — mainnet does **not** retire them:
+
+- **No third-party audit.** Internal review passes are not an audit.
+- **Deposits are capped** (10,000 USDG) and there is **no track record** — no depositors, no
+  trades, `totalAssets` and `totalSupply` are 0. Panels stay empty; that is the honest output.
+- **Ownership handover is pending.** GuardrailConfig and UniswapSwapAdapter are owned by the
+  2-of-3 Safe; RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor are `Ownable2Step` with
+  the Safe as `pendingOwner` and the deployer EOA still `owner()` until the Safe calls
+  `acceptOwnership()`. Do not write "owned by a 2-of-3 multisig" as a blanket claim.
+- **Contracts are not yet verified** on the block explorer, and the mainnet explorer base URL
+  above is taken from the app's chain table — it has not been confirmed against a live host
+  (the bridge writes a different one, `explorer.chain.robinhood.com`). Verify before trusting
+  explorer deep links.
+- **No Chainlink sequencer-uptime feed exists on Robinhood Chain.** The stack substitutes a
+  chain-liveness quorum of 24/7 crypto feeds; it is coarse by design (catches multi-hour
+  outages, not minute-scale ones) and is not equivalent to an uptime feed.
+- The desk itself is unchanged: **every order still needs explicit human approval** in the
+  Claude Code session. The mainnet deploy does not make it autonomous and does not connect
+  customer money to the vault. The `$AELIX` token is unlaunched. Not affiliated with or
+  endorsed by Robinhood or Anthropic.
+
+**Known copy gap (source fix + rebuild needed):** the data files now target 4663, but several
+UI strings still say testnet — `NetworkBadge` renders a hardcoded `TESTNET · LIVE` /
+`TESTNET · PREVIEW`, `PreviewBadge` defaults to `TESTNET · PREVIEW` (`src/components.jsx`), the
+`DeskRunGate` line says the vault is "deployed to testnet", and the vault dApp shows
+`Robinhood Chain · Testnet` plus the disclaimer `Testnet preview · not audited · not for US
+persons` (`src/vault-app.jsx`). Those mislabel the mainnet deployment; replace them with an
+accurate caveat (e.g. `mainnet · unaudited · deposits capped`) — do not simply delete the
+caveat — and re-run the sync script.
+
+The built copy served from the landing site lives in `landing/public/app/` and is regenerated
+by `node scripts/sync-app-into-landing.mjs` (build `ui/` with `base=/app/`, copy `ui/dist`).
+That directory is **committed**, so `landing/public/app/desk-state.json` is public: keep it
+empty/`null` unless every figure in it is a real read.

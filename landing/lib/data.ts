@@ -16,10 +16,10 @@ export const MARQUEE = [
   "4 SPECIALIST AGENTS",
   "RISK VETO ARMED",
   "GUARDRAILS AS CODE",
-  "ON-CHAIN VAULT · TESTNET",
-  "VERIFIABLE TRACK RECORD",
-  "ON ROBINHOOD CHAIN",
-  "TESTNET PREVIEW · NOT YET LIVE",
+  "ON-CHAIN VAULT · MAINNET",
+  "APPEND-ONLY ATTESTATIONS",
+  "ON ROBINHOOD CHAIN · CHAIN 4663",
+  "UNAUDITED · DEPOSITS CAPPED",
   "BETA · NOT INVESTMENT ADVICE",
 ] as const;
 
@@ -51,16 +51,17 @@ export const GUARDS = [
   { title: "Prompt-injection defense", body: "The news agent treats fetched web content as untrusted data. Instruction-like text (“buy X now”) is quoted and flagged, never obeyed." },
   { title: "Independent risk veto", body: "The Risk Manager evaluates against written rules and can block a trade the analysts liked. If caps are unset, it vetoes." },
   { title: "Equities · Agentic account only", body: "The desk can only trade the isolated Agentic account, never your main balance. Disconnect the MCP anytime, that’s the kill switch." },
-  { title: "Guardrails-as-code · verifiable record", body: "The written caps are being compiled into an on-chain Guardrails library the vault and executor enforce, with decisions and outcomes attested for a verifiable track record. Testnet-first, not yet deployed, approval and the caps still apply." },
+  { title: "Guardrails-as-code · attested record", body: "The written caps are compiled into an on-chain GuardrailConfig the vault and executor enforce, with decisions attestable append-only so a record accrues instead of being claimed. Deployed on Robinhood Chain mainnet, unaudited, deposits capped, nothing attested yet; your approval and the caps still apply." },
 ] as const;
 
 export const ROADMAP = [
-  { phase: "FASE 0 · SETUP", title: "Guardrails & contract", body: "Private repo, OAuth to the Agentic account, operating contract, and the permission gate that puts every order behind a manual prompt." },
-  { phase: "FASE 1 · CORE", title: "The four agents + logging", body: "Fundamental, Technical, Macro/News, Risk Manager as isolated sub-agents. JSONL reasoning logs for audit." },
-  { phase: "FASE 2 · DASHBOARD", title: "Desk mirror + paper trading", body: "Read-only dashboard mirrors desk-state live. Robinhood integration starts in paper mode." },
-  { phase: "FASE 3 · ON-CHAIN", title: "Guardrails, vault & proof", body: "The desk's written caps compiled into an on-chain Guardrails library, an RWA Vault (ERC-4626, share token vAELIX) wired to it, and Proof-of-Track-Record attestations so decisions and outcomes are verifiable. Robinhood Chain, testnet-first, pending review, nothing deployed, not an investment product.", experimental: true },
-  { phase: "FASE 4 · EXECUTOR", title: "Guardrail-bounded executor", body: "An ERC-4337 agent executor with a scoped session key that cannot exceed the Guardrails and stays approval-gated, plus optional Autosave / DCA on top of the vault. Robinhood Chain, testnet-first, pending review; not an investment product.", experimental: true },
-  { phase: "FASE 5 · SCALE", title: "Backtesting & optimization", body: "Strategy backtests, prompt-cost optimization, and broader coverage." },
+  { phase: "FASE 0 · SETUP", title: "Guardrails & contract", body: "Private repo, OAuth to the Agentic account, operating contract, and the permission gate that puts every order behind a manual prompt.", status: "done" },
+  { phase: "FASE 1 · CORE", title: "The four agents + logging", body: "Fundamental, Technical, Macro/News, Risk Manager as isolated sub-agents. JSONL reasoning logs for audit.", status: "done" },
+  { phase: "FASE 2 · DASHBOARD", title: "Desk mirror + paper trading", body: "Read-only dashboard mirrors desk-state live. Robinhood integration starts in paper mode.", status: "done" },
+  { phase: "FASE 3 · ON-CHAIN", title: "Guardrails, vault & proof", body: "The desk's written caps compiled into an on-chain GuardrailConfig, an RWA Vault (ERC-4626, share token vAELIX) wired to it, and append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Deployed on Robinhood Chain mainnet (chainId 4663) against real periphery, USDG, Chainlink feeds and Uniswap V2, no mocks in that path. Unaudited, deposits capped, no depositors and nothing attested yet, not an investment product.", status: "done", onchain: true },
+  { phase: "FASE 4 · EXECUTOR", title: "Guardrail-bounded executor", body: "A session-key executor that grants the desk revocable, expiring, tightly-scoped trading rights it cannot exceed, the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint, plus recurring Autosave / DCA on top of the vault. Deployed on mainnet, still approval-gated, still unaudited; not an investment product.", status: "done", onchain: true },
+  { phase: "FASE 5 · HARDENING", title: "Audit, verification & handover", body: "Open, and the reason nothing here should be treated as safe yet: no third-party security audit has been performed (internal passes are not an audit), the contracts are not verified on the block explorer, and the Ownable2Step handover is incomplete, the vault, oracle adapter and executor still have the deployer EOA as owner with the 2-of-3 Safe only as pending owner. Securities and legal review also remain outstanding.", status: "pending" },
+  { phase: "FASE 6 · SCALE", title: "Backtesting & optimization", body: "Strategy backtests, prompt-cost optimization, and broader coverage.", status: "pending" },
 ] as const;
 
 export const MARQUEE2 = [
@@ -95,8 +96,8 @@ export const COMPARE = {
       "Independent risk manager with veto",
       "Quotes suspicious “instructions”, ignores them",
       "Isolated Agentic budget only",
-      "Guardrails enforced on-chain (testnet-first)",
-      "Verifiable, attested record, not claimed",
+      "Guardrails enforced on-chain (mainnet, unaudited)",
+      "Append-only attestations, not screenshots",
     ],
   },
 } as const;
@@ -115,11 +116,11 @@ export const FAQ = [
   },
   {
     q: "What about the on-chain vault and verifiable track record?",
-    a: "That’s the on-chain direction, and it’s testnet-first. The plan: an RWA Vault (ERC-4626, share token vAELIX) wired to a Guardrails library that compiles the desk’s written caps on-chain, plus a Proof-of-Track-Record attestation registry so decisions and outcomes are verifiable rather than claimed. Nothing is deployed yet, every on-chain surface is a testnet preview showing illustrative values, there is no live track record, and human approval and the guardrails still apply. Not an investment product and not investment advice.",
+    a: "The vault is deployed on Robinhood Chain mainnet (chainId 4663): an RWA Vault (ERC-4626, share token vAELIX) wired to a GuardrailConfig that compiles the desk’s written caps on-chain, plus append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Read the caveats: it is unaudited (internal review passes are not an audit), the contracts are not yet verified on the block explorer, ownership handover to the 2-of-3 Safe is still pending on the vault, oracle adapter and executor, deposits are capped, and nothing has been attested, so there is no track record. Human approval and the guardrails still apply. Not an investment product and not investment advice.",
   },
   {
     q: "Who executes on-chain, does the agent trade by itself?",
-    a: "No. The planned ERC-4337 agent executor uses a scoped session key that cannot exceed the Guardrails and stays approval-gated, guardrail-bounded and human-in-the-loop, never autonomous. The desk proposes; you approve. This is testnet-preview and not yet live.",
+    a: "No. The session-key executor grants the desk revocable, expiring, tightly-scoped rights it cannot exceed, the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint. It stays guardrail-bounded and human-in-the-loop, never autonomous: the desk proposes; you approve. It is deployed on Robinhood Chain mainnet and unaudited, and the mainnet deploy does not make the desk autonomous.",
   },
   {
     q: "How does it defend against prompt injection?",

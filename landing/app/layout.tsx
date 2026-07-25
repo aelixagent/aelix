@@ -19,7 +19,7 @@ const sans = Instrument_Sans({ weight: ["400", "500", "600"], subsets: ["latin"]
 
 const TITLE = "AELIX";
 const DESC =
-  "AELIX — on-chain agentic trading desk. Testnet preview.";
+  "AELIX — on-chain agentic trading desk on Robinhood Chain mainnet. Every order needs your yes. Unaudited · deposits capped · no track record.";
 
 // Favicons come from the file-based metadata convention: app/icon.png + app/apple-icon.png
 // (the Aelix "V" mark). The 1200×630 social card comes from app/opengraph-image.tsx —

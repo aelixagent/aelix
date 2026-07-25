@@ -3,7 +3,7 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Architecture",
   description:
-    "How Aelix is put together: a Claude-Code-native desk with no backend and no Python orchestrator, one main session, a folder of sub-agents, one MCP broker connection, and a JSON snapshot instead of a database.",
+    "How Aelix is put together: a Claude-Code-native desk with no backend and no Python orchestrator, one main session, a folder of sub-agents, one MCP broker connection, a JSON snapshot instead of a database, and a separate on-chain module now deployed to Robinhood Chain mainnet, unaudited and deposit-capped.",
   eyebrow: "04, Architecture",
   blocks: [
     {
@@ -320,7 +320,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "warn",
       title: "Don't assume the aspirational v1.0 components exist",
-      md: "The running system on this page is the equities desk, its **trading path** has no chain, RPC, wallet, or token code; every order goes through the Robinhood MCP. The on-chain layer is a **separate, testnet-first module** in `onchain/` (an ERC-4626 vault + guardrails-as-code + on-chain attestations), **unaudited, not deployed to mainnet, and not part of the live desk.** See the [Safety & Disclaimer](/docs/disclaimer) for scope.",
+      md: "The running system on this page is the equities desk, its **trading path** has no chain, RPC, wallet, or token code; every order goes through the Robinhood MCP. The on-chain layer is a **separate module** in `onchain/` (an ERC-4626 vault + guardrails-as-code + on-chain attestations). It is **deployed to Robinhood Chain mainnet** as of 2026-07-26, and it is still **unaudited, deposit-capped, holds zero assets, and is not part of the live desk.** It is mapped in full further down this page; see the [Safety & Disclaimer](/docs/disclaimer) for scope.",
     },
     {
       type: "table",
@@ -332,7 +332,7 @@ export const content: DocContent = {
         ["Celery / Redis job queue", "**None.** Scheduling uses `/loop` or a Claude-session cron."],
         ["PostgreSQL / any database", "**None.** State is `desk-state.json` plus append-only JSONL logs."],
         ["Docker / Docker Compose", "**None.** It runs as local files and plain `node`."],
-        ["Blockchain / RPC / wallet / token", "**Not in the running desk.** A separate, testnet-first module lives in `onchain/` (ERC-4626 vault + guardrails-as-code + attestations), unaudited, not on mainnet, not part of the live trading path."],
+        ["Blockchain / RPC / wallet / token", "**Not in the running desk.** A separate module lives in `onchain/` (ERC-4626 vault + guardrails-as-code + attestations). It is now deployed to Robinhood Chain mainnet (chainId 4663), still unaudited and deposit-capped, and it is **not** in the equities trading path. The `$AELIX` token is **not built**."],
       ],
     },
     {
@@ -357,6 +357,168 @@ export const content: DocContent = {
           "Plain `node` and a Vite dashboard",
         ],
       },
+    },
+    {
+      type: "divider",
+    },
+    {
+      type: "heading",
+      text: "The separate on-chain module",
+    },
+    {
+      type: "prose",
+      md: "Everything above is the equities desk. The `onchain/` module is a **different system** with a different trust model: a Foundry project where the risk caps written in `strategies/` are enforced by a contract instead of read by an agent. **Enforced, not promised.** As of **2026-07-26 it is deployed to Robinhood Chain mainnet, chainId 4663**, against real periphery, there are no mocks in the mainnet path.",
+    },
+    {
+      type: "prose",
+      md: "It is wired to the desk in **neither** direction: the desk's orders go through the Robinhood MCP and never touch a chain, and the vault holds no customer money. Deploying it changed what exists on chain, not what the desk is allowed to do, every order still needs your explicit in-session approval.",
+    },
+    {
+      type: "callout",
+      tone: "danger",
+      title: "Mainnet, unaudited, deposits capped",
+      md: "There is **no third-party audit.** Two internal audit passes and a 42-agent preflight review are **not** an audit. The contracts are **not yet verified on the block explorer.** Deposits are capped at **10,000 USDG**, TVL is **0**, and there are **no depositors, no trades, no returns, and no track record.** Read this section as a map of unaudited mainnet code, not as a product. See [Safety & Disclaimer](/docs/disclaimer).",
+    },
+    {
+      type: "heading",
+      level: 3,
+      text: "Deployed addresses",
+    },
+    {
+      type: "prose",
+      md: "Each address below was confirmed on 2026-07-26 by calling an identifying function on the deployed contract, not copied from a docs table. They mirror `onchain/deployments/latest.json`.",
+    },
+    {
+      type: "table",
+      caption: "Robinhood Chain mainnet, chainId 4663. Verified by direct on-chain call.",
+      headers: ["Contract", "Address (chainId 4663)", "Role"],
+      rows: [
+        [
+          "Safe (2-of-3 multisig)",
+          "`0x47b5e2923216f203b7960d8D232215534AF02FF2`",
+          "The intended owner of the whole stack, two of three signers required. The handover is **partly pending**, see below.",
+        ],
+        [
+          "RWAVault (`vAELIX`)",
+          "`0x0e500E390cC599055f1e54194e1e611Cf64c5047`",
+          "ERC-4626 vault over USDG for tokenized real-world assets. 12 decimals (6 from USDG plus a 1e6 offset that defeats the ERC-4626 inflation attack). Deposit cap **10,000 USDG**. Current state: `totalAssets` 0, `totalSupply` 0, not paused, 5 tokens allowlisted.",
+        ],
+        [
+          "GuardrailConfig",
+          "`0x68cf24994d0363Be7688e96B69dDacC290c766C0`",
+          "The caps as state, not prose: the on-chain store of the risk limits from `CLAUDE.md` and [`strategies/`](/docs/strategies). Some ceilings (e.g. the sell-tolerance cap) cannot be widened even by the owner.",
+        ],
+        [
+          "ChainlinkOracleAdapter",
+          "`0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A`",
+          "Prices the vault reads for NAV and for the trade path, with two-tier staleness bounds, a circuit breaker for splits and corporate actions, and the chain-liveness quorum below.",
+        ],
+        [
+          "DeskRegistry",
+          "`0x68cc84d722E2d613cAc36c62167B177656e2C983`",
+          "Append-only, chain-stamped attestation log for a desk. The on-chain counterpart of `logs/*.jsonl`. Currently empty.",
+        ],
+        [
+          "PerfScore",
+          "`0x1CB3df5AAFEb0d2c31277e3e889613bc6F4C9e14`",
+          "Computes a performance summary **from** attestations in the registry. With nothing attested, there is nothing to score.",
+        ],
+        [
+          "UniswapSwapAdapter",
+          "`0x9a8bb5E65f340C4Bf6c7Aa71991EC5D31083b5cf`",
+          "The vault's only execution surface: a narrow, typed swap over Uniswap V2 Router02, so a manager can never redirect a swap into an arbitrary contract call.",
+        ],
+        [
+          "SessionKeyExecutor",
+          "`0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7`",
+          "The authorization layer between the AI desk and the vault, expiring, permission-scoped keys instead of a standing hot wallet.",
+        ],
+        [
+          "AelixAutosave",
+          "`0x5b0778E8561EA31490588D21bd44419803DC709b`",
+          "Recurring DCA into the vault. It never holds funds beyond the atomic hop.",
+        ],
+      ],
+    },
+    {
+      type: "heading",
+      level: 3,
+      text: "Real periphery, verified by call",
+    },
+    {
+      type: "deflist",
+      items: [
+        {
+          term: "USDG, the 6-decimal original",
+          md: "`0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`, `decimals()` **6**, `symbol()` `USDG`, `name()` `Global Dollar`. An **18-decimal look-alike exists on the same chain**, so the deploy gate pins USDG decimals to 6 and rejects the impostor without ever trusting a symbol.",
+        },
+        {
+          term: "Uniswap V2 Router02",
+          md: "`0x89e5db8b5aa49aa85ac63f691524311aeb649eba`. Identity cross-confirmed because its `WETH()` returns the documented WETH for the chain.",
+        },
+        {
+          term: "Five allowlisted Stock Tokens",
+          md: "NVDA, AAPL, TSLA, GOOGL, SPY, all 18 decimals, all exposing `oraclePaused()` and ERC-8056 `uiMultiplier()`. Matching is by **contract address, never by symbol**, the chain also hosts unrelated tokens with confusable tickers.",
+        },
+        {
+          term: "One Chainlink feed proxy per token",
+          md: "Every equity feed is **8 decimals, 86400s (24h) heartbeat, 0.5% deviation threshold**. The oracle returns live prices, NVDA read **$206.37** at deploy time. Wire the **proxy**, not the aggregator.",
+        },
+        {
+          term: "Test suite",
+          md: "**214 tests passing** in `onchain/test/`. Tests are evidence about the code's own invariants, not a substitute for a third-party audit.",
+        },
+      ],
+    },
+    {
+      type: "heading",
+      level: 3,
+      text: "No sequencer uptime feed: the chain-liveness quorum",
+    },
+    {
+      type: "prose",
+      md: "The standard L2 pattern is to read a Chainlink **sequencer uptime feed** and refuse to price while the sequencer is down. That feed **does not exist here**: Chainlink's reference directory for Robinhood Chain carries 56 feeds and **zero** uptime entries, and the chain is absent from Chainlink's L2 sequencer-feeds page.",
+    },
+    {
+      type: "prose",
+      md: "So the adapter substitutes a **chain-liveness quorum** (`ChainlinkOracleAdapter.livenessRefs`): at least two **24/7 crypto** feeds act as witnesses. Crypto feeds publish around the clock while equity feeds are 24/5, which is exactly the discriminator a plain staleness check lacks, one fresh witness proves the chain is producing blocks and the oracle network is delivering, so a stale equity feed just means a closed session. If **every** witness is stale, the vault fails closed with `ChainLivenessStale`. The gate refuses a deploy that has neither a real uptime feed nor a quorum, and `SEQUENCER_FEED` stays wired for the day one appears.",
+    },
+    {
+      type: "callout",
+      tone: "warn",
+      title: "The quorum is coarse by design, not equivalent",
+      md: "It catches **multi-hour outages, not minute-scale ones.** Do not read it as a replacement for a sequencer uptime feed. Post-recovery protection comes from the **per-feed staleness bound** instead: a trade cannot execute until the equity feed itself publishes a fresh round.",
+    },
+    {
+      type: "heading",
+      level: 3,
+      text: "Ownership: a two-step handover, still pending",
+    },
+    {
+      type: "prose",
+      md: "The stack is meant to be owned by the 2-of-3 Safe, and the contracts use `Ownable2Step`, so a transfer only completes when the new owner calls `acceptOwnership()`. **That handover is not finished.** Until the Safe accepts on the three contracts below, a single deployer key still controls them, so the blanket claim *\"owned by a multisig\"* would be wrong today. Stated precisely, per contract:",
+    },
+    {
+      type: "table",
+      caption: "Ownership as read on chain, 2026-07-26. Deployer EOA = 0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51.",
+      headers: ["Contract", "`owner()` today", "State"],
+      rows: [
+        ["GuardrailConfig", "the Safe", "**Done.** Owned by the 2-of-3 Safe."],
+        ["UniswapSwapAdapter", "the Safe", "**Done.** Owned by the 2-of-3 Safe."],
+        ["RWAVault", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
+        ["ChainlinkOracleAdapter", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
+        ["SessionKeyExecutor", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
+      ],
+    },
+    {
+      type: "callout",
+      tone: "danger",
+      title: "Until the Safe accepts, one hot key controls three contracts",
+      md: "`RWAVault`, `ChainlinkOracleAdapter`, and `SessionKeyExecutor` are still owned by the deployer EOA. That is a real, current concentration of control, and it is why the deposit cap and the zero balance matter. This page will be corrected when each `acceptOwnership()` lands, not before.",
+    },
+    {
+      type: "note",
+      md: "The on-chain module remains a **direction**, gated behind a third-party audit, explorer verification, the completed handover, and legal/securities review. The US-person question is unresolved and the `$AELIX` token is **not built**. Scope in full: [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "divider",

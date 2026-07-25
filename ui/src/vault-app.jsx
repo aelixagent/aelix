@@ -332,8 +332,8 @@ export default function VaultApp() {
   function doCancelPlan() {
     tx(() => walletClient().writeContract({ account, chain, address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'cancelPlan', args: [] }), `Cancel autosave`)
   }
-  // Testnet-only faucet: the deployed USDG is a mock with a permissionless mint,
-  // so a tester can top up their own balance to try Deposit without a terminal.
+  // Mock-asset-only faucet. Gated on isDemoAsset: real mainnet USDG has no permissionless
+  // mint, so this never appears against the live 6-dec USDG.
   function doFaucet() {
     if (!pos) return
     const amount = parseUnits('1000', pos.uDec)
@@ -389,7 +389,7 @@ export default function VaultApp() {
       <main className="vstage">
         <VaultScene active={!!account} />
         <div className="vhero">
-          <div className="vhero-kicker"><span className="tick" aria-hidden="true" />Robinhood Chain · Testnet</div>
+          <div className="vhero-kicker"><span className="tick" aria-hidden="true" />Robinhood Chain · {netShort}</div>
           <h1 className="vhero-title">The Vault</h1>
           <p className="vhero-sub">Deposit USDG. The desk trades inside on-chain guardrails — you approve every move.</p>
         </div>
@@ -508,7 +508,7 @@ export default function VaultApp() {
             </div>
           )}
 
-          <div className="vdisc">Testnet preview · not audited · not for US persons · not investment advice.{isDemoAsset ? ' · USDG is a testnet mock (permissionless mint)' : ''}</div>
+          <div className="vdisc">Mainnet · no third-party audit · deposits capped · not for US persons · not investment advice.{isDemoAsset ? ' · this asset is a mock with a permissionless mint (not real USDG)' : ''}</div>
         </div>
       </main>
 

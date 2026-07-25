@@ -8,7 +8,8 @@ import type { Metadata } from "next";
 // the wallet's injected provider (window.ethereum) is available inside the frame.
 export const metadata: Metadata = {
   title: "Vault",
-  description: "Aelix investor Vault — connect, deposit, withdraw. Testnet preview.",
+  description:
+    "Aelix investor Vault — connect, deposit, withdraw. Live on Robinhood Chain mainnet: unaudited, deposits capped, no track record.",
 };
 
 export default function VaultPage() {

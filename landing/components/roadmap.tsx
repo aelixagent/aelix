@@ -11,23 +11,39 @@ export function Roadmap() {
           <div>
             <DecryptText text="// ROADMAP" as="span" className="eyebrow" />
             <h2>
-              From guardrails<br />to go-live.
+              From guardrails<br />to mainnet.
             </h2>
           </div>
-          <p>Built in phases. Every trading feature ships behind human approval first, paper-trading second.</p>
+          <p>
+            Built in phases. Every trading feature ships behind human approval first,
+            paper-trading second. The on-chain module is deployed on Robinhood Chain
+            mainnet, and the hardening phase after it, audit, explorer verification,
+            ownership handover and legal review, is still open.
+          </p>
         </div>
         <div className="road" style={{ position: "relative" }}>
           <RoadmapProgress />
-          {ROADMAP.map((p, i) => (
-            <Reveal key={p.phase} delay={i * 70} className={"phase" + (("experimental" in p && p.experimental) ? " exp" : "")}>
-              <div className="ph">{p.phase}</div>
-              <h3>
-                {p.title}
-                {"experimental" in p && p.experimental && <span className="badge">EXPERIMENTAL · TESTNET</span>}
-              </h3>
-              <p>{p.body}</p>
-            </Reveal>
-          ))}
+          {ROADMAP.map((p, i) => {
+            const onchain = "onchain" in p && p.onchain;
+            const done = p.status === "done";
+            return (
+              <Reveal key={p.phase} delay={i * 70} className={"phase" + (onchain ? " exp" : "")}>
+                <div className="ph">{p.phase}</div>
+                <h3>
+                  {p.title}
+                  {done ? (
+                    <span className="badge">DONE</span>
+                  ) : (
+                    <span className="badge" style={{ color: "var(--ink-2)", borderColor: "var(--hair-hi)" }}>
+                      PENDING
+                    </span>
+                  )}
+                  {onchain && <span className="badge">MAINNET · UNAUDITED</span>}
+                </h3>
+                <p>{p.body}</p>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
     </section>

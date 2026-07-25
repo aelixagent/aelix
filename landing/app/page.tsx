@@ -301,7 +301,7 @@ export default function HomePage() {
           </div>
           <Reveal className="vx-eyebrow" i={0}>
             <span className="vx-eyebrow__tick" aria-hidden="true" />
-            On-chain agentic desk · testnet
+            On-chain desk · mainnet · unaudited
           </Reveal>
           <RevealChars text="AELIX" as="h1" className="vx-hero-title" step={70} />
           <Reveal className="vx-sub vx-sub--hero" i={4} style={{ marginTop: "0.4em" }}>
@@ -331,7 +331,7 @@ export default function HomePage() {
             step={70}
             lines={[
               "A desk of AI analysts researching your watchlist around the clock,",
-              "an on-chain agentic layer where the rules and the record are verifiable,",
+              "an on-chain layer on Robinhood Chain mainnet where the rules are code,",
               "and no order is ever placed without your explicit yes.",
             ]}
           />
@@ -421,9 +421,9 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "An ERC-4626 vault holds the book; every decision and outcome is",
-              "attested on-chain for a track record you can verify, not take on trust.",
-              "One calm picture, nothing hidden, nothing assumed. Testnet preview.",
+              "An ERC-4626 vault holds the book, live on Robinhood Chain mainnet, and",
+              "decisions can be attested append-only, so a record accrues instead of",
+              "being claimed. Nothing attested yet. Mainnet · unaudited · deposits capped.",
             ]}
           />
         </div>
@@ -439,7 +439,7 @@ export default function HomePage() {
             step={70}
             lines={[
               "The calm layer over your watchlist, one reviewed decision at a time,",
-              "on Robinhood Chain. Testnet-first · preview · not yet live.",
+              "on Robinhood Chain mainnet. Unaudited · deposits capped · no track record.",
             ]}
           />
           <Reveal className="vx-cta-row" i={2}>
@@ -464,11 +464,16 @@ export default function HomePage() {
         <p className="vx-foot__legal">
           <b>Not investment advice.</b> Aelix is an agentic research tool for Robinhood
           Agentic (beta). The desk researches and proposes; every order requires explicit
-          human approval in session. On-chain features, the Guardrails library, ERC-4626
-          vault, on-chain attestations and agent executor, are testnet-first and not yet
-          live: nothing is deployed, all on-chain values shown are illustrative previews,
-          and this is not an investment product. There is no track record. Nothing here is
-          a recommendation to buy or sell any security. Use only risk capital.
+          human approval in session, and the on-chain deploy does not change that.
+          The on-chain module, the Guardrails config, the ERC-4626 vault (vAELIX), the
+          attestation registry and the scoped session-key executor, is deployed on
+          Robinhood Chain mainnet (chainId 4663) and is <b>unaudited</b>: no third-party
+          audit has been performed, the contracts are not yet verified on the block
+          explorer, ownership handover to the 2-of-3 Safe is still pending on the vault,
+          oracle adapter and executor, and deposits are capped. There are no depositors
+          and no track record. The $AELIX token is unlaunched, with no sale and no price.
+          Not affiliated with or endorsed by Robinhood or Anthropic. Nothing here is a
+          recommendation to buy or sell any security. Use only risk capital.
         </p>
       </footer>
     </div>

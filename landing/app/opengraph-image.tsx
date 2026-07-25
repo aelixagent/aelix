@@ -32,7 +32,10 @@ export default function OpengraphImage() {
           AELIX
         </div>
         <div style={{ display: "flex", fontSize: 34, marginTop: 20, color: "#9AA3A0" }}>
-          On-chain · human-in-the-loop · testnet preview
+          On-chain · human-in-the-loop · Robinhood Chain mainnet
+        </div>
+        <div style={{ display: "flex", fontSize: 24, marginTop: 12, color: "#7E8683" }}>
+          Unaudited · deposits capped · no track record
         </div>
         <div
           style={{
