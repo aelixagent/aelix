@@ -31,6 +31,7 @@ const VAULT_ABI = [
   "function totalSupply() view returns (uint256)",
   "function totalAssets() view returns (uint256)",
   "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function manager() view returns (address)",
   "function openPositions() view returns (uint256)",
   "function ordersToday() view returns (uint8)",
@@ -94,12 +95,13 @@ async function main() {
   const perf = new ethers.Contract(d.perfScore, PERF_ABI, provider);
   const usdg = new ethers.Contract(d.usdg, ERC20_ABI, provider);
 
-  const [nav, shares, totalAssets, symbol, manager, caps, cashBal, count, summary] =
+  const [nav, shares, totalAssets, symbol, vDec, manager, caps, cashBal, count, summary] =
     await Promise.all([
       vault.navUsdg(),
       vault.totalSupply(),
       vault.totalAssets(),
       vault.symbol(),
+      vault.decimals(),
       vault.manager(),
       cfg.caps(),
       usdg.balanceOf(d.vault),
@@ -107,7 +109,9 @@ async function main() {
       perf.summary(d.subject),
     ]);
 
-  const navN = num(nav), sharesN = num(shares), cashN = num(cashBal);
+  // Shares carry the vault's decimals (asset decimals + the 1e6 inflation-defense offset),
+  // not a fixed 18 — format them with vDec so share price / share count read correctly.
+  const navN = num(nav), sharesN = num(shares, Number(vDec)), cashN = num(cashBal);
   const sharePrice = sharesN > 0 ? round2(num(totalAssets) / sharesN) : 1;
   const utilizationPct = navN > 0 ? Math.round(((navN - cashN) / navN) * 100) : 0;
   const totalReturnPct = round2(Number(summary.totalReturnBps) / 100);
