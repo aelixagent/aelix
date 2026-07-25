@@ -7,7 +7,7 @@ in [`../CLAUDE.md`](../CLAUDE.md) and [`../strategies/README.md`](../strategies/
 are **enforced by the contract, not merely promised by a prompt** — and every desk
 run leaves a tamper-proof track record.
 
-> **Status: testnet / preview.** 148 passing tests (unit + fuzz + invariant) and a
+> **Status: testnet / preview.** 155 passing tests (unit + fuzz + invariant) and a
 > **live deployment on Robinhood Chain testnet** (chain 46630). The periphery (USDG,
 > Stock Token, price oracle, swap adapter) is **mocked** for this demo; a production
 > deploy points the vault at real Robinhood Chain addresses. **No third-party audit yet.
@@ -117,7 +117,7 @@ CLAUDE.md's "present a preview, then get approval".
 
 ```bash
 cd onchain
-forge test            # 148 tests across 12 suites
+forge test            # 155 tests across 13 suites
 forge test --gas-report
 ```
 

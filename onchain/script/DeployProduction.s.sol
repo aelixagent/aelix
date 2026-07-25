@@ -61,17 +61,24 @@ contract DeployProduction is Script {
         address agent;
     }
 
+    /// @dev Robinhood Chain MAINNET — where real funds live. Deploys here are gated.
+    uint256 internal constant MAINNET_CHAIN_ID = 4663;
+    /// @dev Placeholder periphery: valid only for local simulation / an unconfigured run.
+    ///      A mainnet deploy that still points at these must fail (see {_assertMainnetSafe}).
+    address internal constant PLACEHOLDER_USDG = 0x1111111111111111111111111111111111111111;
+    address internal constant PLACEHOLDER_ROUTER = 0x2222222222222222222222222222222222222222;
+
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(pk);
 
         Cfg memory c;
-        c.usdg = vm.envOr("USDG", address(0x1111111111111111111111111111111111111111));
+        c.usdg = vm.envOr("USDG", PLACEHOLDER_USDG);
         // Read decimals LIVE from the token — the canonical Robinhood Chain USDG is
         // 6-dec, but a 18-dec look-alike ("Global Dollar") exists at a different
         // address (a 1e12 accounting trap). Never trust the env/symbol; read on-chain.
         c.usdgDecimals = _readDecimals(c.usdg, uint8(vm.envOr("USDG_DECIMALS", uint256(6))));
-        c.router = vm.envOr("ROUTER", address(0x2222222222222222222222222222222222222222));
+        c.router = vm.envOr("ROUTER", PLACEHOLDER_ROUTER);
         c.hop = vm.envOr("HOP_TOKEN", address(0));
         c.sequencerFeed = vm.envOr("SEQUENCER_FEED", address(0));
         c.grace = vm.envOr("SEQUENCER_GRACE", uint256(3600));
@@ -93,6 +100,9 @@ contract DeployProduction is Script {
         c.agent = vm.envOr("AGENT", deployer);
         require(c.stocks.length == c.feeds.length, "STOCKS/FEEDS length mismatch");
 
+        // Refuse an unsafe posture on MAINNET (hard revert, not a console warning).
+        _assertMainnetSafe(block.chainid, c, ownerEnv);
+
         console2.log("chainId", block.chainid); // 46630 testnet, 4663 mainnet
         console2.log("USDG decimals (live)", c.usdgDecimals);
 
@@ -103,6 +113,20 @@ contract DeployProduction is Script {
 
         _report(s, c);
         _persist(s);
+    }
+
+    /// @dev Refuse an UNSAFE deploy on Robinhood Chain mainnet (real funds). Each posture
+    ///      below is acceptable for a testnet preview but must never reach mainnet: a single
+    ///      hot EOA owning the whole stack, a disabled L2 sequencer-uptime check, the
+    ///      placeholder periphery addresses, or no Stock Token / feed wired. On any
+    ///      non-mainnet chain this is a no-op so the preview flow stays lenient.
+    function _assertMainnetSafe(uint256 chainId, Cfg memory c, address ownerEnv) internal pure {
+        if (chainId != MAINNET_CHAIN_ID) return;
+        require(ownerEnv != address(0), "MAINNET: set OWNER to a multisig/timelock");
+        require(c.sequencerFeed != address(0), "MAINNET: set SEQUENCER_FEED (L2 uptime)");
+        require(c.usdg != PLACEHOLDER_USDG, "MAINNET: set real USDG");
+        require(c.router != PLACEHOLDER_ROUTER, "MAINNET: set real ROUTER");
+        require(c.stocks.length > 0, "MAINNET: STOCKS/FEEDS required");
     }
 
     function _deploy(Cfg memory c) internal returns (Stack memory s) {
