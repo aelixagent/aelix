@@ -76,18 +76,20 @@ flowchart TD
     RISK -- VETO --> STOP([Trade stops · PM reports back])
     RISK -- APPROVE / CHANGES --> PREV[6. review_equity_order<br/>build preview card]
 
-    PREV --> SNAP[(7. Write desk-state.json)]
-    SNAP --> GATE[8. Present preview · ⏸ wait for your approval]
-    GATE -- you say yes --> EXEC[9. place_equity_order<br/>still gated by ask rule]
+    PREV --> SNAP[(10. Snapshot · write desk-state.json<br/>after every run + after any fill)]
+    SNAP --> GATE[7. Present preview · ⏸ wait for your approval]
+    GATE -- you say yes --> EXEC[8. place_equity_order<br/>still gated by ask rule]
     GATE -- you say no --> STOP
-    EXEC --> CONF[10. Confirm fill · refresh desk-state.json · log]
+    EXEC --> CONF[9. Confirm fill · refresh desk-state.json · log]
 
     SNAP -. polled every 5s .-> DASH[/Dashboard: npm run dev/]
     CONF -. updates .-> DASH
 ```
 
-Steps 1–7 are research and produce **no order**. The desk's standard output is the
-**preview card at step 8**, it stops there until you confirm. The full lifecycle is in
+Steps 1–6 are research and preparation and produce **no order**. The desk's standard
+output is the **preview card at step 7**, it stops there until you confirm. (The
+snapshot write, step 10, runs after every run and after any fill — that's why it
+appears mid-flow above.) The full lifecycle is in
 [the docs](https://www.aelix.xyz/docs/workflow).
 
 ## The desk team
