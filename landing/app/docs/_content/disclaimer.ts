@@ -3,7 +3,7 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Safety & Disclaimer",
   description:
-    "The honest boundary of the project: beta, equities-only, not investment advice, no track record, an on-chain module that is on mainnet but unaudited, and what is explicitly out of scope.",
+    "The honest boundary of the project: beta, equities-only, not investment advice, no track record, an on-chain module that is on mainnet but unaudited with no timelock yet, and what is explicitly out of scope.",
   eyebrow: "17, Safety & Disclaimer",
   blocks: [
     {
@@ -88,7 +88,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "A second correction, this one in the other direction: the ownership handover that this page listed as incomplete is **complete**. On 2026-07-26 the 2-of-3 Safe called `acceptOwnership()` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` in one batch, `pendingOwner()` now reads zero on all three, and `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction. So every owner-controlled contract in the stack is owned by the 2-of-3 Safe: changing a risk cap, a price feed, the deposit cap or a session grant takes two of three signatures, and the deploy key reverts with `OwnableUnauthorizedAccount` on all of them. That is a statement about **custody, not about code**, it does not make the contracts audited.",
+      md: "A second correction, this one in the other direction: the ownership handover that this page listed as incomplete is **complete**. On 2026-07-26 the 2-of-3 Safe called `acceptOwnership()` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` in one batch, `pendingOwner()` now reads zero on all three, and `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction. So every owner-controlled contract in the stack is owned by the 2-of-3 Safe: changing a risk cap, a price feed, the deposit cap or a session grant takes two of three signatures, and the deploy key reverts with `OwnableUnauthorizedAccount` on all of them. **There is no timelock yet**: a change the Safe signs takes effect in one transaction. And multisig custody is a statement about **custody, not about code**, it does not make the contracts audited.",
     },
     {
       type: "prose",
@@ -98,11 +98,12 @@ export const content: DocContent = {
       type: "list",
       items: [
         "**No third-party audit.** Two internal audit passes and a 42-agent preflight review are **not** an audit. This is the single largest caveat on the module.",
-        "**Multisig ownership is not a safety property of the code.** Two of three signatures are now required to touch any owner-controlled setting, which removes the single-hot-key risk, and removes nothing else on this list.",
+        "**Multisig ownership is not a safety property of the code.** Two of three signatures are now required to touch any owner-controlled setting, which removes the single-hot-key risk, and removes nothing else on this list. **There is no timelock yet** — an owner change takes effect in one transaction, with no delay for anyone to react.",
         "**No track record, no returns, no performance.** TVL is 0, there are no depositors, and no trade has been made. Any figure shown anywhere is a real on-chain read, honestly empty, or explicitly labelled sample.",
-        "**Deposits are capped** at 10,000 USDG, and the contracts are **not yet verified on the block explorer**.",
+        "**Deposits are capped** at 10,000 USDG — an owner-changeable setting, not structural — and the contracts are **not yet verified on the block explorer**.",
+        "**The stop-depth cap is not live yet.** The live vault requires a stop below entry on every buy; the cap on how deep that stop may sit (`stopLossBps`) is enforced in the current repo code, regression-tested, and ships with the next deploy. It is not a property of the live vault today.",
         "**There is no Chainlink sequencer uptime feed on Robinhood Chain.** Aelix substitutes a chain-liveness quorum built from 24/7 crypto feeds. It is **coarse by design**, it catches multi-hour outages, not minute-scale ones, and it is **not equivalent** to a real uptime feed. See [Architecture](/docs/architecture#the-separate-on-chain-module).",
-        "**Legal and securities review is still pending**, including the US-person question. Deploying a contract does not resolve regulatory exposure.",
+        "**Legal and securities review is still pending**, including the US-person question. The Robinhood Stock Tokens the vault trades are price-tracking instruments, **not shares**, and are **not for US persons**. Deploying a contract does not resolve regulatory exposure.",
         "**It is not a live product feature for customer money.** The vault holds none, it is not connected to your Robinhood account, and it is not part of the desk's trading path.",
         "**The equities desk is unchanged.** It still requires your explicit in-session approval for every order. Neither the mainnet deploy nor the handover makes the desk autonomous.",
       ],

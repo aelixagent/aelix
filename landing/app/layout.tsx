@@ -19,7 +19,7 @@ const sans = Instrument_Sans({ weight: ["400", "500", "600"], subsets: ["latin"]
 
 const TITLE = "AELIX";
 const DESC =
-  "AELIX — on-chain agentic trading desk on Robinhood Chain mainnet. Every order needs your yes. Unaudited · deposits capped · no track record.";
+  "Least-privilege AI trading: you approve every brokerage order; on-chain the agent holds a scoped, revocable, expiring key. Mainnet · unaudited · no track record. Unaffiliated with Robinhood.";
 
 // Favicons come from the file-based metadata convention: app/icon.png + app/apple-icon.png
 // (the Aelix "V" mark). The 1200×630 social card comes from app/opengraph-image.tsx —
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   title: { default: TITLE, template: "%s · AELIX" },
   description: DESC,
   applicationName: "AELIX",
-  keywords: ["Aelix", "agentic AI", "trading desk", "on-chain", "RWA vault", "Robinhood Chain", "multi-agent", "human-in-the-loop"],
+  keywords: ["Aelix", "least-privilege AI trading", "agentic AI", "trading desk", "on-chain", "RWA vault", "session key", "Robinhood Chain", "multi-agent", "human-in-the-loop"],
   robots: {
     index: true,
     follow: true,

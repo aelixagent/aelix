@@ -11,21 +11,21 @@ export const NAV = [
 ] as const;
 
 export const MARQUEE = [
-  "HUMAN-IN-THE-LOOP",
-  "NO ORDER WITHOUT YOUR APPROVAL",
-  "4 SPECIALIST AGENTS",
+  "LEAST-PRIVILEGE AI TRADING",
+  "NO BROKERAGE ORDER WITHOUT YOUR YES",
+  "ON-CHAIN: A SCOPED, REVOCABLE, EXPIRING KEY",
+  "A REFUSED ORDER SPENDS NO BUDGET",
   "RISK VETO ARMED",
   "GUARDRAILS AS CODE",
-  "ON-CHAIN VAULT · MAINNET",
-  "APPEND-ONLY ATTESTATIONS",
-  "ON ROBINHOOD CHAIN · CHAIN 4663",
+  "REFUSALS GO ON THE RECORD · APPEND-ONLY",
+  "MAINNET · CHAIN 4663",
   "UNAUDITED · DEPOSITS CAPPED",
   "BETA · NOT INVESTMENT ADVICE",
 ] as const;
 
 export const STATS = [
   { value: 4, suffix: "", label: "Specialist AI agents" },
-  { value: 100, suffix: "%", label: "Orders you approve first" },
+  { value: 100, suffix: "%", label: "Brokerage orders you approve first" },
   { value: 1, suffix: "", label: "Risk manager with veto" },
 ] as const;
 
@@ -47,11 +47,11 @@ export const TEAM = [
 ] as const;
 
 export const GUARDS = [
-  { title: "Human-in-the-loop", body: "Only the PM can order, and only after your explicit in-session approval. No order is ever placed on a schedule or on its own." },
+  { title: "Human-in-the-loop", body: "Only the PM can order, and only after your explicit in-session approval. No brokerage order is ever placed on a schedule or on its own — unchanged, and not changing." },
   { title: "Prompt-injection defense", body: "The news agent treats fetched web content as untrusted data. Instruction-like text (“buy X now”) is quoted and flagged, never obeyed." },
   { title: "Independent risk veto", body: "The Risk Manager evaluates against written rules and can block a trade the analysts liked. If caps are unset, it vetoes." },
   { title: "Equities · Agentic account only", body: "The desk can only trade the isolated Agentic account, never your main balance. Disconnect the MCP anytime, that’s the kill switch." },
-  { title: "Guardrails-as-code · attested record", body: "The written caps are compiled into an on-chain GuardrailConfig the vault and executor enforce, with decisions attestable append-only so a record accrues instead of being claimed. Deployed on Robinhood Chain mainnet, unaudited, deposits capped, nothing attested yet; your approval and the caps still apply." },
+  { title: "Guardrails-as-code · attested record", body: "The written caps are compiled into an on-chain GuardrailConfig, and the vault reverts any order that breaches them — previewTrade() names the exact rule before anyone signs, and a refused order spends none of the session budget. Refusals and vetoes are attestable append-only, so a record accrues instead of being claimed. Enforced at the custody layer on every order, changeable only by a 2-of-3 Safe — with no timelock yet. Mainnet, unaudited, deposits capped, nothing attested yet; approval on the desk still applies." },
 ] as const;
 
 export const ROADMAP = [
@@ -59,9 +59,9 @@ export const ROADMAP = [
   { phase: "FASE 1 · CORE", title: "The four agents + logging", body: "Fundamental, Technical, Macro/News, Risk Manager as isolated sub-agents. JSONL reasoning logs for audit.", status: "done" },
   { phase: "FASE 2 · DASHBOARD", title: "Desk mirror + paper trading", body: "Read-only dashboard mirrors desk-state live. Robinhood integration starts in paper mode.", status: "done" },
   { phase: "FASE 3 · ON-CHAIN", title: "Guardrails, vault & proof", body: "The desk's written caps compiled into an on-chain GuardrailConfig, an RWA Vault (ERC-4626, share token vAELIX) wired to it, and append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Deployed on Robinhood Chain mainnet (chainId 4663) against real periphery, USDG, Chainlink feeds and Uniswap V2, no mocks in that path. Unaudited, deposits capped, no depositors and nothing attested yet, not an investment product.", status: "done", onchain: true },
-  { phase: "FASE 4 · EXECUTOR", title: "Guardrail-bounded executor", body: "A session-key executor that grants the desk revocable, expiring, tightly-scoped trading rights it cannot exceed, the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint, plus recurring Autosave / DCA on top of the vault. Deployed on mainnet, still approval-gated, still unaudited; not an investment product.", status: "done", onchain: true },
-  { phase: "FASE 5 · CUSTODY", title: "Ownership handover to the Safe", body: "The Ownable2Step handover is complete. The 2-of-3 Safe called acceptOwnership() on the vault, the oracle adapter and the session-key executor in one batch, and pendingOwner() now reads zero on all three; GuardrailConfig and the swap adapter were Safe-owned from construction and never passed through the deploy key. Every owner-controlled contract in the stack is owned by the 2-of-3 Safe, so widening a risk cap, swapping a feed, raising the deposit cap or granting a session key takes two of three signatures, and the deploy key now reverts on all of them. That settles who holds the keys, not whether the code is audited, it still is not.", status: "done", onchain: true },
-  { phase: "FASE 6 · HARDENING", title: "Audit, verification & legal review", body: "Open, and the reason nothing here should be treated as safe yet: no third-party security audit has been performed (internal passes are not an audit) and the contracts are not verified on the block explorer. Securities and legal review, including the US-person question, also remain outstanding.", status: "pending" },
+  { phase: "FASE 4 · EXECUTOR", title: "Scoped session-key executor", body: "A session-key executor that grants the agent a scoped, revocable, expiring key — bounded by expiry, size, budget, trade count and a ticker allowlist, where a refused order spends none of the budget — the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint, plus recurring buys (DCA) on top of the vault via the AelixAutosave contract. Deployed on mainnet, desk approval unchanged, still unaudited; not an investment product.", status: "done", onchain: true },
+  { phase: "FASE 5 · CUSTODY", title: "Ownership handover to the Safe", body: "The Ownable2Step handover is complete. The 2-of-3 Safe called acceptOwnership() on the vault, the oracle adapter and the session-key executor in one batch, and pendingOwner() now reads zero on all three; GuardrailConfig and the swap adapter were Safe-owned from construction and never passed through the deploy key. Every owner-controlled contract in the stack is owned by the 2-of-3 Safe, so widening a risk cap, swapping a feed, raising the deposit cap or granting a session key takes two of three signatures, and the deploy key now reverts on all of them. There is no timelock yet: once two of three sign, the Safe can make those changes in a single transaction. That settles who holds the keys, not whether the code is audited, it still is not.", status: "done", onchain: true },
+  { phase: "FASE 6 · AUDIT", title: "Audit, verification & legal review", body: "Open, and the reason nothing here should be treated as safe yet: no third-party security audit has been performed (internal passes are not an audit) and the contracts are not verified on the block explorer. A timelock on owner powers is also outstanding. Securities and legal review, including the US-person question, remain open as well.", status: "pending" },
   { phase: "FASE 7 · SCALE", title: "Backtesting & optimization", body: "Strategy backtests, prompt-cost optimization, and broader coverage.", status: "pending" },
 ] as const;
 
@@ -98,7 +98,7 @@ export const COMPARE = {
       "Quotes suspicious “instructions”, ignores them",
       "Isolated Agentic budget only",
       "Guardrails enforced on-chain (mainnet, unaudited)",
-      "Append-only attestations, not screenshots",
+      "First metric it will publish: how often the vault said no",
     ],
   },
 } as const;
@@ -109,7 +109,7 @@ export const RISK = { capPct: 15, minEquity: 1000, maxEquity: 100000, maxWeight:
 export const FAQ = [
   {
     q: "Can Aelix place trades on its own?",
-    a: "No. Every order requires your explicit in-session approval. The analysts have no order tools at all; only the Portfolio Manager can place, and only after you say yes to a preview.",
+    a: "On the brokerage desk, no — and that isn't changing. Every order requires your explicit in-session approval; the analysts have no order tools at all; only the Portfolio Manager can place, and only after you say yes to a preview. On-chain is a separate, clearly labeled surface: there the agent holds a scoped, revocable, expiring session key over an operator-funded vault (no depositors), and the vault reverts any order that breaches the compiled caps.",
   },
   {
     q: "Which markets can it trade?",
@@ -117,11 +117,15 @@ export const FAQ = [
   },
   {
     q: "What about the on-chain vault and verifiable track record?",
-    a: "The vault is deployed on Robinhood Chain mainnet (chainId 4663): an RWA Vault (ERC-4626, share token vAELIX) wired to a GuardrailConfig that compiles the desk’s written caps on-chain, plus append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Every owner-controlled contract is owned by a 2-of-3 Safe multisig, so no single hot key can weaken a cap or swap a feed. Read the caveats: multisig custody is not an audit, and there is none, it is unaudited (internal review passes are not an audit), the contracts are not yet verified on the block explorer, deposits are capped, and nothing has been attested, so there is no track record. Human approval and the guardrails still apply. Not an investment product and not investment advice.",
+    a: "The vault is deployed on Robinhood Chain mainnet (chainId 4663): an RWA Vault (ERC-4626, share token vAELIX) wired to a GuardrailConfig that compiles the desk’s written caps on-chain, plus append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Every owner-controlled contract is owned by a 2-of-3 Safe multisig, so no single hot key can weaken a cap or swap a feed — but there is no timelock yet, so once two of three sign, the Safe can change caps, feeds or the deposit cap in a single transaction. Read the caveats: multisig custody is not an audit, and there is none, it is unaudited (internal review passes are not an audit), the contracts are not yet verified on the block explorer, deposits are capped at 10,000 USDG (an owner-changeable setting, not a structural limit), the vault is operator-funded with no depositors, and nothing has been attested, so there is no track record. The vault trades Robinhood Stock Tokens — price-tracking tokens, not shares, and not available to US persons — while the desk trades US equities in beta; two doors, kept deliberately separate. Not an investment product and not investment advice.",
   },
   {
     q: "Who executes on-chain, does the agent trade by itself?",
-    a: "No. The session-key executor grants the desk revocable, expiring, tightly-scoped rights it cannot exceed, the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint. It stays guardrail-bounded and human-in-the-loop, never autonomous: the desk proposes; you approve. It is deployed on Robinhood Chain mainnet and unaudited, and the mainnet deploy does not make the desk autonomous.",
+    a: "On-chain, the agent holds a session key granted by the 2-of-3 Safe and scoped by expiry, order size, spend budget, trade count and a ticker allowlist — the ERC-4337 session-key design intent implemented at the contract layer rather than through the EntryPoint. Within that scope it can submit orders against the operator-funded vault; the vault re-checks every one against the compiled caps and reverts any breach, and a refused order spends none of the session budget. The agent’s limits are published on-chain before it trades — read them, and watch every order against them. The key is revocable at any time, and none of this touches the brokerage desk, where every order still requires your explicit yes. Mainnet, unaudited.",
+  },
+  {
+    q: "Where’s the performance? Why lead with refusals?",
+    a: "There is no performance: TVL is 0, there are no depositors, no trades and no track record, and we won’t pretend otherwise. The first number we publish will be how often the vault said no. previewTrade() returns the exact rule an order would break before anyone signs, a refused order spends none of the session budget, and refusals and vetoes land in an append-only registry that cannot be pruned. Refusals are the only metric that can be accumulated honestly at zero TVL.",
   },
   {
     q: "How does it defend against prompt injection?",

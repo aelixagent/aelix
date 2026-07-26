@@ -105,7 +105,7 @@ contract HardeningTest is Test {
             isBuy: true,
             amountIn: amountIn,
             minAmountOut: 0,
-            stopPriceE18: PRICE * 90 / 100,
+            stopPriceE18: PRICE * 94 / 100,
             leftSideException: false
         });
         vm.prank(MANAGER);
@@ -147,7 +147,7 @@ contract HardeningTest is Test {
             isBuy: true,
             amountIn: 10e18,
             minAmountOut: 0,
-            stopPriceE18: PRICE * 90 / 100,
+            stopPriceE18: PRICE * 94 / 100,
             leftSideException: false
         });
         vm.prank(MANAGER);
@@ -216,7 +216,7 @@ contract HardeningTest is Test {
             isBuy: true,
             amountIn: 10e18,
             minAmountOut: 0,
-            stopPriceE18: PRICE * 90 / 100,
+            stopPriceE18: PRICE * 94 / 100,
             leftSideException: false
         });
         vm.prank(MANAGER);
@@ -491,7 +491,7 @@ contract HardeningTest is Test {
             isBuy: true,
             amountIn: 10e18,
             minAmountOut: 0,
-            stopPriceE18: PRICE * 90 / 100,
+            stopPriceE18: PRICE * 94 / 100,
             leftSideException: false
         });
         vm.prank(MANAGER);
@@ -532,7 +532,7 @@ contract HardeningTest is Test {
     function test_halt_survivesDepositInflation() public {
         vm.prank(MANAGER);
         vault.executeTrade(
-            RWAVault.TradeOrder(address(stk), true, 15e18, 0, PRICE * 90 / 100, false)
+            RWAVault.TradeOrder(address(stk), true, 15e18, 0, PRICE * 94 / 100, false)
         );
         vm.warp(block.timestamp + 1 days); // roll day → dayStartPps = day-1 pps (1e18)
 
@@ -564,7 +564,7 @@ contract HardeningTest is Test {
         vault.redeem(half, ALICE, ALICE); // fair-value exit; pps unchanged
 
         RWAVault.TradeOrder memory buy =
-            RWAVault.TradeOrder(address(stk), true, 1e18, 0, PRICE * 90 / 100, false);
+            RWAVault.TradeOrder(address(stk), true, 1e18, 0, PRICE * 94 / 100, false);
         assertEq(uint256(vault.previewTrade(buy)), uint256(Guardrails.Violation.None));
     }
 
@@ -612,7 +612,7 @@ contract HardeningTest is Test {
             isBuy: true,
             amountIn: 1e18,
             minAmountOut: 0,
-            stopPriceE18: PRICE * 90 / 100,
+            stopPriceE18: PRICE * 94 / 100,
             leftSideException: false
         });
         vm.prank(AGENT);

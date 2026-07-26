@@ -40,7 +40,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` token is **not built**, **unlaunched, and speculative**: no sale, no price, no allocation, **not** an investment product. The separate on-chain layer (an ERC-4626 vault + guardrails-as-code) **is** now deployed, to Robinhood Chain mainnet, chainId 4663, but it is **unaudited**, deposits are capped at 10,000 USDG, TVL is **0**, and it stays gated behind legal/securities review. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` token is **not built**, **unlaunched, and speculative**: no sale, no price, no allocation, **not** an investment product, and it has **no connection to the vault**. The separate on-chain layer (an ERC-4626 vault + guardrails-as-code) **is** now deployed, to Robinhood Chain mainnet, chainId 4663, but it is **unaudited**, deposits are capped at 10,000 USDG (an owner-changeable setting, not structural), TVL is **0**, and it stays gated behind legal/securities review. The Stock Tokens it trades are price-tracking instruments, **not shares**, and are **not for US persons**. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -48,7 +48,31 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**No, and no.** There is **no third-party audit**, two internal audit passes and a 42-agent preflight review are not an audit, and the contracts are not yet verified on the block explorer. The vault is a **separate system**: it holds no customer money, has no depositors and no trades, and there is no path between it and your Robinhood account. Ownership is settled, every owner-controlled contract is owned by a **2-of-3 Safe multisig**, so no single hot key can move a risk cap, a feed or the deposit cap, but that is custody, not an audit, and it does not make the code safe. Per-contract detail is in [Architecture](/docs/architecture#the-separate-on-chain-module).",
+      md: "**No, and no.** There is **no third-party audit**, two internal audit passes and a 42-agent preflight review are not an audit, and the contracts are not yet verified on the block explorer. The vault is a **separate system**: it holds no customer money, has no depositors and no trades, and there is no path between it and your Robinhood account. Ownership is settled, every owner-controlled contract is owned by a **2-of-3 Safe multisig**, so no single hot key can move a risk cap, a feed or the deposit cap — but **there is no timelock yet**, a change the Safe signs takes effect in one transaction, and multisig custody is custody, not an audit. Per-contract detail is in [Architecture](/docs/architecture#the-separate-on-chain-module).",
+    },
+    {
+      type: "heading",
+      text: "What exactly can the agent do on-chain?",
+    },
+    {
+      type: "prose",
+      md: "Less than a hot wallet, by construction. The agent's limits are **published on-chain before it trades** — read them, and watch every order against them. Its session key is scoped by **expiry, per-trade size, total spend budget, trade count, and a ticker allowlist**; the owner (the 2-of-3 Safe) grants and revokes sessions; and the vault itself **reverts any order that breaches the compiled caps** — a rejected order spends none of the session budget. What the scoping does **not** include: per-depositor limits. The caps govern one pooled book, and changing them takes two of three Safe signatures, with **no timelock yet**.",
+    },
+    {
+      type: "heading",
+      text: "Why lead with a refusal rate instead of returns?",
+    },
+    {
+      type: "prose",
+      md: "Because it is the only number this project can accumulate honestly at TVL 0, and the plumbing for it is real: `previewTrade()` returns the exact rule an order would break **before** anyone signs, a refused order consumes **none** of the session budget, and the `DeskRegistry` is append-only, so refusals and vetoes stay on the record and cannot be pruned. The first number Aelix publishes will be **how often the vault said no**.",
+    },
+    {
+      type: "heading",
+      text: "How do vault redemptions and fees work?",
+    },
+    {
+      type: "prose",
+      md: "There is no customer money in the vault today — TVL is 0. Structurally, shares are always redeemable **in kind**: a pro-rata slice of the vault's cash and tokens, minus the exit fee. Cash-only redemption is limited to the USDG the vault has on hand. There are **no fees anywhere in the contracts** — no management fee, no performance fee, no carry — and the exit fee accrues to **remaining holders**, not the operator.",
     },
     {
       type: "heading",

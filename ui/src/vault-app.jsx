@@ -89,7 +89,6 @@ const AUTOSAVE_ABI = parseAbi([
 // re-anchors after each fill. 0 would disable it.
 const AUTOSAVE_MAX_DRIFT_BPS = 2000
 
-const MAX_UINT = (2n ** 256n) - 1n
 
 const CONTRACT_META = [
   ['vault', 'Vault'],
@@ -297,7 +296,9 @@ export default function VaultApp() {
     const allowance = await pc.readContract({ address: pos.asset, abi: ERC20_ABI, functionName: 'allowance', args: [account, spender] })
     if (allowance >= amount) return
     const wc = walletClient()
-    const hash = await wc.writeContract({ account, chain, address: pos.asset, abi: ERC20_ABI, functionName: 'approve', args: [spender, MAX_UINT] })
+    // Approve exactly the amount this action needs — an unlimited allowance from a UI
+    // whose whole pitch is bounded authority would be the first thing a reader flags.
+    const hash = await wc.writeContract({ account, chain, address: pos.asset, abi: ERC20_ABI, functionName: 'approve', args: [spender, amount] })
     await pc.waitForTransactionReceipt({ hash })
   }
 
@@ -325,7 +326,11 @@ export default function VaultApp() {
     const total = Number(savePeriods) || 0
     if (amount <= 0n) return
     tx(async () => {
-      await ensureAllowance(cfg.contracts.autosave, MAX_UINT)
+      // Bounded allowance: the plan's total spend, never unlimited. An open-ended plan
+      // (totalPeriods 0) gets a year's worth — re-approving later is one click, and an
+      // infinite allowance from a UI whose pitch is bounded authority is self-refuting.
+      const approvePeriods = total > 0 ? total : Math.ceil((365 * 86400) / Number(period))
+      await ensureAllowance(cfg.contracts.autosave, amount * BigInt(Math.max(1, approvePeriods)))
       return walletClient().writeContract({ account, chain, address: cfg.contracts.autosave, abi: AUTOSAVE_ABI, functionName: 'createPlan', args: [amount, period, total, AUTOSAVE_MAX_DRIFT_BPS] })
     }, `Start autosave`)
   }
@@ -391,7 +396,7 @@ export default function VaultApp() {
         <div className="vhero">
           <div className="vhero-kicker"><span className="tick" aria-hidden="true" />Robinhood Chain · {netShort}</div>
           <h1 className="vhero-title">The Vault</h1>
-          <p className="vhero-sub">Deposit USDG. The desk trades inside on-chain guardrails — you approve every move.</p>
+          <p className="vhero-sub">Deposit USDG. The vault enforces the risk caps on every order — any trade outside them reverts. Unaudited · deposits capped.</p>
         </div>
         {wrongNet && <div className="verr warn">Wrong network — your wallet is on chain {walletChainId}. Switch to <b>{chain?.name}</b> to deposit or trade.</div>}
         {err && !wrongNet && <div className="verr">{err}</div>}

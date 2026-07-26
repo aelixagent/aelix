@@ -60,7 +60,7 @@ contract Handler is Test {
             isBuy: true,
             amountIn: amt,
             minAmountOut: 0,
-            stopPriceE18: (price * 90) / 100, // valid stop below market
+            stopPriceE18: (price * 94) / 100, // valid stop within the 8% cap
             leftSideException: false
         });
         try vault.executeTrade(o) { } catch { }

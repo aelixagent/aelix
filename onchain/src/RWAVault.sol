@@ -424,7 +424,15 @@ contract RWAVault is ERC4626, Ownable2Step, ReentrancyGuard, Pausable {
             c.openPositionsAfter = uint8(openPositions() + (pv == 0 ? 1 : 0));
             c.positionIsUnderwater = isUnderwater(o.stockToken);
             c.leftSideException = o.leftSideException;
-            c.hasStop = o.stopPriceE18 > 0 && o.stopPriceE18 < _price(o.stockToken);
+            // The stop must be a real stop: below the current price, but no looser than
+            // caps.stopLossBps under it. Previously only `> 0 && < price` was checked, so
+            // `stopLossBps` sat in RiskCaps validated-but-unread and a $0.01 "stop" passed —
+            // the published "-8% stop enforced" claim was false. Now the max entry loss a
+            // position can be opened with is genuinely capped.
+            uint256 px = _price(o.stockToken);
+            uint256 stopFloor =
+                (px * (10_000 - uint256(guardrailConfig.caps().stopLossBps))) / 10_000;
+            c.hasStop = o.stopPriceE18 >= stopFloor && o.stopPriceE18 < px;
         } else {
             uint256 notional =
                 (o.amountIn * _price(o.stockToken)) / (10 ** tokenDecimals[o.stockToken]);

@@ -301,11 +301,15 @@ export default function HomePage() {
           </div>
           <Reveal className="vx-eyebrow" i={0}>
             <span className="vx-eyebrow__tick" aria-hidden="true" />
-            On-chain desk · mainnet · unaudited
+            Beta · mainnet · unaudited · unaffiliated with Robinhood
           </Reveal>
           <RevealChars text="AELIX" as="h1" className="vx-hero-title" step={70} />
-          <Reveal className="vx-sub vx-sub--hero" i={4} style={{ marginTop: "0.4em" }}>
-            Researches around the clock. Never trades without your yes.
+          <Reveal className="vx-sub vx-sub--hero" i={4} style={{ marginTop: "0.4em", maxWidth: "46ch" }}>
+            Least-privilege AI trading: on Robinhood you approve every order;
+            on-chain the agent holds a scoped, revocable, expiring key.
+          </Reveal>
+          <Reveal className="vx-sub vx-sub--hero" i={6} style={{ marginTop: "0.7em", maxWidth: "46ch" }}>
+            The first number we publish will be how often the vault said no.
           </Reveal>
         </div>
         <div className="vx-cue" aria-hidden="true">
@@ -330,9 +334,11 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "A desk of AI analysts researching your watchlist around the clock,",
-              "an on-chain layer on Robinhood Chain mainnet where the rules are code,",
-              "and no order is ever placed without your explicit yes.",
+              "Two surfaces, one rule. On the brokerage desk, no order is ever placed",
+              "without your explicit yes — unchanged, and not changing. On-chain, the",
+              "written caps are compiled into a vault that reverts any order breaching",
+              "them. The desk is how we develop the rulebook; the vault is how that",
+              "rulebook becomes code.",
             ]}
           />
         </div>
@@ -349,6 +355,8 @@ export default function HomePage() {
             lines={[
               "Fundamental, technical and macro analysts each argue their read of a name,",
               "then a Risk Manager weighs the case, holding veto power over them all.",
+              "The desk runs in Claude Code on your own machine — no backend — and the",
+              "analysts hold no order tools. Anyone can verify that in the repo.",
             ]}
           />
         </div>
@@ -404,9 +412,10 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "The desk proposes; you dispose. Position caps, stop rules and no",
-              "averaging into losers become guardrails-as-code, the same written",
-              "limits compiled on-chain, so they are enforced, not just promised.",
+              "The desk proposes; you dispose. Position caps, a stop on every buy and",
+              "no averaging into losers are written rules first, then guardrails-as-code:",
+              "the vault reverts any order that breaches them — and names the exact rule",
+              "before anyone signs. A refused order spends none of the session budget.",
             ]}
           />
         </div>
@@ -422,8 +431,10 @@ export default function HomePage() {
             step={70}
             lines={[
               "An ERC-4626 vault holds the book, live on Robinhood Chain mainnet, and",
-              "decisions can be attested append-only, so a record accrues instead of",
-              "being claimed. Nothing attested yet. Mainnet · unaudited · deposits capped.",
+              "the record is append-only: refusals and vetoes go on the record and cannot",
+              "be pruned. No management fee, no performance fee, no carry — the exit fee",
+              "accrues to remaining holders, not to us. Nothing attested yet.",
+              "Mainnet · unaudited · no timelock on owner caps · deposits capped.",
             ]}
           />
         </div>
@@ -438,8 +449,9 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "The calm layer over your watchlist, one reviewed decision at a time,",
-              "on Robinhood Chain mainnet. Unaudited · deposits capped · no track record.",
+              "On the desk, you approve every order. On-chain, the key expires, the",
+              "budget caps, and every refusal goes on the record.",
+              "Mainnet · unaudited · deposits capped · no track record.",
             ]}
           />
           <Reveal className="vx-cta-row" i={2}>
@@ -463,19 +475,28 @@ export default function HomePage() {
         </Reveal>
         <p className="vx-foot__legal">
           <b>Not investment advice.</b> Aelix is an agentic research tool for Robinhood
-          Agentic (beta). The desk researches and proposes; every order requires explicit
-          human approval in session, and the on-chain deploy does not change that.
-          The on-chain module, the Guardrails config, the ERC-4626 vault (vAELIX), the
-          attestation registry and the scoped session-key executor, is deployed on
-          Robinhood Chain mainnet (chainId 4663) and is <b>unaudited</b>: no third-party
-          audit has been performed, the contracts are not yet verified on the block
-          explorer, and deposits are capped. Every owner-controlled contract in the stack
+          Agentic (beta). On the brokerage desk, every order requires explicit human
+          approval in session — that is unchanged, and the on-chain deploy does not
+          change it. On-chain, the agent holds a session key scoped by expiry, size,
+          budget, trade count and ticker over an operator-funded vault; the agent&apos;s
+          limits are published on-chain before it trades — read them, and watch every
+          order against them. The on-chain module, the Guardrails config, the ERC-4626
+          vault (vAELIX), the attestation registry and the scoped session-key executor,
+          is deployed on Robinhood Chain mainnet (chainId 4663) and is <b>unaudited</b>:
+          no third-party audit has been performed, the contracts are not yet verified on
+          the block explorer, and deposits are capped at 10,000 USDG — an owner-changeable
+          setting, not a structural limit. Every owner-controlled contract in the stack
           is owned by a 2-of-3 Safe multisig, so changing a risk cap, a price feed or the
-          deposit cap takes two of three signatures, that is custody, not an audit.
-          There are no depositors and no track record. The $AELIX token is unlaunched,
-          with no sale and no price.
-          Not affiliated with or endorsed by Robinhood or Anthropic. Nothing here is a
-          recommendation to buy or sell any security. Use only risk capital.
+          deposit cap takes two of three signatures — with <b>no timelock yet</b>, so the
+          Safe can make those changes in a single transaction. That is custody, not an
+          audit. The contracts charge no management fee, no performance fee and no carry;
+          the exit fee accrues to remaining holders, not to the operator. There are no
+          depositors, no trades and no track record. Robinhood Stock Tokens are
+          price-tracking tokens, not shares, and are not available to US persons; the
+          desk trades US equities in beta — two doors, kept deliberately separate.
+          The $AELIX token is unlaunched, with no sale and no price, and is separate from
+          the vault. Not affiliated with or endorsed by Robinhood or Anthropic. Nothing
+          here is a recommendation to buy or sell any security. Use only risk capital.
         </p>
       </footer>
     </div>

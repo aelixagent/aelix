@@ -108,7 +108,7 @@ contract RWAVaultTest is Test {
     }
 
     function test_buy_movesCashIntoStock_navPreserved() public {
-        uint256 out = _buy(10e18, 45e18, false); // buy 10 USDG of STK, stop @45 (<50)
+        uint256 out = _buy(10e18, 47e18, false); // buy 10 USDG of STK, stop @47 (dalam cap 8%)
         // 10 USDG / 50 = 0.2 STK
         assertEq(out, 0.2e18);
         assertEq(stk.balanceOf(address(vault)), 0.2e18);
@@ -140,11 +140,11 @@ contract RWAVaultTest is Test {
 
         // The agent cannot execute against the held price.
         vm.expectRevert(MockOracle.TradeFeedStale.selector);
-        _buy(10e18, 45e18, false);
+        _buy(10e18, 47e18, false);
 
         // Session reopens -> trading resumes.
         oracle.setTradeHalted(address(stk), false);
-        assertEq(_buy(10e18, 45e18, false), 0.2e18);
+        assertEq(_buy(10e18, 47e18, false), 0.2e18);
     }
 
     // ------------------------------------------------------------------ guardrails at custody
@@ -155,7 +155,7 @@ contract RWAVaultTest is Test {
                 RWAVault.GuardrailViolation.selector, Guardrails.Violation.PerTradeCap
             )
         );
-        _buy(20e18, 45e18, false); // 20% > 15%
+        _buy(20e18, 47e18, false); // 20% > 15%
     }
 
     function test_buy_missingStop_reverts() public {
@@ -167,21 +167,52 @@ contract RWAVaultTest is Test {
         _buy(10e18, 0, false); // no stop
     }
 
+    /// Regression: `stopLossBps` used to sit in RiskCaps validated-but-unread — any stop
+    /// below spot passed, so the published "-8% stop enforced" claim was false (a $0.01
+    /// "stop" satisfied the check). Now the stop must sit within stopLossBps of the price.
+    function test_buy_stopLooserThanCap_reverts() public {
+        // Price 50, cap 8% -> floor 46. A -10% stop (45) is looser than the cap: rejected.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RWAVault.GuardrailViolation.selector, Guardrails.Violation.MissingStop
+            )
+        );
+        _buy(10e18, 45e18, false);
+
+        // The old bug in miniature: a token "stop" at 1 wei must never count as a stop.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RWAVault.GuardrailViolation.selector, Guardrails.Violation.MissingStop
+            )
+        );
+        _buy(10e18, 1, false);
+
+        // Exactly at the floor (46 = 50 * 92%) is allowed...
+        assertGt(_buy(10e18, 46e18, false), 0);
+        // ...and at/above spot is not a stop at all.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RWAVault.GuardrailViolation.selector, Guardrails.Violation.MissingStop
+            )
+        );
+        _buy(2e18, 50e18, false);
+    }
+
     function test_buy_concentration_reverts() public {
         // Build toward the 25% cap, then a buy that would exceed it.
-        _buy(15e18, 45e18, false); // pos 15
-        _buy(10e18, 45e18, false); // pos 25 (exactly at cap, allowed)
+        _buy(15e18, 47e18, false); // pos 15
+        _buy(10e18, 47e18, false); // pos 25 (exactly at cap, allowed)
         assertApproxEqAbs(vault.positionValue(address(stk)), 25e18, 2);
         vm.expectRevert(
             abi.encodeWithSelector(
                 RWAVault.GuardrailViolation.selector, Guardrails.Violation.Concentration
             )
         );
-        _buy(5e18, 45e18, false); // would push to 30 > 25
+        _buy(5e18, 47e18, false); // would push to 30 > 25
     }
 
     function test_buy_noAveragingIntoLoser_reverts_thenLeftSideAllows() public {
-        _buy(10e18, 45e18, false); // 0.2 STK @ cost 10
+        _buy(10e18, 47e18, false); // 0.2 STK @ cost 10
         oracle.setPrice(address(stk), 40e18); // position now worth 8 < 10 => underwater
 
         // A normal add into the loser is blocked.
@@ -190,25 +221,25 @@ contract RWAVaultTest is Test {
                 RWAVault.GuardrailViolation.selector, Guardrails.Violation.NoAveragingIntoLoser
             )
         );
-        _buy(5e18, 36e18, false);
+        _buy(5e18, 37e18, false);
 
         // The same add under an approved left-side ladder is allowed.
-        uint256 out = _buy(5e18, 36e18, true);
+        uint256 out = _buy(5e18, 37e18, true);
         assertGt(out, 0);
     }
 
     function test_maxDailyOrders_blocksFifthBuy() public {
-        _buy(2e18, 45e18, false);
-        _buy(2e18, 45e18, false);
-        _buy(2e18, 45e18, false);
-        _buy(2e18, 45e18, false); // 4 orders
+        _buy(2e18, 47e18, false);
+        _buy(2e18, 47e18, false);
+        _buy(2e18, 47e18, false);
+        _buy(2e18, 47e18, false); // 4 orders
         assertEq(vault.ordersToday(), 4);
         vm.expectRevert(
             abi.encodeWithSelector(
                 RWAVault.GuardrailViolation.selector, Guardrails.Violation.MaxDailyOrders
             )
         );
-        _buy(2e18, 45e18, false);
+        _buy(2e18, 47e18, false);
     }
 
     function test_previewTrade_matchesEnforcement() public view {
@@ -217,7 +248,7 @@ contract RWAVaultTest is Test {
             isBuy: true,
             amountIn: 20e18, // over per-trade
             minAmountOut: 0,
-            stopPriceE18: 45e18,
+            stopPriceE18: 47e18,
             leftSideException: false
         });
         assertEq(uint256(vault.previewTrade(bad)), uint256(Guardrails.Violation.PerTradeCap));
@@ -227,7 +258,7 @@ contract RWAVaultTest is Test {
             isBuy: true,
             amountIn: 10e18,
             minAmountOut: 0,
-            stopPriceE18: 45e18,
+            stopPriceE18: 47e18,
             leftSideException: false
         });
         assertEq(uint256(vault.previewTrade(good)), uint256(Guardrails.Violation.None));
@@ -236,7 +267,7 @@ contract RWAVaultTest is Test {
     // ------------------------------------------------------------------ sells never trapped
 
     function test_sell_alwaysAllowed_evenAfterHalt() public {
-        _buy(15e18, 45e18, false); // establishes dayStartNav ~100, pos 15
+        _buy(15e18, 47e18, false); // establishes dayStartNav ~100, pos 15
         // Crash the price so intraday P&L < -5% of dayStartNav.
         oracle.setPrice(address(stk), 25e18); // 0.3 STK now worth 7.5, nav ~92.5 (-7.5%)
 
@@ -254,7 +285,7 @@ contract RWAVaultTest is Test {
     }
 
     function test_halt_isLatchedForTheDay() public {
-        _buy(15e18, 45e18, false);
+        _buy(15e18, 47e18, false);
         oracle.setPrice(address(stk), 25e18); // -7.5% intraday
         // Persist the halt for the rest of the day (permissionless keeper call).
         vault.latchHalt();
@@ -276,7 +307,7 @@ contract RWAVaultTest is Test {
     // ------------------------------------------------------------------ redemptions
 
     function test_maxWithdraw_cappedByCashLiquidity() public {
-        _buy(15e18, 45e18, false); // deploy 15 into STK, 85 cash left
+        _buy(15e18, 47e18, false); // deploy 15 into STK, 85 cash left
         // Full share value ~100, but only 85 USDG is liquid.
         assertEq(vault.maxWithdraw(ALICE), 85e18);
     }
@@ -284,7 +315,7 @@ contract RWAVaultTest is Test {
     function test_redeemInKind_proRataAcrossCashAndTokens() public {
         vm.prank(HUMAN);
         cfg.setExitFeeBps(0); // isolate the pro-rata math from the exit fee (tested separately)
-        _buy(15e18, 45e18, false); // 0.3 STK (within 25% cap), 85 USDG cash
+        _buy(15e18, 47e18, false); // 0.3 STK (within 25% cap), 85 USDG cash
         // Alice redeems half her shares in kind.
         uint256 half = vault.balanceOf(ALICE) / 2; // 50e18 of 100e18
         vm.prank(ALICE);
@@ -305,7 +336,7 @@ contract RWAVaultTest is Test {
             isBuy: true,
             amountIn: 10e18,
             minAmountOut: 0,
-            stopPriceE18: 45e18,
+            stopPriceE18: 47e18,
             leftSideException: false
         });
         vm.prank(ALICE);
@@ -328,7 +359,7 @@ contract RWAVaultTest is Test {
             isBuy: true,
             amountIn: 5e18,
             minAmountOut: 0,
-            stopPriceE18: 9e18,
+            stopPriceE18: 9.5e18,
             leftSideException: false
         });
         vm.prank(MANAGER);

@@ -3,7 +3,7 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Architecture",
   description:
-    "How Aelix is put together: a Claude-Code-native desk with no backend and no Python orchestrator, one main session, a folder of sub-agents, one MCP broker connection, a JSON snapshot instead of a database, and a separate on-chain module now deployed to Robinhood Chain mainnet, unaudited and deposit-capped.",
+    "How Aelix is put together: a Claude-Code-native desk with no backend and no Python orchestrator, one main session, a folder of sub-agents, one MCP broker connection, a JSON snapshot instead of a database, and a separate on-chain module on Robinhood Chain mainnet that layers session scoping, custody-layer caps, and an append-only registry — unaudited, deposit-capped, no timelock yet.",
   eyebrow: "04, Architecture",
   blocks: [
     {
@@ -367,7 +367,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Everything above is the equities desk. The `onchain/` module is a **different system** with a different trust model: a Foundry project where the risk caps written in `strategies/` are enforced by a contract instead of read by an agent. **Enforced, not promised.** As of **2026-07-26 it is deployed to Robinhood Chain mainnet, chainId 4663**, against real periphery, there are no mocks in the mainnet path.",
+      md: "Everything above is the equities desk. The `onchain/` module is a **different system** with a different trust model: a Foundry project where the risk caps written in `strategies/` are enforced by a contract instead of read by an agent. **Enforced, not promised.** The desk is how the rulebook is developed; the vault is how that rulebook becomes code. As of **2026-07-26 it is deployed to Robinhood Chain mainnet, chainId 4663**, against real periphery, there are no mocks in the mainnet path.",
     },
     {
       type: "prose",
@@ -378,6 +378,36 @@ export const content: DocContent = {
       tone: "danger",
       title: "Mainnet, unaudited, deposits capped",
       md: "There is **no third-party audit.** Two internal audit passes and a 42-agent preflight review are **not** an audit. The contracts are **not yet verified on the block explorer.** Deposits are capped at **10,000 USDG**, TVL is **0**, and there are **no depositors, no trades, no returns, and no track record.** Read this section as a map of unaudited mainnet code, not as a product. See [Safety & Disclaimer](/docs/disclaimer).",
+    },
+    {
+      type: "heading",
+      level: 3,
+      text: "Three layers of least privilege",
+    },
+    {
+      type: "prose",
+      md: "The module's shape is least-privilege layering: two independent mechanisms that each have to say yes before value moves, and one record that cannot be edited afterwards. Each layer would still hold if the layer above it failed.",
+    },
+    {
+      type: "deflist",
+      items: [
+        {
+          term: "Layer 1 — session scoping (SessionKeyExecutor)",
+          md: "The agent never holds a standing hot wallet. It trades through an **expiring session key** scoped by expiry, per-trade size, total spend budget, trade count, and a ticker allowlist. A rejected order spends **none** of that budget — the executor rolls its reservations back when the vault reverts. Sessions are granted and revoked by the owner, the 2-of-3 Safe; there is no per-depositor scoping, the session governs one pooled book.",
+        },
+        {
+          term: "Layer 2 — custody-layer caps (RWAVault + GuardrailConfig)",
+          md: "The risk caps are compiled into the vault, which **reverts any order that breaches them** — enforced at the custody layer on every order, changeable only by the 2-of-3 Safe, **with no delay yet: there is no timelock**, so a cap change the Safe signs takes effect in one transaction. `previewTrade()` returns the exact rule an order would break **before** anyone signs.",
+        },
+        {
+          term: "Layer 3 — the append-only record (DeskRegistry)",
+          md: "Attestations are append-only and chain-stamped: refusals and vetoes go on the record and **cannot be pruned**. That is why the first number this project intends to publish is **how often the vault said no** — the only metric honestly accumulable at TVL 0.",
+        },
+      ],
+    },
+    {
+      type: "note",
+      md: "There are **no fees anywhere in the contracts** — no management fee, no performance fee, no carry. The exit fee accrues to **remaining holders**, not the operator. Shares are always redeemable **in kind**: a pro-rata slice of cash and tokens, minus the exit fee; cash-only redemption is limited to the vault's USDG on hand.",
     },
     {
       type: "heading",
@@ -396,17 +426,17 @@ export const content: DocContent = {
         [
           "Safe (2-of-3 multisig)",
           "`0x47b5e2923216f203b7960d8D232215534AF02FF2`",
-          "The owner of the whole stack, two of three signers required for any owner action. The handover **completed on 2026-07-26**, see below.",
+          "The owner of the whole stack, two of three signers required for any owner action — **with no timelock yet**: a change the Safe signs takes effect in one transaction. The handover **completed on 2026-07-26**, see below.",
         ],
         [
           "RWAVault (`vAELIX`)",
           "`0x0e500E390cC599055f1e54194e1e611Cf64c5047`",
-          "ERC-4626 vault over USDG for tokenized real-world assets. 12 decimals (6 from USDG plus a 1e6 offset that defeats the ERC-4626 inflation attack). Deposit cap **10,000 USDG**. Current state: `totalAssets` 0, `totalSupply` 0, not paused, 5 tokens allowlisted.",
+          "ERC-4626 vault over USDG for tokenized real-world assets. 12 decimals (6 from USDG plus a 1e6 offset that defeats the ERC-4626 inflation attack). Deposit cap **10,000 USDG** — an owner-changeable setting, not structural. Current state: `totalAssets` 0, `totalSupply` 0, not paused, 5 tokens allowlisted.",
         ],
         [
           "GuardrailConfig",
           "`0x68cf24994d0363Be7688e96B69dDacC290c766C0`",
-          "The caps as state, not prose: the on-chain store of the risk limits from `CLAUDE.md` and [`strategies/`](/docs/strategies). Some ceilings (e.g. the sell-tolerance cap) cannot be widened even by the owner.",
+          "The caps as state, not prose: the on-chain store of the risk limits from `CLAUDE.md` and [`strategies/`](/docs/strategies). Some ceilings (e.g. the sell-tolerance cap) cannot be widened even by the owner; the rest are owner-changeable by the Safe, with **no timelock yet**.",
         ],
         [
           "ChainlinkOracleAdapter",
@@ -431,14 +461,18 @@ export const content: DocContent = {
         [
           "SessionKeyExecutor",
           "`0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7`",
-          "The authorization layer between the AI desk and the vault, expiring, permission-scoped keys instead of a standing hot wallet.",
+          "The authorization layer between the AI desk and the vault: expiring session keys scoped by expiry, size, budget, trade count and ticker, instead of a standing hot wallet. A rejected order spends none of the session budget.",
         ],
         [
           "AelixAutosave",
           "`0x5b0778E8561EA31490588D21bd44419803DC709b`",
-          "Recurring DCA into the vault. It never holds funds beyond the atomic hop.",
+          "Recurring, scheduled buys into the vault. It never holds funds beyond the atomic hop.",
         ],
       ],
+    },
+    {
+      type: "note",
+      md: "Stop-loss, precisely: the **live** vault requires a stop below entry on every buy. The stop-**depth** cap — a buy's stop must sit within `stopLossBps` of price, so a nominal $0.01 \"stop\" fails — is enforced in the current repo code with a regression test and ships with the next deploy. It is **not** a property of the live vault today.",
     },
     {
       type: "heading",
@@ -466,7 +500,7 @@ export const content: DocContent = {
         },
         {
           term: "Test suite",
-          md: "**214 tests passing** in `onchain/test/`. Tests are evidence about the code's own invariants, not a substitute for a third-party audit.",
+          md: "**215 tests passing** in `onchain/test/`, including the regression test pinning the stop-depth cap. Tests are evidence about the code's own invariants, not a substitute for a third-party audit.",
         },
       ],
     },
@@ -518,7 +552,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "info",
       title: "What multisig ownership does, and does not, buy",
-      md: "Every owner-controlled contract in the stack is owned by the 2-of-3 Safe, so changing a risk cap, a price feed, the deposit cap or a session grant requires **two of three signatures**, and no single hot key can weaken the guardrails. That is a statement about **custody, not about code**: it does not make the contracts audited, verified on the explorer, or safe. The audit is still the caveat that matters most.",
+      md: "Every owner-controlled contract in the stack is owned by the 2-of-3 Safe, so changing a risk cap, a price feed, the deposit cap or a session grant requires **two of three signatures**, and no single hot key can weaken the guardrails. **There is no timelock yet:** a change the Safe approves takes effect in one transaction, with no delay for anyone to react. And multisig custody is a statement about **custody, not about code**: it does not make the contracts audited or verified on the explorer. The audit is still the caveat that matters most.",
     },
     {
       type: "note",

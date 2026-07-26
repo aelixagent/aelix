@@ -1,20 +1,27 @@
-# Aelix — On-Chain Module (Robinhood Chain)
+# Aelix — On-Chain Module
 
-The smart-contract layer that turns the Aelix AI trading desk (this repo) into a
-product other people can use **and verify**: a non-custodial, AI-managed vault for
-tokenized real-world assets (Robinhood Chain **Stock Tokens**) where the risk rules
-in [`../CLAUDE.md`](../CLAUDE.md) and [`../strategies/README.md`](../strategies/README.md)
-are **enforced by the contract, not merely promised by a prompt** — and where each desk
-run is attested on-chain, so the record is verifiable instead of self-reported. (Nothing
-has been attested yet on mainnet; there is no track record.)
+Aelix's second surface. The desk (this repo) is how the rulebook is developed — on the
+brokerage side a human approves every order, and that isn't changing. This module is how
+that rulebook becomes code: a non-custodial ERC-4626 vault for tokenized equities
+(Robinhood Chain **Stock Tokens**) where the risk rules in
+[`../CLAUDE.md`](../CLAUDE.md) and [`../strategies/README.md`](../strategies/README.md)
+are **compiled into the contract, not merely promised by a prompt** — the vault reverts
+any order that breaches them, and the agent trades only through a session key scoped by
+expiry, size, budget, trade count and ticker (a rejected order spends none of that
+budget). Each desk run is attested on-chain, so the record is verifiable instead of
+self-reported. (Nothing has been attested yet on mainnet; there is no track record.)
+Two doors, one brand: the desk is US, beta, equities; Stock Tokens are **not for US
+persons** and are price-tracking instruments, not shares.
 
 > **Status: mainnet — unaudited — deposits capped.** Deployed on Robinhood Chain
-> **mainnet (chain 4663)** against real periphery: 214 passing tests (unit + fuzz +
+> **mainnet (chain 4663)** against real periphery: 215 passing tests (unit + fuzz +
 > invariant), no mocks anywhere in the mainnet path. **No third-party audit yet** — two
 > internal audit passes and a 42-agent preflight review are *not* an audit. Deposits are
-> capped at **10,000 USDG**, TVL is **0**, and **every owner-controlled contract is now
-> owned by the 2-of-3 Safe multisig** — the handover completed 2026-07-26 and was verified
-> by direct call (details below). Contracts are not yet verified on the block explorer.
+> capped at **10,000 USDG** (an owner-changeable setting, not a structural limit), TVL is
+> **0**, and **every owner-controlled contract is now owned by the 2-of-3 Safe multisig**
+> — the handover completed 2026-07-26 and was verified by direct call (details below).
+> There is **no timelock yet**: an approved 2-of-3 Safe transaction changes caps, feeds
+> or session grants immediately. Contracts are not yet verified on the block explorer.
 > Treat this as an early mainnet deployment, not a finished product.
 
 ## Live on Robinhood Chain mainnet (chain 4663)
@@ -26,7 +33,7 @@ Router02**, and five **Robinhood Stock Tokens** (NVDA, AAPL, TSLA, GOOGL, SPY) e
 its own Chainlink feed proxy. The oracle returns live prices (NVDA read **$206.37** at
 deploy time). `vAELIX` has 12 decimals (6 from USDG + a 6-decimal offset).
 
-Hardened before deploy across two internal audit passes — the exploit-focused second pass
+Two internal audit passes preceded the deploy — the exploit-focused second pass
 closed all 5 HIGH value-extraction vectors: ERC-4626 inflation attack (1e6 decimals offset),
 oracle-lag deposit/redeem arbitrage (0.2% exit fee), sell (self-)sandwich (sell band
 tightened 15%→5%), token-decimals spoof (pinned at trade), plus the earlier per-day sell
@@ -74,9 +81,11 @@ holds no residual authority over any contract in the stack.
 
 The consequence: **every owner-controlled contract in the stack is owned by the 2-of-3
 Safe.** Changing any risk cap, price feed, deposit cap or session grant takes 2 of 3
-signatures, so no single hot key can weaken the guardrails. It does not mean the code has
-been reviewed — the stack is still **unaudited**. A multisig governs who may change the
-rules; it does not audit the implementation.
+signatures, so no single hot key can weaken the guardrails. There is **no timelock yet**
+— an approved Safe transaction takes effect immediately, with no delay for anyone to
+react. And none of this means the code has been reviewed — the stack is still
+**unaudited**. A multisig governs who may change the rules; it does not audit the
+implementation.
 
 ### Live state
 
@@ -114,11 +123,23 @@ What retail can't do today is *trust* an AI with money: robo-advisors are custod
 black boxes, and "AI trading bots" all claim profits nobody can check. This module
 closes both gaps on-chain:
 
-1. **Guardrails as code** — the CLAUDE.md caps become a smart contract an agent
-   *cannot* bypass, only the human owner can change.
+1. **Guardrails as code** — the CLAUDE.md caps become a smart-contract check on every
+   order at the custody layer: an order that breaks a cap reverts. The caps are
+   changeable only by the 2-of-3 Safe — with no timelock yet.
 2. **Proof-of-track-record** — each desk run is attested on-chain and performance is
    computed from attested data, so it can't be inflated. The mechanism is deployed; no
    runs have been attested on mainnet yet, so there is nothing to show.
+
+**The first number we publish will be how often the vault said no.** `previewTrade()`
+returns the exact rule an order would break *before* anyone signs; a refused order
+consumes none of the agent's session budget (`SessionKeyExecutor` rolls its reservations
+back when the vault reverts); and `DeskRegistry` is append-only, so refusals and vetoes
+go on the record and cannot be pruned. With TVL at 0, a refusal rate is the only number
+that can honestly accumulate — so it goes first.
+
+**And there are no fees anywhere in the contracts** — no management fee, no performance
+fee, no carry. The one fee that exists (the 0.2% exit fee) accrues to the remaining
+holders, not to the operator.
 
 ## Architecture (8 deployed contracts + 1 pure library)
 
@@ -130,7 +151,7 @@ GuardrailConfig ──caps──►  Guardrails (pure lib)
    previewTrade      ───┤         │                                 │ trade()
    redeemInKind      ───┴──►  RWAVault (ERC-4626)  ◄──manager──  SessionKeyExecutor
    AelixAutosave     ───┘     enforces caps at the               (expiring, revocable,
-   (recurring DCA)             custody layer                      scoped agent keys)
+   (recurring buys)            custody layer                      scoped agent keys)
                                 │              │
                                 │ price()      │ swap()
                                 ▼              ▼
@@ -152,7 +173,7 @@ DeskRegistry ──series──► PerfScore
 | `ChainlinkOracleAdapter` | Real Chainlink feeds → NAV; per-feed staleness, freeze breaker, liveness quorum | [src/ChainlinkOracleAdapter.sol](src/ChainlinkOracleAdapter.sol) |
 | `UniswapSwapAdapter` | Executes the swap leg through Uniswap V2 Router02 with a slippage band | [src/UniswapSwapAdapter.sol](src/UniswapSwapAdapter.sol) |
 | `SessionKeyExecutor` | ERC-4337-style scoped/expiring/revocable delegation to agent keys | [src/SessionKeyExecutor.sol](src/SessionKeyExecutor.sol) |
-| `AelixAutosave` | Consumer recurring DCA into the vault (keeper-triggered) | [src/AelixAutosave.sol](src/AelixAutosave.sol) |
+| `AelixAutosave` | Recurring buys into the vault (keeper-triggered, per-user schedules) | [src/AelixAutosave.sol](src/AelixAutosave.sol) |
 | `DeskRegistry` + `PerfScore` | Attested track record + on-chain performance math | [src/DeskRegistry.sol](src/DeskRegistry.sol) · [src/PerfScore.sol](src/PerfScore.sol) |
 
 ## CLAUDE.md → on-chain mapping
@@ -165,33 +186,45 @@ Every cap in [`../strategies/README.md`](../strategies/README.md) is basis-point
 | Max concentration | 25% NAV | `maxConcentrationBps 2500` |
 | Max open positions | 6 | `maxOpenPositions` |
 | Max daily orders | 4 | `maxDailyOrders` (buys throttled; sells never trapped) |
-| Stop-loss required | −8% | `stopLossBps 800` (buy reverts without a real stop) |
+| Stop-loss required | −8% | `stopLossBps 800` — stop below entry enforced live; depth cap: see footnote † |
 | Daily-loss halt | −5% | `dailyLossHaltBps 500` (live + latchable) |
 | Cash buffer | ≥10% | `cashBufferBps 1000` |
 | No averaging into losers | except left-side ladder | `leftSideException` flag |
 
-The vault re-checks these on **every** `executeTrade`, so a compromised agent key
-(or a buggy strategy) can't push an order the rules forbid. `previewTrade(order)`
-returns the exact `Violation` before anything is signed — the on-chain analogue of
-CLAUDE.md's "present a preview, then get approval".
+> † **Stop-loss, precisely.** The **live** mainnet vault requires a stop **below entry**
+> on every buy — a stop-less buy reverts — but it does **not** yet enforce the −8%
+> *depth*. The check that a buy's stop must sit within `stopLossBps` of price (so a
+> $0.01 "stop" no longer passes) is enforced in the current repo code, covered by a
+> regression test (215 tests), and ships with the next deploy. Do not read the −8% in
+> this row as live-vault enforcement until then.
+
+The vault re-checks these on **every** `executeTrade`: an order that breaks a rule
+reverts at the custody layer, whatever key signed it — a compromised agent key (or a
+buggy strategy) gets a revert, not a fill. The caps themselves are changeable only by
+the 2-of-3 Safe, with no timelock yet. `previewTrade(order)` returns the exact
+`Violation` before anything is signed — the on-chain analogue of CLAUDE.md's "present a
+preview, then get approval".
 
 ## Security model — defense in depth
 
 - **Layer 1 — SessionKeyExecutor:** per-agent scope (expiry, per-trade + cumulative
   notional caps, max trades, token allowlist, side). Revocable instantly. A trade the
   vault rejects consumes *none* of the session budget.
-- **Layer 2 — RWAVault + GuardrailConfig:** the hard, non-bypassable risk caps at the
-  custody layer.
+- **Layer 2 — RWAVault + GuardrailConfig:** the risk caps, enforced at the custody
+  layer on every order; changeable only by the 2-of-3 Safe — with no timelock yet.
 - **Human-only caps:** only `GuardrailConfig.owner` can change limits; the agent has
   read access and nothing more. On mainnet that owner is the 2-of-3 Safe.
-- **Always-solvent exit:** `redeemInKind` returns a pro-rata slice of USDG + every
-  Stock Token; it can never fail for lack of cash.
-- **Staged blast radius:** the mainnet deposit cap is 10,000 USDG. The stack is
-  unaudited, so what a surviving bug could reach is bounded by what the vault may hold.
+- **Always redeemable in kind:** `redeemInKind` returns a pro-rata slice of USDG + every
+  Stock Token, minus the exit fee (which accrues to remaining holders, not the
+  operator). Cash-only redemption is limited to the vault's USDG on hand.
+- **Staged blast radius:** the mainnet deposit cap is 10,000 USDG (an owner-changeable
+  setting, not a structural limit). The stack is unaudited, so what a surviving bug
+  could reach is bounded by what the vault may hold.
 - **Multisig-governed, not hot-key-governed:** every owner-controlled contract is owned by
   the 2-of-3 Safe (handover completed and verified above, including the negative control
   that the deployer key now reverts). Two of three signatures are required to move a cap,
-  swap a feed, raise the deposit cap or grant a session. The weakest link in the model is
+  swap a feed, raise the deposit cap or grant a session — and with **no timelock yet**, an
+  approved Safe transaction takes effect immediately. The weakest link in the model is
   now the one thing a multisig cannot fix: the code is **unaudited**.
 
 ---
@@ -200,7 +233,7 @@ CLAUDE.md's "present a preview, then get approval".
 
 ```bash
 cd onchain
-forge test            # 214 tests across 14 suites
+forge test            # 215 tests across 15 suites
 forge test --gas-report
 ```
 
@@ -261,6 +294,12 @@ rules. Neither resolved any of the following.
 - **No third-party audit.** Two internal passes and a 42-agent preflight review are not
   an audit. This is the single largest open risk, and it is why the deposit cap exists.
   Completing the ownership handover did nothing to strengthen the code.
+- **No timelock on owner powers.** The 2-of-3 Safe can change caps, feeds, the deposit
+  cap, the manager or session grants in a single transaction with immediate effect —
+  there is no delay in which anyone could react or exit first.
+- **The live vault does not yet enforce stop depth.** It requires a stop below entry on
+  every buy; the −8% depth cap is enforced in the current repo code and ships with the
+  next deploy (see the footnote under the caps table).
 - **No track record.** TVL 0, no depositors, no trades, no returns. Nothing to evaluate.
 - **Contracts not yet verified** on the block explorer, so the bytecode cannot be read
   back against this source by a third party.

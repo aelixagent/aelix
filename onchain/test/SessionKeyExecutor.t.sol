@@ -92,7 +92,7 @@ contract SessionKeyExecutorTest is Test {
             isBuy: true,
             amountIn: amountIn,
             minAmountOut: 0,
-            stopPriceE18: 45e18,
+            stopPriceE18: 47e18,
             leftSideException: false
         });
         vm.prank(AGENT);
@@ -162,7 +162,7 @@ contract SessionKeyExecutorTest is Test {
             isBuy: true,
             amountIn: 5e18,
             minAmountOut: 0,
-            stopPriceE18: 9e18,
+            stopPriceE18: 9.5e18,
             leftSideException: false
         });
         vm.prank(AGENT);
@@ -202,7 +202,7 @@ contract SessionKeyExecutorTest is Test {
             isBuy: true,
             amountIn: 20e18,
             minAmountOut: 0,
-            stopPriceE18: 45e18,
+            stopPriceE18: 47e18,
             leftSideException: false
         });
         vm.prank(AGENT);

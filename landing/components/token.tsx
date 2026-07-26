@@ -14,9 +14,10 @@ export function Token() {
               <GlitchText text="$AELIX, a roadmap experiment" mode="hover" />
             </h3>
             <p>
-              A planned utility token on Robinhood Chain (chainId 4663) for premium research access,
-              governance over risk parameters, and fee discounts. The vault and guardrail contracts
-              are deployed on mainnet; the token is not. No sale, no price, no listing.
+              A planned utility token on Robinhood Chain (chainId 4663) for premium research
+              access. It is unlaunched: no sale, no price, no listing, no contract. It is also
+              entirely separate from the vault — holding it would confer no claim on the vault,
+              its assets or its record.
             </p>
             <p>
               It is a Web3 experiment, not a fundraising or investment vehicle. Launchpad terms and

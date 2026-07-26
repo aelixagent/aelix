@@ -15,10 +15,10 @@ export function Roadmap() {
             </h2>
           </div>
           <p>
-            Built in phases. Every trading feature ships behind human approval first,
+            Built in phases. Every desk trading feature ships behind human approval first,
             paper-trading second. The on-chain module is deployed on Robinhood Chain
-            mainnet and its ownership now sits with a 2-of-3 Safe multisig, while the rest
-            of the hardening phase, audit, explorer verification and legal review, is
+            mainnet and its ownership sits with a 2-of-3 Safe multisig — with no timelock
+            yet — while third-party audit, explorer verification and legal review are
             still open.
           </p>
         </div>

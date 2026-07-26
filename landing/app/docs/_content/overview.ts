@@ -3,22 +3,40 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "What is Aelix?",
   description:
-    "Aelix is an agentic AI equity research desk that runs inside Claude Code, connects to a Robinhood Agentic account over MCP, and never places an order without your explicit approval.",
+    "Least-privilege AI trading: on Robinhood you approve every order; on-chain the agent holds a scoped, revocable, expiring key. An AI research desk in Claude Code — two surfaces, one rulebook.",
   eyebrow: "01, Overview",
   blocks: [
     {
       type: "prose",
-      md: "**Aelix** is a multi-agent stock-research desk that runs *inside* Claude Code. It connects to a **Robinhood Agentic** account over [MCP](/docs/mcp) and behaves like a small institutional desk: a team of specialist AI analysts screens your watchlist, debates each candidate, and hands you a one-click **preview card**. You approve; it places. It never trades on its own.",
+      md: "**Least-privilege AI trading: on Robinhood you approve every order; on-chain the agent holds a scoped, revocable, expiring key.** Aelix is an AI research desk in Claude Code with two surfaces and one rulebook. The headline surface is the brokerage desk: it connects to a **Robinhood Agentic** account over [MCP](/docs/mcp) and behaves like a small institutional desk — a team of specialist AI analysts screens your watchlist, debates each candidate, and hands you a one-click **preview card**. You approve; it places. It never places an order without your yes, and that isn't changing.",
     },
     {
       type: "prose",
-      md: "It is deliberately **not** a bot that YOLOs your money. Every safeguard is structural, not aspirational, the analysts physically have no order tools, an independent Risk Manager can veto any trade, and the whole desk is wrapped in written guardrails that live in [`CLAUDE.md`](/docs/guardrails) and cannot be weakened by the agent.",
+      md: "Every safeguard on the desk is structural, not aspirational, and a stranger can verify each one on their own laptop: the analysts hold **no order tools** in their `.claude/agents/*.md` frontmatter, an independent Risk Manager can veto any trade, orders sit behind a `deny → ask → allow` permission gate, the written guardrails in [`CLAUDE.md`](/docs/guardrails) cannot be weakened by the agent, and the kill switch is one command: `claude mcp remove robinhood-trading`.",
     },
     {
       type: "callout",
       tone: "danger",
       title: "Real money · beta · not investment advice",
-      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).\n\nThe separate on-chain vault is **mainnet, unaudited**, with **no timelock on owner caps**, deposits capped at **10,000 USDG**, and **no depositors, no trades, no track record**. Aelix is not affiliated with Robinhood.",
+    },
+    {
+      type: "heading",
+      text: "Two surfaces, one rulebook",
+    },
+    {
+      type: "prose",
+      md: "The second surface is the **on-chain vault** on Robinhood Chain — explicitly labeled, operator-funded, and separate from the desk. There, the risk caps are compiled into a vault that **reverts any order breaching them**, and the agent's key is separately scoped by **expiry, size, budget, trade count and ticker** — a rejected order spends none of that budget. The desk is how we develop the rulebook; the vault is how that rulebook becomes code. Mechanics in [Architecture](/docs/architecture#the-separate-on-chain-module).",
+    },
+    {
+      type: "prose",
+      md: "The geographic split is a chosen constraint, not an accident: the desk is US, beta, equities; the Stock Tokens the vault trades are **not for US persons** and are price-tracking instruments, **not shares**. Two doors, one brand — not a funnel from one into the other.",
+    },
+    {
+      type: "callout",
+      tone: "info",
+      title: "The first number we publish will be how often the vault said no",
+      md: "Not returns — there are none, and TVL is 0. A refusal rate is the only metric this project can accumulate honestly today, and the plumbing for it is real: `previewTrade()` returns the exact rule an order would break **before** anyone signs, a refused order consumes **none** of the session budget, and the append-only `DeskRegistry` keeps every refusal and veto on the record, where it cannot be pruned.",
     },
     {
       type: "heading",

@@ -1,9 +1,9 @@
 # Trading Desk UI
 
-A read-only, professional dashboard for the Robinhood Agentic desk. It is a **mirror**,
-not a controller: it visualizes a `desk-state.json` snapshot the PM session writes after
-each desk run. **It cannot place orders** — approval and execution happen only in the
-Claude Code session (per `CLAUDE.md`).
+A read-only dashboard for the Aelix desk — the brokerage surface, where a human approves
+every order. It is a **mirror**, not a controller: it visualizes a `desk-state.json`
+snapshot the PM session writes after each desk run. **It cannot place orders** — approval
+and execution happen only in the Claude Code session (per `CLAUDE.md`).
 
 ## Run
 
@@ -114,7 +114,7 @@ Tell the PM to write the snapshot, e.g.:
       "vault": "0x…",                    //   RWAVault (vAELIX) — NAV/supply/positions + the dApp
       "attestor": "0x…",                 //   DeskRegistry     — desk-run attestations
       "executor": "0x…",                 //   SessionKeyExecutor
-      "autosave": "0x…" },               //   AelixAutosave    — omit and the DCA tab hides
+      "autosave": "0x…" },               //   AelixAutosave    — omit and the recurring-buy tab hides
     "vault": {                           // snapshot fallback; live reads override these when the RPC is up.
                                          //   Use null — NOT 0 — for anything unread: null renders '—',
                                          //   while 0 reads as a real measurement of zero.
@@ -130,7 +130,8 @@ Tell the PM to write the snapshot, e.g.:
     "executor": {                        // agent-executor panel
       "type": "Scoped session key (EOA)", "status": "live|active|preview",
       "scope": "", "sessionKey": "0x…|null", "dailyCapPct": 15, "lastAction": "" },
-    "autosave": {                        // autosave / DCA panel
+    "autosave": {                        // recurring-buy panel (key matches the deployed
+                                         //   AelixAutosave contract; copy calls it "recurring buy")
       "enabled": false, "cadence": null, "amount": null, "asset": "USDG", "nextRun": null }
   }
 }
@@ -153,7 +154,7 @@ absent or empty.
   the timeline renders. `tone` drives the badge/accent color
   (`pos`/`neg`/`flat`/`warn`).
 - **`onchain`** feeds the entire on-chain band (RWA vault, guardrails-as-code, track
-  record, executor, autosave) and the vault dApp at `/vault`. When `onchain.contracts.vault`
+  record, executor, recurring buy) and the vault dApp at `/vault`. When `onchain.contracts.vault`
   and `onchain.network.chainId` are present, the UI reads the **live** deployed contracts
   over a public RPC (see `src/onchain.js`) and those live values take precedence over the
   static `onchain.vault` / `onchain.guardrails` snapshot; the snapshot is only the fallback.
@@ -195,17 +196,23 @@ same calls from the Safe succeed — the deploy key has no residual authority.
 
 So the dashboard copy **may** now state plainly that every owner-controlled contract is owned
 by a 2-of-3 Safe multisig, that changing any risk cap, feed, deposit cap or session grant
-requires 2 of 3 signatures, and that no single hot key can weaken the guardrails. That is a
-custody fact and nothing more — it says nothing about the code having been reviewed, so it
-does **not** soften any caveat below.
+requires 2 of 3 signatures, and that no single hot key can weaken the guardrails — **provided
+the same block also says there is no timelock yet** (an approved Safe transaction takes
+effect immediately). Wherever copy describes what the Safe can change, the no-timelock line
+is required, not optional. That is a custody fact and nothing more — it says nothing about
+the code having been reviewed, so it does **not** soften any caveat below.
 
 Standing caveats the dashboard copy must keep — mainnet and the completed handover do **not**
 retire them:
 
 - **No third-party audit.** Internal review passes are not an audit, and neither is a
   completed ownership handover. This remains the single most important caveat.
-- **Deposits are capped** (10,000 USDG) and there is **no track record** — no depositors, no
-  trades, `totalAssets` and `totalSupply` are 0. Panels stay empty; that is the honest output.
+- **No timelock on owner powers.** The Safe changes caps, feeds, session grants or the
+  deposit cap in one transaction with immediate effect; copy describing Safe powers must say
+  so in the same block.
+- **Deposits are capped** (10,000 USDG — an owner-changeable setting, not a structural limit)
+  and there is **no track record** — no depositors, no trades, `totalAssets` and
+  `totalSupply` are 0. Panels stay empty; that is the honest output.
 - **Contracts are not yet verified** on the block explorer, and the mainnet explorer base URL
   above is taken from the app's chain table — it has not been confirmed against a live host
   (the bridge writes a different one, `explorer.chain.robinhood.com`). Verify before trusting

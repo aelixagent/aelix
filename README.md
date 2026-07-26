@@ -4,10 +4,10 @@
 
 # ◤ AELIX ◢
 
-### Agentic AI Equity Research Desk
+### Least-Privilege AI Trading
 
-**A team of specialist AI analysts that research your watchlist inside Claude Code,
-connect to a Robinhood Agentic account over MCP, and never place an order without your approval.**
+**An AI research desk that never places an order without your yes — and an on-chain
+vault where the agent's key is scoped, revocable, and expiring.**
 
 [**📖 Documentation**](https://www.aelix.xyz/docs) · [**🌐 Website**](https://www.aelix.xyz) · [**⚡ Quickstart**](https://www.aelix.xyz/docs/quickstart) · [**🛡 Guardrails**](https://www.aelix.xyz/docs/guardrails)
 
@@ -20,11 +20,16 @@ connect to a Robinhood Agentic account over MCP, and never place an order withou
 
 ---
 
-Aelix isn't a bot that YOLOs your money. It's a small **desk of specialized sub-agents**:
-fundamental, technical, macro/news, and a **risk manager with veto power**, that screen
-your watchlist, debate each candidate, and hand you a one-click **preview card**. You
-approve; it places. Everything is wrapped in written guardrails (human-in-the-loop,
-position caps, prompt-injection defense) and mirrored to a Robinhood-style dashboard.
+Aelix is an AI research desk in Claude Code: a small **desk of specialized sub-agents** —
+fundamental, technical, macro/news, and a **risk manager with veto power** — that screen
+your watchlist, debate each candidate, and hand you a one-click **preview card**. On your
+Robinhood account it **never places an order without your yes; that isn't changing.** On
+Robinhood Chain, the caps are compiled into a vault that reverts any order breaching
+them, and the agent's key is separately scoped by expiry, size, budget, trade count and
+ticker — a rejected order spends none of that budget. The desk is how we develop the
+rulebook; the vault is how that rulebook becomes code ([`onchain/`](onchain/README.md)).
+Mainnet, unaudited, no timelock on owner caps, deposits capped at 10,000 USDG, no
+depositors, trades, or track record; beta; not advice; unaffiliated with Robinhood.
 
 ![Aelix, the desk dashboard](docs/demo.jpeg)
 
@@ -45,7 +50,12 @@ position caps, prompt-injection defense) and mirrored to a Robinhood-style dashb
   quotes suspicious "instructions" instead of acting on them.
 - **Low-touch by design**, it runs read-only research on a schedule and only surfaces a
   trade when one genuinely qualifies; most days it tells you to stand aside.
-- **A real dashboard**, a Robinhood-style UI mirrors the desk's state live.
+- **A real dashboard**, a clean brokerage-style UI mirrors the desk's state live.
+- **The first number we publish will be how often the vault said no.** On-chain,
+  `previewTrade()` returns the exact rule an order would break before anyone signs, a
+  refused order spends none of the agent's session budget, and the registry is
+  append-only — refusals and vetoes go on the record. At TVL 0, a refusal rate is the
+  only metric that can honestly accumulate.
 
 ## How the desk works
 
@@ -166,8 +176,11 @@ Deep dive → [Guardrails](https://www.aelix.xyz/docs/guardrails) ·
 ├── backtest/                  # Offline, dependency-free strategy backtester (pure Node ESM)
 ├── tools/desk-log.mjs         # Append-only JSONL audit-log helper
 ├── logs/                      # JSONL decision trail (real logs gitignored)
-├── ui/                        # Read-only Robinhood-style dashboard (Vite + React)
+├── ui/                        # Read-only brokerage-style dashboard (Vite + React)
 │   └── public/desk-state.example.json   # demo data (live desk-state.json is gitignored)
+├── onchain/                   # Surface two: the rulebook as code — Foundry contracts on
+│                              #   Robinhood Chain (mainnet, unaudited, deposits capped;
+│                              #   see onchain/README.md for every caveat)
 └── landing/                   # Marketing site + full documentation (Next.js) → aelix.xyz
 ```
 
@@ -199,9 +212,15 @@ Aelix is a **research & recommendation tool, not financial advice**. Robinhood A
 Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic
 account funded with a dedicated budget, that budget is the most it can ever lose. **There
 is no track record and no performance claim here**; all example data is illustrative. All
-investment decisions are your own responsibility. Use only risk capital. Any crypto/token
-material referenced in exploratory notes is **out of scope, unverified, and not
-implemented**, see [Safety & Disclaimer](https://www.aelix.xyz/docs/disclaimer).
+investment decisions are your own responsibility. Use only risk capital.
+
+The on-chain module ([`onchain/`](onchain/README.md)) is a separate, explicitly labeled
+surface — two doors, one brand, not a funnel: the desk is US, beta, equities; Robinhood
+Chain **Stock Tokens are not for US persons** and are price-tracking instruments, not
+shares. The vault is live on mainnet but **unaudited**, deposit-capped at 10,000 USDG,
+operator-funded, with no depositors, no trades, and no track record. The `$AELIX` token
+is **unlaunched**. Not affiliated with, or endorsed by, Robinhood or Anthropic. See
+[Safety & Disclaimer](https://www.aelix.xyz/docs/disclaimer).
 
 <div align="center">
 
