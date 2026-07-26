@@ -35,8 +35,12 @@ Postures the gate additionally refuses, beyond the five below:
   bounds, `FEED_STALENESS_OFFHOURS < 3d` (breaks NAV every weekend) or `> 7d` (an
   open-ended licence to transact on a dead feed).
 
-- [ ] **`OWNER`** — Safe multisig (2-of-3 min) + timelock (24–48h) on chain 4663.
-      Owns `GuardrailConfig`; the only party that may change caps. Never an EOA.
+- [~] **`OWNER`** — Safe multisig (2-of-3) **live on chain 4663 and owning the whole stack**:
+      `0x47b5e2923216f203b7960d8D232215534AF02FF2`. It is the only party that may change caps.
+      Never an EOA. Handover settled 2026-07-26 — see C6 for the verification.
+      Still outstanding: the **timelock (24–48h)** in front of the Safe. Today a 2-of-3 quorum
+      can change a cap effective immediately — no delay, no window to observe and react before
+      it lands. Harmless while the vault is empty; required before it is not.
 - [x] **Network access to Robinhood Chain.** Was blocked at ISP level (every
       `*.robinhood.com` host resolved to `trustpositif.moratelindo.io`). Resolved via VPN;
       `eth_chainId` on the mainnet RPC now returns `0x1237` (4663). Note the deploy machine
@@ -76,9 +80,13 @@ Postures the gate additionally refuses, beyond the five below:
 
 ## B. Keys and gas
 
-- [ ] **Deployer** — hardware wallet or `cast wallet` keystore. Never a plaintext
+- [~] **Deployer** — hardware wallet or `cast wallet` keystore. Never a plaintext
       `PRIVATE_KEY` in `.env` for mainnet. Single-use; hands ownership to the multisig
       immediately after deploy.
+      The **handover half is done**: `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` holds no
+      owner role anywhere in the stack and reverts `OwnableUnauthorizedAccount` on every
+      owner-only call (verified 2026-07-26, see C6). The **custody posture** is the part still
+      open — move the key to hardware/keystore before it signs anything on mainnet again.
 - [ ] **`AGENT`** — desk hot key, granted only via `SessionKeyExecutor`
       (expiring + revocable + scoped). Never a direct vault role.
 - [ ] **Keeper** — separate key for `AelixAutosave` DCA triggers.
@@ -127,9 +135,18 @@ Postures the gate additionally refuses, beyond the five below:
       DEPLOYER — so all wiring reverted *after* eight contract deployments had been paid for.
       A real mainnet run would have burned the gas and left an unusable, half-configured
       stack. Fixed: vault/oracle/executor are born deployer-owned, wired, then handed over via
-      `Ownable2Step` (pending until the Safe accepts); GuardrailConfig and the swap adapter are
-      born multisig-owned and never pass through the hot key. Pinned by
-      `test/DeployHandover.t.sol` (6 tests).
+      `Ownable2Step`; GuardrailConfig and the swap adapter are born multisig-owned and never
+      pass through the hot key. Pinned by `test/DeployHandover.t.sol` (6 tests).
+      **Handover completed on mainnet 2026-07-26.** The Safe accepted all three in one batch
+      (tx `0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`). Verified by
+      direct `eth_call` after execution — `RWAVault` `0x0e500E39…c5047`,
+      `ChainlinkOracleAdapter` `0xF6cFcA20…2699A`, `SessionKeyExecutor` `0xC1C00ED3…06AF7`:
+      `owner()` == the Safe and `pendingOwner()` == `0x0` on all three, so the handover is
+      fully settled rather than half-done. Negative control: the deployer EOA reverts
+      `OwnableUnauthorizedAccount` (`0x118cdaa7`) on `allowToken`, `setDepositCap` and
+      `setFeedFrozen`, while the same calls from the Safe succeed.
+      Note this is a **key-custody** result, not a code-assurance one — D's audit item is
+      untouched by it.
 - [ ] **C4 — Purge mocks.** Assert nothing under `src/mocks/` is reachable from the
       mainnet deploy path.
 - [x] **C5 — Initial deposit cap.** *This checklist item previously described a control that
@@ -163,7 +180,8 @@ Postures the gate additionally refuses, beyond the five below:
 
 ## Suggested order
 
-1. **B** — stand up the multisig and keys (no external dependency).
+1. **B** — the multisig is stood up and owns the stack (done); what remains is the timelock in
+   front of it and the deployer/agent/keeper custody posture.
 2. **A** — source `SEQUENCER_FEED` + the Stock Token feed proxies from Chainlink.
    This is the only item gated on someone outside the project; start it first.
 3. **C** — C1 and C2 are real correctness bugs on mainnet, not polish. Fix with tests.

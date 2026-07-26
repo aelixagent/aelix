@@ -48,7 +48,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**No, and no.** There is **no third-party audit**, two internal audit passes and a 42-agent preflight review are not an audit, and the contracts are not yet verified on the block explorer. The vault is a **separate system**: it holds no customer money, has no depositors and no trades, and there is no path between it and your Robinhood account. The ownership handover is also incomplete, three of the deployed contracts are **still owned by the deployer EOA** with the 2-of-3 Safe only as `pendingOwner()`. Per-contract detail is in [Architecture](/docs/architecture#the-separate-on-chain-module).",
+      md: "**No, and no.** There is **no third-party audit**, two internal audit passes and a 42-agent preflight review are not an audit, and the contracts are not yet verified on the block explorer. The vault is a **separate system**: it holds no customer money, has no depositors and no trades, and there is no path between it and your Robinhood account. Ownership is settled, every owner-controlled contract is owned by a **2-of-3 Safe multisig**, so no single hot key can move a risk cap, a feed or the deposit cap, but that is custody, not an audit, and it does not make the code safe. Per-contract detail is in [Architecture](/docs/architecture#the-separate-on-chain-module).",
     },
     {
       type: "heading",

@@ -20,6 +20,41 @@ The `decimals() == 6` read is the check that matters: an 18-decimal "Global Doll
 look-alike exists, and `DeployProduction` now pins USDG decimals to 6 so the impostor is
 rejected without ever trusting the symbol.
 
+## Aelix contract ownership (verified by direct call, 2026-07-26)
+
+Safe (2-of-3) `0x47b5e2923216f203b7960d8D232215534AF02FF2` — `getThreshold()` = 2, all
+three signers confirmed by `getOwners()`.
+
+`owner()` and `pendingOwner()` read back **after** the Safe executed `acceptOwnership()`
+(one 2-of-3 batch, tx
+`0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`). A zero
+`pendingOwner()` is the part that shows the transfer settled rather than sitting half-done:
+
+| Contract | Address | `owner()` | `pendingOwner()` |
+|---|---|---|---|
+| RWAVault | `0x0e500E390cC599055f1e54194e1e611Cf64c5047` | Safe | `0x0` |
+| ChainlinkOracleAdapter | `0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A` | Safe | `0x0` |
+| SessionKeyExecutor | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` | Safe | `0x0` |
+| GuardrailConfig | `0x68cf24994d0363Be7688e96B69dDacC290c766C0` | Safe (from construction) | `0x0` — hand-rolled two-step handoff (`pendingOwner`/`acceptOwnership`), not OZ `Ownable2Step`, but a `transferOwnership` alone still does NOT move it |
+| UniswapSwapAdapter | `0x9a8bb5E65f340C4Bf6c7Aa71991EC5D31083b5cf` | Safe (from construction) | `0x0` |
+
+The last two never passed through the deployer: they take the owner as a constructor
+argument, so there was no window in which a hot key controlled them.
+
+Negative control, also by direct call: the deployer EOA
+`0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` now reverts with `OwnableUnauthorizedAccount`
+(`0x118cdaa7`) on `allowToken`, `setDepositCap` and `setFeedFrozen`, while the same calls
+from the Safe address succeed. The deploy key retains no authority over the stack; commands
+in [DEPLOY.md](DEPLOY.md) step 6.
+
+`DeskRegistry` `0x68cc84d722E2d613cAc36c62167B177656e2C983` (append-only) and `PerfScore`
+`0x1CB3df5AAFEb0d2c31277e3e889613bc6F4C9e14` (pure math) have no owner at all;
+`AelixAutosave` `0x5b0778E8561EA31490588D21bd44419803DC709b` is non-custodial with per-user
+schedules.
+
+Ownership is about **who may change the risk parameters** — nothing here implies the code
+has been reviewed. There is still no third-party audit.
+
 ## Stock Tokens (verified by direct call)
 
 All Robinhood Stock Tokens are **18 decimals** and expose both `oraclePaused()` (false at

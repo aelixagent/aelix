@@ -12,9 +12,10 @@ has been attested yet on mainnet; there is no track record.)
 > **mainnet (chain 4663)** against real periphery: 214 passing tests (unit + fuzz +
 > invariant), no mocks anywhere in the mainnet path. **No third-party audit yet** — two
 > internal audit passes and a 42-agent preflight review are *not* an audit. Deposits are
-> capped at **10,000 USDG**, TVL is **0**, and **ownership handover to the multisig is
-> still pending on three contracts** (details below). Contracts are not yet verified on
-> the block explorer. Treat this as an early mainnet deployment, not a finished product.
+> capped at **10,000 USDG**, TVL is **0**, and **every owner-controlled contract is now
+> owned by the 2-of-3 Safe multisig** — the handover completed 2026-07-26 and was verified
+> by direct call (details below). Contracts are not yet verified on the block explorer.
+> Treat this as an early mainnet deployment, not a finished product.
 
 ## Live on Robinhood Chain mainnet (chain 4663)
 
@@ -35,23 +36,47 @@ cap, resilient `redeemInKind`, and honest (real-NAV) track record. That is inter
 | Contract | Address | Owner **today** |
 |---|---|---|
 | Safe (2-of-3 multisig) | `0x47b5e2923216f203b7960d8D232215534AF02FF2` | 3 signers, threshold 2 |
-| RWAVault (vAELIX) | `0x0e500E390cC599055f1e54194e1e611Cf64c5047` | ⚠️ deployer EOA — Safe is `pendingOwner()` |
-| GuardrailConfig | `0x68cf24994d0363Be7688e96B69dDacC290c766C0` | ✅ Safe |
-| ChainlinkOracleAdapter | `0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A` | ⚠️ deployer EOA — Safe is `pendingOwner()` |
-| UniswapSwapAdapter | `0x9a8bb5E65f340C4Bf6c7Aa71991EC5D31083b5cf` | ✅ Safe |
-| SessionKeyExecutor | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` | ⚠️ deployer EOA — Safe is `pendingOwner()` |
+| RWAVault (vAELIX) | `0x0e500E390cC599055f1e54194e1e611Cf64c5047` | ✅ Safe — `acceptOwnership()` executed 2026-07-26 |
+| GuardrailConfig | `0x68cf24994d0363Be7688e96B69dDacC290c766C0` | ✅ Safe — from construction |
+| ChainlinkOracleAdapter | `0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A` | ✅ Safe — `acceptOwnership()` executed 2026-07-26 |
+| UniswapSwapAdapter | `0x9a8bb5E65f340C4Bf6c7Aa71991EC5D31083b5cf` | ✅ Safe — from construction |
+| SessionKeyExecutor | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` | ✅ Safe — `acceptOwnership()` executed 2026-07-26 |
 | DeskRegistry | `0x68cc84d722E2d613cAc36c62167B177656e2C983` | append-only, no owner |
 | PerfScore | `0x1CB3df5AAFEb0d2c31277e3e889613bc6F4C9e14` | pure math, no owner |
 | AelixAutosave | `0x5b0778E8561EA31490588D21bd44419803DC709b` | non-custodial, per-user schedules |
 
-### ⚠️ Ownership handover is incomplete
+### Ownership handover — complete (2026-07-26)
 
-`RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` are `Ownable2Step`: the
-deployer has called `transferOwnership(Safe)`, so `pendingOwner()` is the Safe, but
-`owner()` is **still the deployer EOA** `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51`.
-Until the Safe executes `acceptOwnership()` on all three (see [DEPLOY.md](DEPLOY.md)), a
-**single hot key** controls those contracts. Do not describe the stack as "multisig-owned"
-until then — it is multisig-owned for `GuardrailConfig` and `UniswapSwapAdapter` only.
+`RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` are `Ownable2Step`. The
+deploy called `transferOwnership(Safe)`; the Safe then executed `acceptOwnership()` on all
+three in one 2-of-3 batch
+(tx `0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`).
+
+Verified by direct `eth_call` **after** execution, not from tx receipts (`$R` is the
+mainnet RPC, as in [DEPLOY.md](DEPLOY.md)):
+
+```bash
+for c in 0x0e500E390cC599055f1e54194e1e611Cf64c5047 \
+         0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A \
+         0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7; do
+  cast call "$c" "owner()(address)"        --rpc-url "$R"   # -> 0x47b5…2FF2 (the Safe)
+  cast call "$c" "pendingOwner()(address)" --rpc-url "$R"   # -> 0x0  (settled, not half-done)
+done
+```
+
+`GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned **from construction** and never
+passed through the deployer at all.
+
+**Negative control.** The deployer EOA `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` now
+reverts with `OwnableUnauthorizedAccount` (`0x118cdaa7`) on `allowToken`, `setDepositCap`
+and `setFeedFrozen`, while the same calls from the Safe address succeed. The deploy key
+holds no residual authority over any contract in the stack.
+
+The consequence: **every owner-controlled contract in the stack is owned by the 2-of-3
+Safe.** Changing any risk cap, price feed, deposit cap or session grant takes 2 of 3
+signatures, so no single hot key can weaken the guardrails. It does not mean the code has
+been reviewed — the stack is still **unaudited**. A multisig governs who may change the
+rules; it does not audit the implementation.
 
 ### Live state
 
@@ -163,9 +188,11 @@ CLAUDE.md's "present a preview, then get approval".
   Stock Token; it can never fail for lack of cash.
 - **Staged blast radius:** the mainnet deposit cap is 10,000 USDG. The stack is
   unaudited, so what a surviving bug could reach is bounded by what the vault may hold.
-- **Caveat, not a claim:** three contracts (`RWAVault`, `ChainlinkOracleAdapter`,
-  `SessionKeyExecutor`) are still owned by the deployer EOA pending `acceptOwnership()`.
-  That is the weakest link in the model right now.
+- **Multisig-governed, not hot-key-governed:** every owner-controlled contract is owned by
+  the 2-of-3 Safe (handover completed and verified above, including the negative control
+  that the deployer key now reverts). Two of three signatures are required to move a cap,
+  swap a feed, raise the deposit cap or grant a session. The weakest link in the model is
+  now the one thing a multisig cannot fix: the code is **unaudited**.
 
 ---
 
@@ -183,8 +210,9 @@ Dependencies (`forge-std`, OpenZeppelin v5.1.0) are vendored plainly under `lib/
 ## Deploy
 
 Mainnet is deployed via `script/DeployProduction.s.sol`, driven by `go-mainnet.sh`. The
-full runbook — RPC proxy, Safe creation, env vars, and the three `acceptOwnership()`
-steps that finish the handover — is in **[DEPLOY.md](DEPLOY.md)**.
+full runbook — RPC proxy, Safe creation, env vars, and the three `acceptOwnership()` steps
+that completed the handover (still part of the procedure for any future redeploy) — is in
+**[DEPLOY.md](DEPLOY.md)**.
 
 ```bash
 # Local simulation with mock periphery (prints all addresses, seeds a demo):
@@ -227,12 +255,12 @@ writes is a real read — with TVL at 0 the panels are honestly empty, not seede
 
 ## ⚠️ Open risks and unresolved constraints
 
-Deploying to mainnet resolved the wiring. It did not resolve any of the following.
+Deploying to mainnet resolved the wiring; the Safe handover resolved who may change the
+rules. Neither resolved any of the following.
 
 - **No third-party audit.** Two internal passes and a 42-agent preflight review are not
   an audit. This is the single largest open risk, and it is why the deposit cap exists.
-- **Ownership handover pending** on `RWAVault`, `ChainlinkOracleAdapter` and
-  `SessionKeyExecutor` — a single deployer EOA still owns them (see above).
+  Completing the ownership handover did nothing to strengthen the code.
 - **No track record.** TVL 0, no depositors, no trades, no returns. Nothing to evaluate.
 - **Contracts not yet verified** on the block explorer, so the bytecode cannot be read
   back against this source by a third party.
@@ -260,7 +288,8 @@ Deploying to mainnet resolved the wiring. It did not resolve any of the followin
 
 ## Roadmap
 
-- Complete the ownership handover: Safe `acceptOwnership()` on all three contracts.
+- ~~Complete the ownership handover: Safe `acceptOwnership()` on all three contracts.~~
+  **Done 2026-07-26** — verified above.
 - Third-party audit before any meaningful funds; raise the deposit cap only after.
 - Verify contracts on the mainnet explorer.
 - ERC-4337 account + on-chain session-key validation (native, not just this executor).

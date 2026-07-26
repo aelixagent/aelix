@@ -396,7 +396,7 @@ export const content: DocContent = {
         [
           "Safe (2-of-3 multisig)",
           "`0x47b5e2923216f203b7960d8D232215534AF02FF2`",
-          "The intended owner of the whole stack, two of three signers required. The handover is **partly pending**, see below.",
+          "The owner of the whole stack, two of three signers required for any owner action. The handover **completed on 2026-07-26**, see below.",
         ],
         [
           "RWAVault (`vAELIX`)",
@@ -492,33 +492,37 @@ export const content: DocContent = {
     {
       type: "heading",
       level: 3,
-      text: "Ownership: a two-step handover, still pending",
+      text: "Ownership: the two-step handover, complete",
     },
     {
       type: "prose",
-      md: "The stack is meant to be owned by the 2-of-3 Safe, and the contracts use `Ownable2Step`, so a transfer only completes when the new owner calls `acceptOwnership()`. **That handover is not finished.** Until the Safe accepts on the three contracts below, a single deployer key still controls them, so the blanket claim *\"owned by a multisig\"* would be wrong today. Stated precisely, per contract:",
+      md: "The contracts use `Ownable2Step`, so a transfer only completes when the new owner calls `acceptOwnership()`. **That handover is now finished.** On **2026-07-26** the 2-of-3 Safe accepted ownership of the vault, the oracle adapter and the session-key executor in a single batch (tx `0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`). Read back by direct `eth_call` after execution, all three return the Safe from `owner()` and the zero address from `pendingOwner()`, so the transfer is settled, not half-done. Per contract:",
     },
     {
       type: "table",
-      caption: "Ownership as read on chain, 2026-07-26. Deployer EOA = 0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51.",
-      headers: ["Contract", "`owner()` today", "State"],
+      caption: "Ownership as read on chain after the handover, 2026-07-26. Safe = 0x47b5e2923216f203b7960d8D232215534AF02FF2.",
+      headers: ["Contract", "`owner()` today", "How it got there"],
       rows: [
-        ["GuardrailConfig", "the Safe", "**Done.** Owned by the 2-of-3 Safe."],
-        ["UniswapSwapAdapter", "the Safe", "**Done.** Owned by the 2-of-3 Safe."],
-        ["RWAVault", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
-        ["ChainlinkOracleAdapter", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
-        ["SessionKeyExecutor", "deployer EOA", "**Pending.** `pendingOwner()` is the Safe; awaiting `acceptOwnership()`."],
+        ["GuardrailConfig", "the Safe", "Safe-owned **from construction**, it never passed through the deploy key at all."],
+        ["UniswapSwapAdapter", "the Safe", "Safe-owned **from construction**, same as above."],
+        ["RWAVault", "the Safe", "`Ownable2Step` transfer, **accepted** by the Safe; `pendingOwner()` is now `0x0`."],
+        ["ChainlinkOracleAdapter", "the Safe", "`Ownable2Step` transfer, **accepted** by the Safe; `pendingOwner()` is now `0x0`."],
+        ["SessionKeyExecutor", "the Safe", "`Ownable2Step` transfer, **accepted** by the Safe; `pendingOwner()` is now `0x0`."],
       ],
     },
     {
+      type: "prose",
+      md: "The negative control was checked too, not just the positive one. The deployer EOA `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` now reverts with `OwnableUnauthorizedAccount` (`0x118cdaa7`) on `allowToken`, `setDepositCap` and `setFeedFrozen`, while the same calls from the Safe address succeed. The deploy key retains no authority over any contract in the stack.",
+    },
+    {
       type: "callout",
-      tone: "danger",
-      title: "Until the Safe accepts, one hot key controls three contracts",
-      md: "`RWAVault`, `ChainlinkOracleAdapter`, and `SessionKeyExecutor` are still owned by the deployer EOA. That is a real, current concentration of control, and it is why the deposit cap and the zero balance matter. This page will be corrected when each `acceptOwnership()` lands, not before.",
+      tone: "info",
+      title: "What multisig ownership does, and does not, buy",
+      md: "Every owner-controlled contract in the stack is owned by the 2-of-3 Safe, so changing a risk cap, a price feed, the deposit cap or a session grant requires **two of three signatures**, and no single hot key can weaken the guardrails. That is a statement about **custody, not about code**: it does not make the contracts audited, verified on the explorer, or safe. The audit is still the caveat that matters most.",
     },
     {
       type: "note",
-      md: "The on-chain module remains a **direction**, gated behind a third-party audit, explorer verification, the completed handover, and legal/securities review. The US-person question is unresolved and the `$AELIX` token is **not built**. Scope in full: [Safety & Disclaimer](/docs/disclaimer).",
+      md: "The on-chain module remains a **direction**, gated behind a third-party audit, explorer verification, and legal/securities review. The US-person question is unresolved and the `$AELIX` token is **not built**. Scope in full: [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "divider",

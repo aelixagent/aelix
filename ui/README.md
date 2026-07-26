@@ -182,15 +182,30 @@ truth for the address set — copy from there, don't hand-edit addresses.
 | AelixAutosave | `0x5b0778E8561EA31490588D21bd44419803DC709b` |
 | Asset | real USDG `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` — `decimals() == 6` |
 
-Standing caveats the dashboard copy must keep — mainnet does **not** retire them:
+**Ownership: handover complete.** Every owner-controlled contract in the stack is owned by the
+2-of-3 Safe `0x47b5e2923216f203b7960d8D232215534AF02FF2`. The Safe called `acceptOwnership()`
+on RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor in a single batch (tx
+`0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`); a direct `eth_call`
+after execution returns the Safe from `owner()` and the zero address from `pendingOwner()` on
+all three, so nothing is left half-transferred. GuardrailConfig and UniswapSwapAdapter were
+Safe-owned from construction and never passed through the deployer at all. As a negative
+control, the deployer EOA `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` now reverts with
+`OwnableUnauthorizedAccount` on `allowToken`, `setDepositCap` and `setFeedFrozen`, while the
+same calls from the Safe succeed — the deploy key has no residual authority.
 
-- **No third-party audit.** Internal review passes are not an audit.
+So the dashboard copy **may** now state plainly that every owner-controlled contract is owned
+by a 2-of-3 Safe multisig, that changing any risk cap, feed, deposit cap or session grant
+requires 2 of 3 signatures, and that no single hot key can weaken the guardrails. That is a
+custody fact and nothing more — it says nothing about the code having been reviewed, so it
+does **not** soften any caveat below.
+
+Standing caveats the dashboard copy must keep — mainnet and the completed handover do **not**
+retire them:
+
+- **No third-party audit.** Internal review passes are not an audit, and neither is a
+  completed ownership handover. This remains the single most important caveat.
 - **Deposits are capped** (10,000 USDG) and there is **no track record** — no depositors, no
   trades, `totalAssets` and `totalSupply` are 0. Panels stay empty; that is the honest output.
-- **Ownership handover is pending.** GuardrailConfig and UniswapSwapAdapter are owned by the
-  2-of-3 Safe; RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor are `Ownable2Step` with
-  the Safe as `pendingOwner` and the deployer EOA still `owner()` until the Safe calls
-  `acceptOwnership()`. Do not write "owned by a 2-of-3 multisig" as a blanket claim.
 - **Contracts are not yet verified** on the block explorer, and the mainnet explorer base URL
   above is taken from the app's chain table — it has not been confirmed against a live host
   (the bridge writes a different one, `explorer.chain.robinhood.com`). Verify before trusting

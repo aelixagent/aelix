@@ -43,3 +43,6 @@ out/
 # Local draft articles (not part of the shipped repo)
 article.md
 article-clean.md
+
+# Marketing drafts — kept local, not published with the code
+docs/x-mainnet-launch-thread.md

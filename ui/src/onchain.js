@@ -43,7 +43,10 @@ const bps = (x) => `${(Number(x) / 100).toLocaleString(undefined, { maximumFract
 // Read everything the on-chain band needs, live. Best-effort: each section is guarded so
 // one failed call can't blank the whole band.
 export async function readOnchain(cfg) {
-  const chain = CHAINS[cfg.chainId] || CHAINS[46630]
+  // Fall back to MAINNET (4663), where the stack is actually deployed. This used to fall
+  // back to testnet 46630, so a snapshot missing chainId would have read the wrong chain
+  // and quietly reported nothing while looking healthy.
+  const chain = CHAINS[cfg.chainId] || CHAINS[4663]
   const pc = createPublicClient({ chain, transport: http(chain.rpcUrls.default.http[0]) })
   const c = cfg.contracts || {}
   // Start NOT live: only flip to true once a real contract read actually succeeds,

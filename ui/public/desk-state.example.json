@@ -37,7 +37,7 @@
       "deployed": true,
       "explorer": "https://explorer.mainnet.chain.robinhood.com"
     },
-    "_contractsNote": "Real Robinhood Chain mainnet (4663) deployment — mirrors onchain/deployments/latest.json. Ownership handover is still pending: GuardrailConfig and UniswapSwapAdapter are owned by the 2-of-3 Safe, while RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor are Ownable2Step with the Safe as pendingOwner and the deployer EOA still owner until the Safe calls acceptOwnership(). Contracts are not yet verified on the block explorer.",
+    "_contractsNote": "Real Robinhood Chain mainnet (4663) deployment — mirrors onchain/deployments/latest.json. Ownership handover is COMPLETE: every owner-controlled contract in the stack is owned by the 2-of-3 Safe 0x47b5e2923216f203b7960d8D232215534AF02FF2, so changing any risk cap, feed, deposit cap or session grant requires 2 of 3 signatures. The Safe called acceptOwnership() on RWAVault, ChainlinkOracleAdapter and SessionKeyExecutor in one batch (tx 0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea); all three now return the Safe from owner() and the zero address from pendingOwner(), so nothing is half-transferred, and the deployer EOA now reverts with OwnableUnauthorizedAccount on owner-only calls. GuardrailConfig and UniswapSwapAdapter were Safe-owned from construction and never passed through the deployer at all. That is custody only: the code still has NO third-party audit, and contracts are not yet verified on the block explorer.",
     "contracts": {
       "guardrails": "0x68cf24994d0363Be7688e96B69dDacC290c766C0",
       "vault": "0x0e500E390cC599055f1e54194e1e611Cf64c5047",
@@ -65,7 +65,7 @@
       "verifiedPnlPct": null,
       "lastAttestation": null
     },
-    "_executorNote": "SessionKeyExecutor is deployed on mainnet 4663, but no session key has been granted and no trade has been executed — hence status 'preview', not 'live'. It is also still Ownable2Step-pending: the deployer EOA remains owner until the Safe calls acceptOwnership().",
+    "_executorNote": "SessionKeyExecutor is deployed on mainnet 4663 and owned by the 2-of-3 Safe (handover accepted, pendingOwner cleared), so granting or revoking a session key takes 2 of 3 signatures. No session key has been granted and no trade has been executed — hence status 'preview', not 'live'.",
     "executor": {
       "type": "Scoped session key (EOA)",
       "status": "preview",

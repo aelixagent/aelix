@@ -17,8 +17,9 @@ export function Roadmap() {
           <p>
             Built in phases. Every trading feature ships behind human approval first,
             paper-trading second. The on-chain module is deployed on Robinhood Chain
-            mainnet, and the hardening phase after it, audit, explorer verification,
-            ownership handover and legal review, is still open.
+            mainnet and its ownership now sits with a 2-of-3 Safe multisig, while the rest
+            of the hardening phase, audit, explorer verification and legal review, is
+            still open.
           </p>
         </div>
         <div className="road" style={{ position: "relative" }}>

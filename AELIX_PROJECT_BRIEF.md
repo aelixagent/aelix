@@ -2,7 +2,7 @@
 
 > **Read this before writing any X/Twitter (or other marketing) content.**
 > It is the single source of truth for what Aelix *is*, what you may claim, and what you must **never** claim.
-> Last synced from the repo: **2026-07-26** (on-chain module deployed to Robinhood Chain mainnet; addresses and state verified by direct on-chain reads). If code/docs change, re-verify.
+> Last synced from the repo: **2026-07-26** (on-chain module deployed to Robinhood Chain mainnet; ownership handover to the 2-of-3 Safe completed and verified the same day; addresses and state verified by direct on-chain reads). If code/docs change, re-verify.
 
 ---
 
@@ -10,7 +10,7 @@
 
 1. Skim **§1–§3** for the pitch, **§11** for voice, **§12** for the hard limits.
 2. Pull ready-made copy from the **§13 X Content Playbook** (taglines, bios, post templates).
-3. Before posting, run the **§12 compliance checklist** — Aelix is real-money-adjacent, the equities desk is **beta**, and the on-chain module is **live on mainnet but unaudited with handover still pending**, so overclaiming is the #1 risk.
+3. Before posting, run the **§12 compliance checklist** — Aelix is real-money-adjacent, the equities desk is **beta**, and the on-chain module is **live on mainnet but unaudited**, so overclaiming is the #1 risk.
 
 ---
 
@@ -120,7 +120,7 @@ Global caps live in `strategies/README.md`; % of **NAV** (`get_portfolio.total_v
 
 ---
 
-## 9. On-chain module (LIVE ON MAINNET — UNAUDITED · HANDOVER PENDING · NO DEPOSITORS)
+## 9. On-chain module (LIVE ON MAINNET — UNAUDITED · SAFE-OWNED · NO DEPOSITORS)
 
 Turns the desk into something others can use **and verify**: a non-custodial, AI-managed vault for tokenized real-world assets where the desk's risk rules are **enforced by the contract**, and every run can leave a tamper-proof record.
 
@@ -138,9 +138,10 @@ Turns the desk into something others can use **and verify**: a non-custodial, AI
 | `SessionKeyExecutor` | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` |
 | `AelixAutosave` | `0x5b0778E8561EA31490588D21bd44419803DC709b` |
 
+- **Ownership — settled 2026-07-26, verified on-chain.** Every owner-controlled contract in the stack is owned by the **2-of-3 Safe** (`0x47b5…2FF2`). `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction and never passed through the deploy key. `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` were born deployer-owned so `_wire` could configure them, then handed over with `Ownable2Step`; the Safe accepted all three in one batch (tx `0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`). Confirmed by direct `eth_call`: `owner()` == the Safe and `pendingOwner()` == `0x0` on all three, so the handover is fully settled, not half-done. Negative control also checked: the deployer EOA (`0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51`) now reverts `OwnableUnauthorizedAccount` on `allowToken`, `setDepositCap` and `setFeedFrozen` while the same calls from the Safe succeed — the deploy key has **no residual authority**. Changing any risk cap, feed, deposit cap or session grant takes 2 of 3 signatures; **no single hot key can weaken the guardrails.** This is a key-custody property, not a code-quality one — it does nothing about the audit gap below.
 - **`RWAVault`** — OpenZeppelin **ERC-4626** vault ("Aelix RWA Vault", share symbol **`vAELIX`**, **12 decimals** = 6 USDG + 6 offset). Asset = USDG; NAV = USDG cash + oracle-priced allowlisted Stock Tokens. Always-solvent in-kind exit. **Deposit cap live at 10,000 USDG.** Current state: `totalAssets` 0, `totalSupply` 0, not paused, 5 tokens allowlisted.
 - **`Guardrails`** (pure lib) — the `CLAUDE.md` rulebook as deterministic `evaluate()`. Called on **every** `executeTrade`; reverts `GuardrailViolation`. Buys (risk-increasing) gated; risk-reducing sells always allowed. Per-trade/concentration/positions/daily-orders/stop/daily-loss/cash-buffer/no-averaging all enforced; execution-slippage bounded; **fails closed** (zero cap reverts).
-- **`GuardrailConfig`** — agent read-only, can't widen caps. Two-step ownership, **already owned by the Safe**.
+- **`GuardrailConfig`** — agent read-only, can't widen caps. Two-step ownership, **owned by the Safe from construction** — it never passed through the deploy key at all.
 - **`SessionKeyExecutor`** — scoped, revocable, expiring agent "sessions" (notional caps, trade count, token allowlist, buy/sell perms). ERC-4337-style *intent* but a plain scoped EOA — **not** a real 4337 account (roadmap).
 - **`DeskRegistry` + `PerfScore`** — append-only attestation rails (epoch, timestamp, NAV, realized PnL, snapshot hash, uri) + on-chain performance math (return, max drawdown, vol, Sharpe-like) derived only from attested data. **Nothing attested yet — no track record.**
 - **`AelixAutosave`** — non-custodial recurring DCA into the vault via permissionless keeper.
@@ -153,12 +154,11 @@ Turns the desk into something others can use **and verify**: a non-custodial, AI
 ### Caveats that survive the mainnet deploy — never drop these
 
 1. **No third-party audit.** Two internal audit passes plus a 42-agent preflight audit are **not an audit**. This is the single most important caveat. Unaudited contracts carry total-loss risk; the 10,000 USDG cap **bounds** exposure by design, it does not remove it.
-2. **Ownership handover is pending.** `GuardrailConfig` and `UniswapSwapAdapter` are owned by the Safe. `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` still have `owner()` == the deployer EOA (`0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51`) with `pendingOwner()` == the Safe; they're `Ownable2Step`, so the Safe must call `acceptOwnership()` on each. Until that lands, **a single hot key controls those three.** Never write "owned by a 2-of-3 multisig" as a blanket statement — state it per contract.
-3. **No track record, no returns, no performance.** TVL is 0, no depositors, no trades.
-4. **Contracts are not yet verified on the block explorer.**
-5. **No Chainlink sequencer uptime feed exists on Robinhood Chain** (56 feeds in the directory, zero uptime entries). Aelix substitutes a chain-liveness quorum built from 24/7 crypto feeds. It is **coarse by design**: it catches multi-hour outages, not minute-scale ones. Describe it as a substitute with that limitation — never as equivalent.
-6. **US-person / securities review still stands.** Deploying a contract does not resolve regulatory exposure, and no legal review has been completed. Stock Tokens are **not for US persons** (build targets non-US); Stock Tokens ≠ share ownership.
-7. **The desk is unchanged.** The mainnet deploy does not make the equities desk autonomous and does not connect real customer money or the Robinhood Agentic account to the vault. Every order still requires explicit human approval.
+2. **No track record, no returns, no performance.** TVL is 0, no depositors, no trades.
+3. **Contracts are not yet verified on the block explorer.**
+4. **No Chainlink sequencer uptime feed exists on Robinhood Chain** (56 feeds in the directory, zero uptime entries). Aelix substitutes a chain-liveness quorum built from 24/7 crypto feeds. It is **coarse by design**: it catches multi-hour outages, not minute-scale ones. Describe it as a substitute with that limitation — never as equivalent.
+5. **US-person / securities review still stands.** Deploying a contract does not resolve regulatory exposure, and no legal review has been completed. Stock Tokens are **not for US persons** (build targets non-US); Stock Tokens ≠ share ownership.
+6. **The desk is unchanged.** The mainnet deploy does not make the equities desk autonomous and does not connect real customer money or the Robinhood Agentic account to the vault. Every order still requires explicit human approval.
 
 > **Docs status:** `architecture.ts`, `faq.ts`, and `disclaimer.ts` state that the running equities desk has no chain code in its *trading path*, while the on-chain layer is a **separate module in `onchain/`**. That framing still holds — but any "testnet / not on mainnet" wording in those files is now **wrong** and must be replaced with `mainnet · unaudited · deposits capped`, not deleted. Sanity-check the legal wording before publishing.
 
@@ -189,7 +189,7 @@ Turns the desk into something others can use **and verify**: a non-custodial, AI
 
 - **Not investment advice.** Research tool / reference architecture. **No track record, no performance claims** — any example figure must be explicitly labelled **SAMPLE**, never passed off as live.
 - **Real money · beta.** Robinhood Agentic Trading is **beta, US, equities only, long-only, USD**. Options/crypto/futures unsupported (option tools hard-denied).
-- **On-chain module: live on mainnet, unaudited, empty.** Deployed to Robinhood Chain mainnet (4663) with real periphery; **no third-party audit**, ownership handover to the Safe still pending on three contracts, contracts unverified on the explorer, deposits capped at 10,000 USDG, **TVL 0 / no depositors / no trades**. Still gated behind legal/securities review. "There is no track record."
+- **On-chain module: live on mainnet, unaudited, empty.** Deployed to Robinhood Chain mainnet (4663) with real periphery; the whole stack is owned by the 2-of-3 Safe (handover completed and verified 2026-07-26), but there is still **no third-party audit**, contracts are unverified on the explorer, deposits are capped at 10,000 USDG, and **TVL 0 / no depositors / no trades**. Multisig ownership is key custody, not code assurance — it does not close the audit gap. Still gated behind legal/securities review. "There is no track record."
 - **$AELIX token is NOT live** — unlaunched, no sale, no price, no investment.
 - **Any displayed figure must be a real on-chain read, honestly empty, or explicitly labelled SAMPLE.** Gate every "live" indicator on a successful read. Never fabricate a number, and never rebrand sample data as mainnet data.
 - **Max downside = the dedicated budget** funding the isolated Agentic account. Use only risk capital.
@@ -206,13 +206,13 @@ Turns the desk into something others can use **and verify**: a non-custodial, AI
 - The on-chain module is **deployed and live on mainnet** — not testnet, not mocked. **Real periphery throughout: no mocks in the mainnet path.** Real USDG (the 6-decimal original), real Uniswap V2 Router02, five real Robinhood Stock Tokens (NVDA, AAPL, TSLA, GOOGL, SPY) each with its own Chainlink feed, returning live prices.
 - The vault is a real **ERC-4626** (`vAELIX`), **deposit cap live at 10,000 USDG**, 5 tokens allowlisted, not paused. **214 tests passing.**
 - Attestation rails (`DeskRegistry` + `PerfScore`) are deployed: performance math is computed only from attested data, so it **can't be inflated after the fact**. Claim the *mechanism*, never a result.
-- `GuardrailConfig` and `UniswapSwapAdapter` are owned by a **2-of-3 Safe multisig** — say it about those two by name, not about the stack.
+- **Every owner-controlled contract in the stack is owned by a 2-of-3 Safe multisig** — the blanket claim is now permitted, verified on-chain 2026-07-26. You may say: changing any risk cap, feed, deposit cap or session grant requires 2 of 3 signatures, and **no single hot key can weaken the guardrails**. `owner()` == the Safe and `pendingOwner()` == `0x0` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor`; `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction; the deployer EOA now reverts `OwnableUnauthorizedAccount` on owner-only calls. Say it as a **key-custody** property — it says nothing about code quality, and it does **not** soften the audit prohibition below.
 - Prompt-injection contained; open-source (MIT); runs in Claude Code, no backend.
 - Equities, Robinhood Agentic (beta).
 
 **You must NOT claim / imply:**
 - ❌ **That the module is audited, security-reviewed, or "reviewed by auditors."** There has been **no third-party audit**. Two internal audit passes plus a 42-agent preflight audit are **not an audit** — never let "hardened", "audit-passed", "battle-tested" or similar imply one. *This is the single most important prohibition in this doc and must survive every rewrite.*
-- ❌ **That the contracts are under multisig control as a blanket statement.** `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` still have `owner()` == the deployer EOA with the Safe only as `pendingOwner()`; they're `Ownable2Step` and the Safe must still call `acceptOwnership()`. Until then **a single hot key controls those three.** State ownership per contract or not at all.
+- ❌ **That multisig ownership implies the code is safe, reviewed, or audited.** The handover is complete and may be stated plainly (see the MAY list), but it is a **key-custody** fact only: it stops a single key from widening the caps, it does not make an unaudited contract sound. Never let "Safe-owned", "multisig-controlled" or "no single key" stand in for a security review.
 - ❌ **That depositors, TVL, AUM, users, inflows, or any capital in the vault exist.** `totalAssets` and `totalSupply` are both **0**. No trades have been made.
 - ❌ Any **returns, profit, performance, or "track record"** ("there is no track record"). Nothing has been attested — do not present the attestation rails as a record that exists.
 - ❌ **Any number that is not a real on-chain read.** A displayed figure must be a real read, honestly empty, or explicitly labelled **SAMPLE**. Gate every "live" indicator on a successful read. Never rebrand sample data as mainnet data.
@@ -294,10 +294,14 @@ The `⛓ testnet` marker is retired — it is now false. Use `⛓ mainnet · una
 >
 > What it is not: audited. Deposits are capped at 10,000 USDG, the vault is empty, and there is no track record.
 
-**Handover / ownership (only phrasing that is accurate today):**
-> Guardrail config and the swap adapter are owned by a 2-of-3 Safe.
+**Handover / ownership (accurate as of 2026-07-26):**
+> The Aelix contracts are now owned by a 2-of-3 Safe. All of them.
 >
-> The vault, oracle adapter and session-key executor are mid-handover — Ownable2Step, Safe already set as pendingOwner, acceptOwnership still to be called. Until it lands, one hot key holds those three. Saying it out loud is the point.
+> The Safe accepted ownership of the vault, oracle adapter and session-key executor in one batch; guardrail config and the swap adapter were Safe-owned from construction. owner() is the Safe, pendingOwner() is zero, and the deploy key reverts on every owner-only call.
+>
+> Changing a risk cap, a feed or a session grant now takes 2 of 3 signatures. No single hot key can weaken the guardrails.
+>
+> Still unaudited. That hasn't changed.
 
 ---
 
@@ -306,7 +310,7 @@ The `⛓ testnet` marker is retired — it is now false. Use `⛓ mainnet · una
 - ✅ **DONE — Token ticker renamed** `vVLRA`→`vAELIX` and `$VLRA`→`$AELIX` across onchain deploy scripts + tests, `data.ts`, `faq.ts`, `disclaimer.ts`, `token.tsx`, `design.md`. Landing typechecks, onchain compiles. The mainnet vault reports **`vAELIX`** — the old `vVLRA` note is resolved. (`broadcast/*.json` are generated artifacts, left untouched.)
 - ✅ **DONE — Internal codenames removed** ("Halon" / "Robin Droids" scrubbed from `brand.ts`). "vvvhound" in `page.tsx` / `diorama.tsx` left as-is (third-party design-technique name, not brand).
 - ✅ **DONE — Domain renamed** `projectvex.ai` → **`aelix.xyz`** across `site.ts` `SITE_URL`, `opengraph-image.tsx`, and all README links (now `https://www.aelix.xyz`). Register the domain + point DNS/deploy at it, and set `NEXT_PUBLIC_SITE_URL` in prod if the host differs. (`GITHUB_URL` already `github.com/aelixagent/aelix`.)
+- ✅ **DONE — Ownership handover.** The Safe called `acceptOwnership()` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` in one batch (tx `0x1ee7a73e…5968cea`, 2026-07-26). Verified by direct `eth_call`: `owner()` == the Safe and `pendingOwner()` == `0x0` on all three; the deployer EOA reverts `OwnableUnauthorizedAccount` on `allowToken` / `setDepositCap` / `setFeedFrozen`. Content **may** now claim full multisig control of the stack (§9, §12 updated) — as key custody, never as code assurance. Sweep any doc still saying "handover pending" and replace it, same rule as the stale-caveat item below.
 - **Stale "testnet / not live" wording across the site and docs:** now factually wrong post-deploy. Sweep `architecture.ts`, `faq.ts`, `disclaimer.ts`, `data.ts`, README(s) and any UI marquee/badge for "testnet", "not live", "mocked periphery", "functional preview" and replace with `mainnet · unaudited · deposits capped`. Replace, don't delete.
-- **Ownership handover:** Safe must call `acceptOwnership()` on `RWAVault`, `ChainlinkOracleAdapter`, `SessionKeyExecutor`. Until then no content may imply full multisig control. Update §9 and §12 the moment it lands.
 - **Explorer verification:** contracts not yet verified on the Robinhood Chain explorer. Until they are, "verifiable" must mean *the mechanism is verifiable by design*, not "go read the verified source."
 - **Third-party audit:** not commissioned. This gates the largest single class of claims — keep it at the top of every on-chain post's caveat line.

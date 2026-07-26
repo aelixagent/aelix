@@ -469,9 +469,11 @@ export default function HomePage() {
           attestation registry and the scoped session-key executor, is deployed on
           Robinhood Chain mainnet (chainId 4663) and is <b>unaudited</b>: no third-party
           audit has been performed, the contracts are not yet verified on the block
-          explorer, ownership handover to the 2-of-3 Safe is still pending on the vault,
-          oracle adapter and executor, and deposits are capped. There are no depositors
-          and no track record. The $AELIX token is unlaunched, with no sale and no price.
+          explorer, and deposits are capped. Every owner-controlled contract in the stack
+          is owned by a 2-of-3 Safe multisig, so changing a risk cap, a price feed or the
+          deposit cap takes two of three signatures, that is custody, not an audit.
+          There are no depositors and no track record. The $AELIX token is unlaunched,
+          with no sale and no price.
           Not affiliated with or endorsed by Robinhood or Anthropic. Nothing here is a
           recommendation to buy or sell any security. Use only risk capital.
         </p>

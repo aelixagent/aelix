@@ -62,8 +62,11 @@ export const content: DocContent = {
         { term: "Legal", md: "Any feature beyond equities could fall under securities regulation and must pass legal review before it is even considered. **No legal review has been completed**, and deploying a contract does not resolve regulatory exposure, including the US-person question." },
         { term: "Third-party audit (on-chain module)", md: "**Not done.** Two internal audit passes and a 42-agent preflight review are **not** an audit. Nothing on chain should be relied on until an independent audit exists." },
         { term: "Explorer verification", md: "The mainnet contracts are **not yet verified** on the block explorer, so you cannot yet read the deployed source there. Verify addresses against `onchain/deployments/latest.json` and by direct call." },
-        { term: "Ownership handover", md: "Incomplete. Three of the deployed contracts are still owned by the deployer EOA, with the Safe only as `pendingOwner()`. See [Architecture](/docs/architecture#the-separate-on-chain-module) for the per-contract state." },
       ],
+    },
+    {
+      type: "note",
+      md: "One item has left this list: the **ownership handover is complete** as of 2026-07-26, every owner-controlled contract is owned by the 2-of-3 Safe, read back by direct call. It is a fact now, not a plan, and it changes none of the items above.",
     },
     {
       type: "heading",
@@ -85,24 +88,28 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "What that deploy does **not** change is more important than what it does. Every item below is current:",
+      md: "A second correction, this one in the other direction: the ownership handover that this page listed as incomplete is **complete**. On 2026-07-26 the 2-of-3 Safe called `acceptOwnership()` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor` in one batch, `pendingOwner()` now reads zero on all three, and `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction. So every owner-controlled contract in the stack is owned by the 2-of-3 Safe: changing a risk cap, a price feed, the deposit cap or a session grant takes two of three signatures, and the deploy key reverts with `OwnableUnauthorizedAccount` on all of them. That is a statement about **custody, not about code**, it does not make the contracts audited.",
+    },
+    {
+      type: "prose",
+      md: "What the deploy and the handover do **not** change is more important than what they do. Every item below is current:",
     },
     {
       type: "list",
       items: [
         "**No third-party audit.** Two internal audit passes and a 42-agent preflight review are **not** an audit. This is the single largest caveat on the module.",
-        "**The ownership handover is incomplete.** `GuardrailConfig` and `UniswapSwapAdapter` are owned by the 2-of-3 Safe. `RWAVault`, `ChainlinkOracleAdapter`, and `SessionKeyExecutor` are **still owned by the deployer EOA**, with the Safe only as `pendingOwner()`, they are `Ownable2Step` and the Safe must call `acceptOwnership()` on each. Until then **a single hot key controls those three.**",
+        "**Multisig ownership is not a safety property of the code.** Two of three signatures are now required to touch any owner-controlled setting, which removes the single-hot-key risk, and removes nothing else on this list.",
         "**No track record, no returns, no performance.** TVL is 0, there are no depositors, and no trade has been made. Any figure shown anywhere is a real on-chain read, honestly empty, or explicitly labelled sample.",
         "**Deposits are capped** at 10,000 USDG, and the contracts are **not yet verified on the block explorer**.",
         "**There is no Chainlink sequencer uptime feed on Robinhood Chain.** Aelix substitutes a chain-liveness quorum built from 24/7 crypto feeds. It is **coarse by design**, it catches multi-hour outages, not minute-scale ones, and it is **not equivalent** to a real uptime feed. See [Architecture](/docs/architecture#the-separate-on-chain-module).",
         "**Legal and securities review is still pending**, including the US-person question. Deploying a contract does not resolve regulatory exposure.",
         "**It is not a live product feature for customer money.** The vault holds none, it is not connected to your Robinhood account, and it is not part of the desk's trading path.",
-        "**The equities desk is unchanged.** It still requires your explicit in-session approval for every order. The mainnet deploy does **not** make the desk autonomous.",
+        "**The equities desk is unchanged.** It still requires your explicit in-session approval for every order. Neither the mainnet deploy nor the handover makes the desk autonomous.",
       ],
     },
     {
       type: "prose",
-      md: "So the **desk's** scope stays exactly what it is today: **equities-only, long-only, human-in-the-loop, Claude-Code-native.** Until legal review, a third-party audit, the completed ownership handover, a technical verification of any third-party network, and official confirmation of non-equities availability are **all** complete, the on-chain module stays a **direction**, deployed but unaudited code, not a product you can rely on.",
+      md: "So the **desk's** scope stays exactly what it is today: **equities-only, long-only, human-in-the-loop, Claude-Code-native.** Until legal review, a third-party audit, a technical verification of any third-party network, and official confirmation of non-equities availability are **all** complete, the on-chain module stays a **direction**, deployed but unaudited code, not a product you can rely on.",
     },
     {
       type: "heading",

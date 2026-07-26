@@ -7,7 +7,9 @@ Live addresses: [`deployments/latest.json`](deployments/latest.json) and the tab
 Go/no-go gates: [MAINNET_CHECKLIST.md](MAINNET_CHECKLIST.md).
 
 > **The stack is unaudited.** It is deployed with a 10,000 USDG deposit cap for exactly
-> that reason, and **the ownership handover is not finished** — see [step 6](#6-finish-the-handover-three-acceptownership-txs).
+> that reason. The ownership handover **is finished** — all three `Ownable2Step` contracts
+> are now Safe-owned, verified by direct call, see [step 6](#6-the-handover-three-acceptownership-txs--completed).
+> That changed *who may alter the rules*; it did not audit the code.
 > Re-confirm every periphery address against <https://docs.robinhood.com/chain> and
 > against the chain itself before sending funds. Never trust a symbol.
 
@@ -177,25 +179,25 @@ forge script script/DeployProduction.s.sol --rpc-url $R --broadcast \
 Prefer a keystore over a plaintext key where you can:
 `cast wallet import aelix-deployer --interactive`, then `--account aelix-deployer`.
 
-### 6. Finish the handover: three acceptOwnership txs
+### 6. The handover: three acceptOwnership txs — COMPLETED
 
-**This is still outstanding and it is the most important remaining step.**
+**Done 2026-07-26.** Executed as one 2-of-3 Safe batch, tx
+`0x1ee7a73e7c3df216579554cd3d5993dfeee6be2bd081a68f59700efbd5968cea`. The procedure below
+stays documented because it is what was done — and because **any future redeploy must do it
+again**.
 
 The deploy calls `transferOwnership(Safe)` on `RWAVault`, `ChainlinkOracleAdapter` and
 `SessionKeyExecutor`. All three are **`Ownable2Step`**, so ownership does *not* move until
 the Safe accepts — deliberately, because a typo'd `OWNER` then cannot brick the stack.
-Right now:
 
-- ✅ `GuardrailConfig` and `UniswapSwapAdapter` — owned by the Safe already.
-- ⚠️ `RWAVault`, `ChainlinkOracleAdapter`, `SessionKeyExecutor` — `owner()` is still the
-  deployer EOA `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51`, with `pendingOwner()` = Safe.
-
-**Until these three land, a single hot key controls the vault, the oracle and the agent
-executor.**
+- ✅ `GuardrailConfig` and `UniswapSwapAdapter` — Safe-owned from construction; these never
+  passed through the deployer at all.
+- ✅ `RWAVault`, `ChainlinkOracleAdapter`, `SessionKeyExecutor` — `owner()` = Safe,
+  `pendingOwner()` = `0x0`.
 
 These must be executed **as Safe transactions** (2-of-3), not as direct EOA sends —
 `acceptOwnership()` requires `msg.sender == pendingOwner()`, which is the Safe itself.
-Three separate txs, each to one target with empty-args calldata `acceptOwnership()`
+Three calls, each to one target with empty-args calldata `acceptOwnership()`
 (selector `0x79ba5097`), value 0:
 
 | # | Target | Contract |
@@ -204,16 +206,55 @@ Three separate txs, each to one target with empty-args calldata `acceptOwnership
 | 2 | `0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A` | ChainlinkOracleAdapter |
 | 3 | `0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7` | SessionKeyExecutor |
 
-(The deploy log prints the same three addresses.) Then confirm each `owner()` reads as
-the Safe — do not treat the handover as done on the strength of the tx receipts:
+(The deploy log prints the same three addresses.)
+
+**Verification — do not trust the tx receipts.** Read the state back. `owner()` must be the
+Safe *and* `pendingOwner()` must be zero; a non-zero `pendingOwner()` means the handover is
+half-done:
 
 ```bash
 for c in 0x0e500E390cC599055f1e54194e1e611Cf64c5047 \
          0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A \
          0xC1C00ED38A41a00Cbbf89be8A4552c1a16706AF7; do
-  cast call "$c" "owner()(address)" --rpc-url "$R"     # expect the Safe on all three
+  cast call "$c" "owner()(address)"        --rpc-url "$R"   # -> 0x47b5e29…AF02FF2 (the Safe)
+  cast call "$c" "pendingOwner()(address)" --rpc-url "$R"   # -> 0x0
 done
 ```
+
+Both reads returned as expected on all three contracts.
+
+**Negative control — prove the old key is powerless.** Ownership reading correctly is not
+the same as the deployer having lost authority; check the revert directly. Each of these
+now fails from the deployer EOA `0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51` with
+`OwnableUnauthorizedAccount`, selector `0x118cdaa7`, while the identical call from the Safe
+address succeeds:
+
+```bash
+export D=0xeC68f3c2f23c11Eb7Ca77322b4E66d23492B5c51   # deployer EOA (expected: revert)
+export S=0x47b5e2923216f203b7960d8D232215534AF02FF2   # the Safe    (expected: success)
+
+# vault: allowlist a token (NVDA is already allowlisted, so the probe is a no-op)
+cast call 0x0e500E390cC599055f1e54194e1e611Cf64c5047 \
+  "allowToken(address)" 0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC \
+  --from $D --rpc-url "$R"        # -> reverts 0x118cdaa7 (OwnableUnauthorizedAccount)
+
+# vault: set the deposit cap (10,000 USDG — its current value, so the probe is a no-op)
+cast call 0x0e500E390cC599055f1e54194e1e611Cf64c5047 \
+  "setDepositCap(uint256)" 10000000000 --from $D --rpc-url "$R"      # -> reverts 0x118cdaa7
+
+# oracle: freeze a feed
+cast call 0xF6cFcA2024AFDeC14BCb0A9eb7bA402e73b2699A \
+  "setFeedFrozen(address,bool)" 0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC true \
+  --from $D --rpc-url "$R"        # -> reverts 0x118cdaa7
+
+# same three with --from $S -> succeed
+```
+
+`cast call` never broadcasts, so every probe above is read-only and none of them touched
+state. Together the two checks are the proof the handover landed: the Safe can move the risk
+parameters, the deploy key cannot. Changing any cap, feed, deposit cap or session grant now
+takes 2 of 3 signatures, so no single hot key can weaken the guardrails. It remains true
+that the code is **unaudited** — this step changed governance, not the implementation.
 
 ### 7. Verify on the explorer (outstanding)
 
@@ -242,8 +283,8 @@ seed them.
 ## After deploy
 
 - The script grants the agent a **zero-limit placeholder session**. Set real limits with
-  `SessionKeyExecutor.grantSession(...)` — from the Safe, after step 6 — once the vault is
-  funded.
+  `SessionKeyExecutor.grantSession(...)` — now a 2-of-3 Safe transaction, since step 6
+  landed — once the vault is funded.
 - Deposits are capped at 10,000 USDG. Raise it only after an audit, via the Safe.
 - Current live state: `totalAssets` 0, `totalSupply` 0, not paused, 5 tokens allowlisted.
   No depositors, no trades, no track record.
@@ -251,8 +292,9 @@ seed them.
 ## Known limitations (before real funds)
 
 - **No third-party audit.** Two internal audit passes and a 42-agent preflight review are
-  not an audit. Everything below is secondary to this.
-- **Ownership handover incomplete** — step 6 above.
+  not an audit. Everything below is secondary to this, and the completed ownership handover
+  does not touch it — a multisig decides who may change the rules, it does not review the
+  code.
 - **No sequencer uptime feed on this chain.** The liveness quorum is a coarse substitute
   that catches multi-hour outages, not minute-scale ones.
 - **Corporate actions / splits:** the Robinhood Chainlink oracle *pauses* during
