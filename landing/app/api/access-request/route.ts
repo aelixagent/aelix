@@ -1,14 +1,16 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  AccessRequestStorageError,
+  readAccessRequests,
+  writeAccessRequest,
+  type AccessRequestRecord,
+} from "@/lib/access-request-store";
 
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const LANES = new Set(["wallet-preorder", "desk-beta", "vault-preview"]);
 const PERSONAS = new Set(["trader", "builder", "fund", "researcher"]);
 const WALLET_REQUIRED = new Set(["wallet-preorder", "vault-preview"]);
-const DATA_FILE = join(process.cwd(), ".data", "access-requests.jsonl");
-
 function cleanText(value: unknown, max = 600) {
   return String(value ?? "").trim().slice(0, max);
 }
@@ -36,20 +38,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  let raw = "";
   try {
-    raw = await readFile(DATA_FILE, "utf8");
-  } catch {
-    return NextResponse.json({ ok: true, count: 0, requests: [] });
+    const requests = await readAccessRequests();
+    return NextResponse.json({ ok: true, count: requests.length, requests });
+  } catch (error) {
+    if (error instanceof AccessRequestStorageError) {
+      return NextResponse.json({ ok: false, error: error.publicMessage }, { status: error.status });
+    }
+    return NextResponse.json({ ok: false, error: "could not read access requests" }, { status: 500 });
   }
-
-  const requests = raw
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => JSON.parse(line))
-    .reverse();
-
-  return NextResponse.json({ ok: true, count: requests.length, requests });
 }
 
 export async function POST(req: NextRequest) {
@@ -77,7 +74,7 @@ export async function POST(req: NextRequest) {
   }
   if (!consent) return NextResponse.json({ ok: false, error: "risk acknowledgement required" }, { status: 400 });
 
-  const record = {
+  const record: AccessRequestRecord = {
     id: requestId(wallet, email),
     lane,
     wallet: wallet || null,
@@ -89,8 +86,14 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  await mkdir(dirname(DATA_FILE), { recursive: true });
-  await appendFile(DATA_FILE, `${JSON.stringify(record)}\n`, "utf8");
+  try {
+    await writeAccessRequest(record);
+  } catch (error) {
+    if (error instanceof AccessRequestStorageError) {
+      return NextResponse.json({ ok: false, error: error.publicMessage }, { status: error.status });
+    }
+    return NextResponse.json({ ok: false, error: "could not save access request" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, id: record.id });
 }

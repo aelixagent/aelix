@@ -7,7 +7,9 @@
     "dev": "next dev -p 5190",
     "build": "next build",
     "start": "next start -p 5190",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:access": "node --test scripts/access-request-collector.test.mjs",
+    "access:collector": "node scripts/access-request-collector.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.6.1",
