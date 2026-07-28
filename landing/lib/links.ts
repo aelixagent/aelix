@@ -9,4 +9,5 @@ export const DOCS_PATH = "/docs";
  * /vault is a real page route (app/vault/page.tsx) that frames /app/vault.html.
  */
 export const VAULT_URL = "/vault"; // connect wallet · deposit · withdraw
-export const DESK_APP_URL = "/app/index.html"; // raw desk mirror (marketing desk lives at /desk)
+export const DESK_APP_URL = "/app/index.html"; // raw desk mirror; public desk entry is gated by request access
+export const REQUEST_ACCESS_URL = "/request-access"; // wallet pre-order + gated beta access

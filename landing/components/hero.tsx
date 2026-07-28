@@ -45,7 +45,7 @@ export function Hero() {
             </a>
           </Magnetic>
           <Magnetic>
-            <a href="#desk" className="btn btn-ghost">
+            <a href="/request-access" className="btn btn-ghost">
               See The Desk
             </a>
           </Magnetic>

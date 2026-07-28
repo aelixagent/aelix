@@ -20,7 +20,7 @@ vault where the agent's key is scoped, revocable, and expiring.**
 
 ---
 
-Aelix is an AI research desk in Claude Code: a small **desk of specialized sub-agents** —
+AELIX is an AI research desk in Claude Code: a small **desk of specialized sub-agents** —
 fundamental, technical, macro/news, and a **risk manager with veto power** — that screen
 your watchlist, debate each candidate, and hand you a one-click **preview card**. On your
 Robinhood account it **never places an order without your yes; that isn't changing.** On
@@ -30,8 +30,6 @@ ticker — a rejected order spends none of that budget. The desk is how we devel
 rulebook; the vault is how that rulebook becomes code ([`onchain/`](onchain/README.md)).
 Mainnet, unaudited, no timelock on owner caps, deposits capped at 10,000 USDG, no
 depositors, trades, or track record; beta; not advice; unaffiliated with Robinhood.
-
-![Aelix, the desk dashboard](docs/demo.jpeg)
 
 > [!WARNING]
 > **Real money, beta, not investment advice.** Robinhood Agentic Trading is in beta
@@ -193,7 +191,7 @@ The complete, browsable docs live at **[aelix.xyz/docs](https://www.aelix.xyz/do
 
 | | |
 |---|---|
-| [Overview](https://www.aelix.xyz/docs) | What Aelix is and the core idea |
+| [Overview](https://www.aelix.xyz/docs) | What AELIX is and the core idea |
 | [Quickstart](https://www.aelix.xyz/docs/quickstart) · [Setup](https://www.aelix.xyz/docs/setup) | From clone to first desk run |
 | [Architecture](https://www.aelix.xyz/docs/architecture) · [The Desk Team](https://www.aelix.xyz/docs/team) · [The Desk Run](https://www.aelix.xyz/docs/workflow) | How it works |
 | [Guardrails](https://www.aelix.xyz/docs/guardrails) · [Prompt-Injection Defense](https://www.aelix.xyz/docs/prompt-injection) · [Strategies & Risk](https://www.aelix.xyz/docs/strategies) | Safety |
@@ -208,7 +206,7 @@ cd landing && npm install && npm run dev   # http://localhost:5190  (docs at /do
 
 ## Disclaimer
 
-Aelix is a **research & recommendation tool, not financial advice**. Robinhood Agentic
+AELIX is a **research & recommendation tool, not financial advice**. Robinhood Agentic
 Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic
 account funded with a dedicated budget, that budget is the most it can ever lose. **There
 is no track record and no performance claim here**; all example data is illustrative. All

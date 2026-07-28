@@ -918,6 +918,305 @@ body:has(.vx-root)::after {
 
 /* dim helper texts must still read over the bright valley */
 .vx-eyebrow { color: rgba(236, 242, 240, 0.92); }
+
+/* ── request access / wallet pre-order ───────────────────────────────── */
+.access-root {
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 70% at 72% 18%, rgba(215, 254, 81, 0.12), transparent 56%),
+    radial-gradient(80% 72% at 12% 84%, rgba(236, 242, 240, 0.08), transparent 62%),
+    #22242A;
+}
+.access-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(18px, 3vw, 34px) clamp(20px, 4vw, 56px);
+}
+.access-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 28px);
+}
+.access-shell {
+  position: relative;
+  z-index: 2;
+  min-height: calc(100vh - 92px);
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(36px, 6vw, 88px) 0 clamp(64px, 8vw, 108px);
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(380px, 1fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+}
+.access-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.access-title {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(3.2rem, 8vw, 7.6rem);
+  line-height: 0.96;
+  letter-spacing: 0.01em;
+  color: var(--white);
+  text-shadow:
+    0 2px 10px rgba(10, 11, 13, 0.8),
+    0 8px 34px rgba(10, 11, 13, 0.6),
+    0 0 58px rgba(215, 254, 81, 0.18);
+}
+.access-lede {
+  max-width: 54ch;
+  color: var(--white-dim);
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.8;
+}
+.access-rail {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+.access-rail div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 3px 14px;
+  padding: 16px 0;
+  border-top: 1px solid var(--hair);
+}
+.access-rail span {
+  grid-row: span 2;
+  font-family: var(--mono);
+  color: var(--leaf);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.access-rail strong {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: 1.24rem;
+}
+.access-rail p {
+  color: var(--white-faint);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.access-form {
+  position: relative;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--hair-hi);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(233, 243, 238, 0.1), rgba(233, 243, 238, 0.035)),
+    rgba(14, 16, 19, 0.58);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(233, 243, 238, 0.1);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+}
+.access-card-head,
+.access-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  color: var(--white-faint);
+}
+.access-card-head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hair);
+}
+.access-card-head span:last-child,
+.access-summary strong {
+  color: var(--leaf);
+  font-weight: 700;
+}
+.access-lanes {
+  margin: 22px 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+.access-lanes legend,
+.access-field > span {
+  margin-bottom: 9px;
+  display: block;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  color: var(--white-faint);
+}
+.access-lanes label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: rgba(233, 243, 238, 0.035);
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+.access-lanes label.is-selected {
+  border-color: rgba(215, 254, 81, 0.5);
+  background: rgba(215, 254, 81, 0.07);
+}
+.access-lanes input {
+  margin-top: 4px;
+  accent-color: var(--leaf);
+}
+.access-lanes strong {
+  display: block;
+  font-weight: 600;
+  color: var(--white);
+}
+.access-lanes small {
+  display: block;
+  margin-top: 3px;
+  color: var(--white-faint);
+  line-height: 1.5;
+}
+.access-field {
+  display: block;
+  margin-top: 16px;
+}
+.access-field input,
+.access-field select,
+.access-field textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  padding: 13px 14px;
+  background: rgba(10, 11, 13, 0.48);
+  color: var(--white);
+  outline: none;
+  font: inherit;
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.access-field textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+.access-field input:focus,
+.access-field select:focus,
+.access-field textarea:focus {
+  border-color: rgba(215, 254, 81, 0.55);
+  box-shadow: 0 0 0 3px rgba(215, 254, 81, 0.1);
+}
+.access-field input[aria-invalid="true"] {
+  border-color: rgba(255, 91, 82, 0.65);
+}
+.access-field ::placeholder {
+  color: rgba(236, 242, 240, 0.32);
+}
+.access-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.access-error {
+  display: block;
+  margin-top: 8px;
+  color: #FF9A94;
+  font-size: 12px;
+}
+.access-consent {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 18px 0;
+  color: var(--white-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.access-consent input {
+  margin-top: 4px;
+  accent-color: var(--leaf);
+}
+.access-submit {
+  width: 100%;
+  justify-content: center;
+  border: 0;
+}
+.access-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 14px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hair);
+}
+.access-summary strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.access-next {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hair);
+}
+.access-next p {
+  color: var(--white-dim);
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.access-next pre {
+  margin-top: 14px;
+  max-height: 180px;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: rgba(10, 11, 13, 0.48);
+  color: var(--white-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+@media (max-width: 900px) {
+  .access-shell {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .access-copy {
+    padding-top: 20px;
+  }
+}
+@media (max-width: 560px) {
+  .access-header,
+  .access-nav,
+  .access-grid {
+    align-items: stretch;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+  .access-header {
+    gap: 14px;
+  }
+  .access-nav {
+    display: none;
+  }
+  .access-shell {
+    width: min(100% - 28px, 1180px);
+    padding-top: 24px;
+  }
+  .access-form {
+    border-radius: 14px;
+  }
+}
 .vx-sub--hero,
 .vx-cue,
 .vx-cue span {

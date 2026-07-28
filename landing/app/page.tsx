@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { getLenis } from "@/lib/lenis-store";
 import { Reveal, RevealLines, RevealChars } from "@/components/vx/reveal-text";
-import { VAULT_URL } from "@/lib/links";
+import { REQUEST_ACCESS_URL, VAULT_URL } from "@/lib/links";
 import "./vx.css";
 
 const Diorama = dynamic(() => import("@/components/vx/diorama"), { ssr: false });
@@ -37,7 +37,7 @@ const SECTIONS = [
   { id: "vx-signals", label: "Signals" },
   { id: "vx-decide", label: "You Decide" },
   { id: "vx-view", label: "In View" },
-  { id: "vx-run", label: "Run" },
+  { id: "vx-run", label: "Access" },
 ];
 
 function scrollToId(id: string) {
@@ -262,13 +262,13 @@ export default function HomePage() {
       <header className="vx-header" ref={headerRef}>
         <a className="vx-logo" href="/" aria-label="Aelix home">
           <VMark />
-          <span>Aelix</span>
+          <span>AELIX</span>
         </a>
         <nav className="vx-nav">
-          <a className="vx-nav-link vx-nav-hide" href="/desk"><span>Desk</span></a>
+          <a className="vx-nav-link vx-nav-hide" href={REQUEST_ACCESS_URL}><span>Desk access</span></a>
           <a className="vx-nav-link vx-nav-hide" href="/docs"><span>Docs</span></a>
-          <a className="vx-nav-cta" href={VAULT_URL}>
-            <span>Launch app</span>
+          <a className="vx-nav-cta" href={REQUEST_ACCESS_URL}>
+            <span>Request access</span>
             <ArrowUpRight />
           </a>
         </nav>
@@ -440,27 +440,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── RUN / CTA ── */}
+      {/* ── ACCESS / CTA ── */}
       <section className="vx-sec vx-h-last" id="vx-run">
         <div className="vx-sec__inner">
-          <IndexLabel n="07">Run</IndexLabel>
-          <RevealChars text="One Desk. Every Angle." as="h2" className="vx-title" step={26} />
+          <IndexLabel n="07">Access</IndexLabel>
+          <RevealChars text="Request Access" as="h2" className="vx-title" step={26} />
           <RevealLines
             className="vx-desc"
             step={70}
             lines={[
-              "On the desk, you approve every order. On-chain, the key expires, the",
-              "budget caps, and every refusal goes on the record.",
-              "Mainnet · unaudited · deposits capped · no track record.",
+              "The desk is not a production auto-trader. Access starts with a gated",
+              "request: tell us the surface you want, attach an EVM wallet for the",
+              "wallet pre-order list, and keep the brokerage desk human-approved.",
+              "Mainnet · unaudited · no track record · not investment advice.",
             ]}
           />
           <Reveal className="vx-cta-row" i={2}>
-            <a className="vx-btn vx-btn-lime" href={VAULT_URL}>
-              <span>Launch the app</span>
+            <a className="vx-btn vx-btn-lime" href={REQUEST_ACCESS_URL}>
+              <span>Request access</span>
               <ArrowUpRight />
             </a>
-            <a className="vx-btn vx-btn-glass" href="/desk">
-              <span>Tour the desk</span>
+            <a className="vx-btn vx-btn-glass" href={REQUEST_ACCESS_URL}>
+              <span>See the desk</span>
             </a>
           </Reveal>
         </div>
@@ -468,10 +469,11 @@ export default function HomePage() {
 
       <footer className="vx-foot">
         <Reveal className="vx-kicker" i={0}>Approved by you. Executed with care.</Reveal>
-        <RevealChars text="Run with Aelix" as="h2" className="vx-title" step={22} />
+        <RevealChars text="Run with AELIX" as="h2" className="vx-title" step={22} />
         <Reveal className="vx-cta-row" i={2}>
-          <a className="vx-btn vx-btn-lime" href={VAULT_URL}><span>Launch the app</span><ArrowUpRight /></a>
+          <a className="vx-btn vx-btn-lime" href={REQUEST_ACCESS_URL}><span>Request access</span><ArrowUpRight /></a>
           <a className="vx-btn vx-btn-glass" href="/docs"><span>Docs</span></a>
+          <a className="vx-btn vx-btn-glass" href={VAULT_URL}><span>Vault preview</span></a>
         </Reveal>
         <p className="vx-foot__legal">
           <b>Not investment advice.</b> Aelix is an agentic research tool for Robinhood

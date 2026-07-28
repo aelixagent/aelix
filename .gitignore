@@ -39,6 +39,7 @@ node_modules/
 .next/
 dist/
 out/
+landing/.data/
 
 # Local draft articles (not part of the shipped repo)
 article.md
@@ -46,3 +47,6 @@ article-clean.md
 
 # Marketing drafts — kept local, not published with the code
 docs/x-mainnet-launch-thread.md
+docs/x-thread-paste.md
+docs/x-content-banner.md
+docs/aelix-x-banner.png

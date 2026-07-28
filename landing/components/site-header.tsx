@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AelixLogo } from "@/components/ui/aelix-logo";
 import { ScrambleHover } from "@/components/ui/scramble-hover";
 import { NAV } from "@/lib/data";
-import { GITHUB_URL, VAULT_URL } from "@/lib/links";
+import { GITHUB_URL, REQUEST_ACCESS_URL } from "@/lib/links";
 import { cn } from "@/lib/cn";
 
 function GitHubGlyph() {
@@ -94,8 +94,8 @@ export function SiteHeader() {
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" aria-label="Aelix on GitHub">
               <GitHubGlyph /> <ScrambleHover text="GitHub" />
             </a>
-            <a href={VAULT_URL} className="active" aria-label="Launch the app">
-              <span className="n">↗</span> <ScrambleHover text="Launch App" />
+            <a href={REQUEST_ACCESS_URL} className="active" aria-label="Request access">
+              <span className="n">↗</span> <ScrambleHover text="Request Access" />
             </a>
           </nav>
           <button className="burger" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}>
@@ -124,8 +124,8 @@ export function SiteHeader() {
           </span>{" "}
           <ScrambleHover text="GitHub" />
         </a>
-        <a href={VAULT_URL} onClick={() => setDrawer(false)}>
-          <span className="n">↗</span> <ScrambleHover text="Launch App" />
+        <a href={REQUEST_ACCESS_URL} onClick={() => setDrawer(false)}>
+          <span className="n">↗</span> <ScrambleHover text="Request Access" />
         </a>
       </div>
 

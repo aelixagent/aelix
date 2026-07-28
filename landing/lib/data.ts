@@ -4,10 +4,10 @@
  */
 
 export const NAV = [
-  { n: "01", label: "The Desk", href: "#desk" },
+  { n: "01", label: "Request Access", href: "#access" },
   { n: "02", label: "How It Works", href: "#flow" },
   { n: "03", label: "The Team", href: "#team" },
-  { n: "04", label: "Access", href: "#access" },
+  { n: "04", label: "Guardrails", href: "#safety" },
 ] as const;
 
 export const MARQUEE = [
