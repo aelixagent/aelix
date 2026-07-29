@@ -467,7 +467,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="vx-foot">
+      <footer className="vx-foot" id="vx-foot">
         <Reveal className="vx-kicker" i={0}>Approved by you. Executed with care.</Reveal>
         <RevealChars text="Run with AELIX" as="h2" className="vx-title" step={22} />
         <Reveal className="vx-cta-row" i={2}>
@@ -476,29 +476,9 @@ export default function HomePage() {
           <a className="vx-btn vx-btn-glass" href={VAULT_URL}><span>Vault preview</span></a>
         </Reveal>
         <p className="vx-foot__legal">
-          <b>Not investment advice.</b> Aelix is an agentic research tool for Robinhood
-          Agentic (beta). On the brokerage desk, every order requires explicit human
-          approval in session — that is unchanged, and the on-chain deploy does not
-          change it. On-chain, the agent holds a session key scoped by expiry, size,
-          budget, trade count and ticker over an operator-funded vault; the agent&apos;s
-          limits are published on-chain before it trades — read them, and watch every
-          order against them. The on-chain module, the Guardrails config, the ERC-4626
-          vault (vAELIX), the attestation registry and the scoped session-key executor,
-          is deployed on Robinhood Chain mainnet (chainId 4663) and is <b>unaudited</b>:
-          no third-party audit has been performed, the contracts are not yet verified on
-          the block explorer, and deposits are capped at 10,000 USDG — an owner-changeable
-          setting, not a structural limit. Every owner-controlled contract in the stack
-          is owned by a 2-of-3 Safe multisig, so changing a risk cap, a price feed or the
-          deposit cap takes two of three signatures — with <b>no timelock yet</b>, so the
-          Safe can make those changes in a single transaction. That is custody, not an
-          audit. The contracts charge no management fee, no performance fee and no carry;
-          the exit fee accrues to remaining holders, not to the operator. There are no
-          depositors, no trades and no track record. Robinhood Stock Tokens are
-          price-tracking tokens, not shares, and are not available to US persons; the
-          desk trades US equities in beta — two doors, kept deliberately separate.
-          The $AELIX token is unlaunched, with no sale and no price, and is separate from
-          the vault. Not affiliated with or endorsed by Robinhood or Anthropic. Nothing
-          here is a recommendation to buy or sell any security. Use only risk capital.
+          <b>Not investment advice.</b> AELIX is beta software. The Robinhood Chain vault
+          is mainnet, unaudited, deposit-capped, has no timelock, no depositors, no trades
+          and no track record. Not affiliated with Robinhood or Anthropic.
         </p>
       </footer>
     </div>

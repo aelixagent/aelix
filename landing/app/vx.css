@@ -679,28 +679,25 @@ body:has(.vx-root)::after {
 /* ── footer / arrival (world is dusk-dark by now) ─────────────────────── */
 .vx-foot {
   position: relative;
-  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   gap: 1.1em;
-  padding: 0 clamp(20px, 6vw, 90px) 20vh; /* keep the CTA stack clear of the legal line */
+  padding: clamp(96px, 15vh, 150px) clamp(20px, 6vw, 90px) clamp(40px, 8vh, 72px);
   background: radial-gradient(120% 100% at 50% 45%, rgba(34, 36, 42, 0.12), rgba(34, 36, 42, 0.42));
 }
 .vx-foot__legal {
-  position: absolute;
-  bottom: clamp(18px, 4vh, 40px);
-  left: 0;
-  right: 0;
-  padding: 0 clamp(20px, 5vw, 60px);
+  position: relative;
+  padding: 0;
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 11.5px;
   line-height: 1.7;
   color: var(--white-faint);
-  max-width: 780px;
-  margin: 0 auto;
+  max-width: 760px;
+  margin: clamp(16px, 3vh, 26px) auto 0;
 }
 .vx-foot__legal b { color: var(--white-dim); font-weight: 600; }
 
@@ -904,7 +901,7 @@ body:has(.vx-root)::after {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 36vh;
+  height: 52vh;
   background: linear-gradient(to top, rgba(14, 16, 19, 0.88), rgba(14, 16, 19, 0.5) 55%, transparent);
   pointer-events: none;
   z-index: 0;
@@ -1222,10 +1219,4 @@ body:has(.vx-root)::after {
 .vx-cue span {
   color: rgba(236, 242, 240, 0.95);
   text-shadow: 0 1px 6px rgba(10, 11, 13, 0.9), 0 3px 16px rgba(10, 11, 13, 0.65);
-}
-
-/* my blanket z-index rule accidentally un-anchored the legal — re-pin it */
-.vx-foot > .vx-foot__legal {
-  position: absolute;
-  z-index: 1;
 }

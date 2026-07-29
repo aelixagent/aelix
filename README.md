@@ -55,6 +55,36 @@ depositors, trades, or track record; beta; not advice; unaffiliated with Robinho
   append-only — refusals and vetoes go on the record. At TVL 0, a refusal rate is the
   only metric that can honestly accumulate.
 
+## Smart contracts
+
+AELIX also ships an **on-chain module on Robinhood Chain mainnet (chainId 4663)**. It is
+not the live brokerage desk path; it is a separate Foundry contract stack that turns the
+desk rulebook into custody-layer checks for a vault of tokenized real-world assets.
+
+The core idea is simple: the AI does not get a standing hot wallet. It can only act
+through an expiring, revocable session key, and every proposed vault trade is checked by
+the vault before execution. If an order breaches the configured caps, the transaction
+reverts and the session budget is not spent.
+
+| Contract | Role |
+|---|---|
+| [`RWAVault`](onchain/src/RWAVault.sol) | ERC-4626 vault over USDG; enforces guardrails on every trade |
+| [`GuardrailConfig`](onchain/src/GuardrailConfig.sol) + [`Guardrails`](onchain/src/libraries/Guardrails.sol) | Stores and evaluates risk caps from `strategies/` |
+| [`SessionKeyExecutor`](onchain/src/SessionKeyExecutor.sol) | Scoped agent delegation: expiry, size, budget, trade count, token allowlist |
+| [`ChainlinkOracleAdapter`](onchain/src/ChainlinkOracleAdapter.sol) | Robinhood Chain Chainlink feeds with staleness, freeze, and liveness checks |
+| [`UniswapSwapAdapter`](onchain/src/UniswapSwapAdapter.sol) | Narrow swap surface through Uniswap V2 Router02 |
+| [`DeskRegistry`](onchain/src/DeskRegistry.sol) + [`PerfScore`](onchain/src/PerfScore.sol) | Append-only run attestations and on-chain performance math |
+| [`AelixAutosave`](onchain/src/AelixAutosave.sol) | Non-custodial recurring deposits into the vault |
+
+Mainnet addresses are published in [`onchain/README.md`](onchain/README.md) and
+[`onchain/deployments/latest.json`](onchain/deployments/latest.json). The vault address is
+`0x0e500E390cC599055f1e54194e1e611Cf64c5047`, owned by the 2-of-3 Safe
+`0x47b5e2923216f203b7960d8D232215534AF02FF2`.
+
+Important caveat: this stack is **mainnet but unaudited**. It has 215 passing Foundry
+tests, a 10,000 USDG deposit cap, 0 TVL, no depositors, no trades, no returns, and no
+track record. Owner-controlled caps are Safe-owned, but there is **no timelock yet**.
+
 ## How the desk works
 
 You talk to the **Portfolio Manager (PM = the main Claude Code session)** in plain
