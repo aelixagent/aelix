@@ -10,6 +10,7 @@ export type AccessRequestRecord = {
   persona: string;
   telegram: string | null;
   intent: string | null;
+  accessWave: string;
   acknowledged: string;
   createdAt: string;
 };

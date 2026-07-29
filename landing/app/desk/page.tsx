@@ -4,7 +4,7 @@ import { REQUEST_ACCESS_URL } from "@/lib/links";
 
 export const metadata: Metadata = {
   title: "Request Access",
-  description: "Request gated access to the AELIX desk beta and wallet pre-order list.",
+  description: "Request gated access to the AELIX desk and wallet pre-order list.",
 };
 
 export default function Page() {

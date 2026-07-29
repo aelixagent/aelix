@@ -10,7 +10,7 @@ any order that breaches them, and the agent trades only through a session key sc
 expiry, size, budget, trade count and ticker (a rejected order spends none of that
 budget). Each desk run is attested on-chain, so the record is verifiable instead of
 self-reported. (Nothing has been attested yet on mainnet; there is no track record.)
-Two doors, one brand: the desk is US, beta, equities; Stock Tokens are **not for US
+Two doors, one brand: the desk is US equities through gated access; Stock Tokens are **not for US
 persons** and are price-tracking instruments, not shares.
 
 > **Status: mainnet — unaudited — deposits capped.** Deployed on Robinhood Chain

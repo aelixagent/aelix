@@ -88,7 +88,7 @@ export const content: DocContent = {
       steps: [
         { label: "01", title: "Real secrets", md: "Set `JWT_SECRET` and a 32-byte base64 `VAULT_KEY`. The server **refuses to boot** in production without them. Back the vault key with a KMS." },
         { label: "02", title: "Real database", md: "Implement the store interface against **Postgres** and set `STORE_DRIVER=postgres`. The JSON driver is for dev/single-node only." },
-        { label: "03", title: "Real broker", md: "Set `BROKER_MODE=mcp` and verify the live Robinhood MCP tool names/response shapes. Confirm the Agentic beta ToS permits a third-party multi-user app storing user tokens." },
+        { label: "03", title: "Real broker", md: "Set `BROKER_MODE=mcp` and verify the live Robinhood MCP tool names/response shapes. Confirm the Agentic access ToS permits a third-party multi-user app storing user tokens." },
         { label: "04", title: "Scale the scheduler", md: "Move the in-process loop to a Redis/BullMQ worker pool so scans fan out across processes." },
         { label: "05", title: "Legal", md: "Keep the anti-advice posture (analyze / guard / alert). Start with a **paper-trading** tier to sidestep most regulation while you validate, and get counsel before real-money launch." },
       ],
@@ -97,7 +97,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "danger",
       title: "Three gates before real money, public",
-      md: "**1) Regulation**, securities analytics for the public can implicate adviser/broker rules; get legal counsel. **2) Robinhood ToS**, confirm the Agentic beta allows a third-party multi-tenant app + token storage. **3) Security**, you become custodian of many users' brokerage tokens; encrypt, use a KMS, and pen-test.",
+      md: "**1) Regulation**, securities analytics for the public can implicate adviser/broker rules; get legal counsel. **2) Robinhood ToS**, confirm the Agentic access surface allows a third-party multi-tenant app + token storage. **3) Security**, you become custodian of many users' brokerage tokens; encrypt, use a KMS, and pen-test.",
     },
     {
       type: "note",

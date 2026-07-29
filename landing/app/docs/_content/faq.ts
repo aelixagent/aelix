@@ -24,7 +24,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "**US equities only**, long-only, in USD, inside an isolated Robinhood Agentic account (beta). Options, futures, and crypto are out of scope of the underlying beta, the option order tools are explicitly `deny`-ed in [`.claude/settings.json`](/docs/mcp).",
+      md: "**US equities only**, long-only, in USD, inside an isolated Robinhood Agentic account. Options, futures, and crypto are out of scope of the current access surface, the option order tools are explicitly `deny`-ed in [`.claude/settings.json`](/docs/mcp).",
     },
     {
       type: "heading",
@@ -40,7 +40,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Crypto trading isn't supported by the underlying beta. The `$AELIX` token is **not built**, **unlaunched, and speculative**: no sale, no price, no allocation, **not** an investment product, and it has **no connection to the vault**. The separate on-chain layer (an ERC-4626 vault + guardrails-as-code) **is** now deployed, to Robinhood Chain mainnet, chainId 4663, but it is **unaudited**, deposits are capped at 10,000 USDG (an owner-changeable setting, not structural), TVL is **0**, and it stays gated behind legal/securities review. The Stock Tokens it trades are price-tracking instruments, **not shares**, and are **not for US persons**. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "Crypto trading isn't supported by the current access surface. The `$AELIX` token is **not built**, **unlaunched, and speculative**: no sale, no price, no allocation, **not** an investment product, and it has **no connection to the vault**. The separate on-chain layer (an ERC-4626 vault + guardrails-as-code) **is** now deployed, to Robinhood Chain mainnet, chainId 4663, but it is **unaudited**, deposits are capped at 10,000 USDG (an owner-changeable setting, not structural), TVL is **0**, and it stays gated behind legal/securities review. The Stock Tokens it trades are price-tracking instruments, **not shares**, and are **not for US persons**. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -142,7 +142,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "warn",
       title: "Still evaluating?",
-      md: "Aelix is beta software against a beta broker product. Expect rough edges, verify the [MCP tool names](/docs/mcp) yourself, keep your budget small, and monitor every run. Read the [Safety & Disclaimer](/docs/disclaimer) before you fund anything.",
+      md: "Aelix access is gated against a changing broker surface. Expect rough edges, verify the [MCP tool names](/docs/mcp) yourself, keep your budget small, and monitor every run. Read the [Safety & Disclaimer](/docs/disclaimer) before you fund anything.",
     },
   ],
 };

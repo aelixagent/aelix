@@ -17,8 +17,8 @@ export const content: DocContent = {
     {
       type: "callout",
       tone: "danger",
-      title: "Real money · beta · not investment advice",
-      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).\n\nThe separate on-chain vault is **mainnet, unaudited**, with **no timelock on owner caps**, deposits capped at **10,000 USDG**, and **no depositors, no trades, no track record**. Aelix is not affiliated with Robinhood.",
+      title: "Real money · request access · not investment advice",
+      md: "The desk trades US equities only, inside an isolated Robinhood Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is no track record and no performance claim anywhere in this project. It is a reference architecture for learning. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).\n\nThe separate on-chain vault is **mainnet, unaudited**, with **no timelock on owner caps**, deposits capped at **10,000 USDG**, and **no depositors, no trades, no track record**. Aelix is not affiliated with Robinhood.",
     },
     {
       type: "heading",
@@ -30,7 +30,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The geographic split is a chosen constraint, not an accident: the desk is US, beta, equities; the Stock Tokens the vault trades are **not for US persons** and are price-tracking instruments, **not shares**. Two doors, one brand — not a funnel from one into the other.",
+      md: "The geographic split is a chosen constraint, not an accident: the desk is US equities through gated access; the Stock Tokens the vault trades are **not for US persons** and are price-tracking instruments, **not shares**. Two doors, one brand — not a funnel from one into the other.",
     },
     {
       type: "callout",
@@ -167,7 +167,7 @@ export const content: DocContent = {
     },
     {
       type: "pills",
-      items: ["Equities only", "Long only", "USD", "Human-in-the-loop", "MCP", "Claude Code native", "Beta"],
+      items: ["Equities only", "Long only", "USD", "Human-in-the-loop", "MCP", "Claude Code native", "Request access"],
     },
   ],
 };

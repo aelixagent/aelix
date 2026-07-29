@@ -6,7 +6,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
-const LANES = new Set(["wallet-preorder", "desk-beta", "vault-preview"]);
+const LANES = new Set(["wallet-preorder", "desk-access", "vault-access"]);
 const PERSONAS = new Set(["trader", "builder", "fund", "researcher"]);
 const DEFAULT_DATA_FILE = ".data/access-requests.jsonl";
 const MAX_BODY_BYTES = 64 * 1024;

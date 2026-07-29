@@ -301,7 +301,7 @@ export default function HomePage() {
           </div>
           <Reveal className="vx-eyebrow" i={0}>
             <span className="vx-eyebrow__tick" aria-hidden="true" />
-            Beta · mainnet · unaudited · unaffiliated with Robinhood
+            Request access · mainnet · unaudited · unaffiliated with Robinhood
           </Reveal>
           <RevealChars text="AELIX" as="h1" className="vx-hero-title" step={70} />
           <Reveal className="vx-sub vx-sub--hero" i={4} style={{ marginTop: "0.4em", maxWidth: "46ch" }}>
@@ -449,15 +449,15 @@ export default function HomePage() {
             className="vx-desc"
             step={70}
             lines={[
-              "The desk is not a production auto-trader. Access starts with a gated",
-              "request: tell us the surface you want, attach an EVM wallet for the",
-              "wallet pre-order list, and keep the brokerage desk human-approved.",
+              "Access opens in waves. Wave 01 review closes Friday, August 7, 2026:",
+              "tell us the surface you want, attach an EVM wallet for the wallet",
+              "pre-order list, and keep the brokerage desk human-approved.",
               "Mainnet · unaudited · no track record · not investment advice.",
             ]}
           />
           <Reveal className="vx-cta-row" i={2}>
             <a className="vx-btn vx-btn-lime" href={REQUEST_ACCESS_URL}>
-              <span>Request access</span>
+              <span>Enter access wave</span>
               <ArrowUpRight />
             </a>
             <a className="vx-btn vx-btn-glass" href={REQUEST_ACCESS_URL}>
@@ -473,10 +473,10 @@ export default function HomePage() {
         <Reveal className="vx-cta-row" i={2}>
           <a className="vx-btn vx-btn-lime" href={REQUEST_ACCESS_URL}><span>Request access</span><ArrowUpRight /></a>
           <a className="vx-btn vx-btn-glass" href="/docs"><span>Docs</span></a>
-          <a className="vx-btn vx-btn-glass" href={VAULT_URL}><span>Vault preview</span></a>
+          <a className="vx-btn vx-btn-glass" href={VAULT_URL}><span>Vault</span></a>
         </Reveal>
         <p className="vx-foot__legal">
-          <b>Not investment advice.</b> AELIX is beta software. The Robinhood Chain vault
+          <b>Not investment advice.</b> AELIX access is gated. The Robinhood Chain vault
           is mainnet, unaudited, deposit-capped, has no timelock, no depositors, no trades
           and no track record. Not affiliated with Robinhood or Anthropic.
         </p>

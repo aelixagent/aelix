@@ -316,7 +316,7 @@ hard stop = tighter of { strategy invalidation level , -8% from average entry }
     },
     {
       type: "pills",
-      items: ["Equities only", "Long only", "NAV-based caps", "Human-in-the-loop", "Beta", "Illustrative numbers only"],
+      items: ["Equities only", "Long only", "NAV-based caps", "Human-in-the-loop", "Request access", "Illustrative numbers only"],
     },
   ],
 };

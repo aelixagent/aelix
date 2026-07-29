@@ -3,14 +3,14 @@ import type { DocContent } from "./types";
 export const content: DocContent = {
   title: "Safety & Disclaimer",
   description:
-    "The honest boundary of the project: beta, equities-only, not investment advice, no track record, an on-chain module that is on mainnet but unaudited with no timelock yet, and what is explicitly out of scope.",
+    "The honest boundary of the project: request access, equities-only, not investment advice, no track record, an on-chain module that is on mainnet but unaudited with no timelock yet, and what is explicitly out of scope.",
   eyebrow: "17, Safety & Disclaimer",
   blocks: [
     {
       type: "callout",
       tone: "danger",
-      title: "Real money · beta · not financial advice",
-      md: "Aelix is a research & recommendation tool, **not financial advice**. Robinhood Agentic Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is **no track record and no performance claim** here. All investment decisions are your own responsibility. Use only risk capital.\n\nThe separate on-chain module is now deployed to Robinhood Chain mainnet: **mainnet, unaudited, deposits capped, zero assets held.** It is not connected to customer money and not part of the desk. Details below.",
+      title: "Real money · request access · not financial advice",
+      md: "Aelix is a research & recommendation tool, **not financial advice**. The desk trades US equities only, inside an isolated Robinhood Agentic account funded with a dedicated budget, **that budget is the most it can ever lose**. There is **no track record and no performance claim** here. All investment decisions are your own responsibility. Use only risk capital.\n\nThe separate on-chain module is now deployed to Robinhood Chain mainnet: **mainnet, unaudited, deposits capped, zero assets held.** It is not connected to customer money and not part of the desk. Details below.",
     },
     {
       type: "heading",
@@ -26,11 +26,11 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Aelix is deliberately narrow: **equities-only, long-only, USD, human-in-the-loop, Claude-Code-native.** Options, futures, and crypto are not supported by the underlying beta, and the desk is configured to refuse them (option order tools are `deny`-ed).",
+      md: "Aelix is deliberately narrow: **equities-only, long-only, USD, human-in-the-loop, Claude-Code-native.** Options, futures, and crypto are not supported by the current access surface, and the desk is configured to refuse them (option order tools are `deny`-ed).",
     },
     {
       type: "pills",
-      items: ["Equities only", "Long only", "USD", "Human-in-the-loop", "Beta", "Educational"],
+      items: ["Equities only", "Long only", "USD", "Human-in-the-loop", "Request access", "Educational"],
     },
     {
       type: "heading",
@@ -57,8 +57,8 @@ export const content: DocContent = {
     {
       type: "deflist",
       items: [
-        { term: "Instrument scope", md: "Robinhood Agentic Trading is currently beta and equities-only, crypto/options/futures support is not available. The desk is intentionally limited to equities long-only; confirm current scope with Robinhood." },
-        { term: "MCP tool names & behavior", md: "Verify the real tool names via `/mcp` or `claude mcp get robinhood-trading`, then tighten [`.claude/settings.json`](/docs/mcp) to match. Names can change during beta." },
+        { term: "Instrument scope", md: "Robinhood Agentic Trading is currently equities-only, crypto/options/futures support is not available. The desk is intentionally limited to equities long-only; confirm current scope with Robinhood." },
+        { term: "MCP tool names & behavior", md: "Verify the real tool names via `/mcp` or `claude mcp get robinhood-trading`, then tighten [`.claude/settings.json`](/docs/mcp) to match. Names can change while access is gated." },
         { term: "Legal", md: "Any feature beyond equities could fall under securities regulation and must pass legal review before it is even considered. **No legal review has been completed**, and deploying a contract does not resolve regulatory exposure, including the US-person question." },
         { term: "Third-party audit (on-chain module)", md: "**Not done.** Two internal audit passes and a 42-agent preflight review are **not** an audit. Nothing on chain should be relied on until an independent audit exists." },
         { term: "Explorer verification", md: "The mainnet contracts are **not yet verified** on the block explorer, so you cannot yet read the deployed source there. Verify addresses against `onchain/deployments/latest.json` and by direct call." },
@@ -76,7 +76,7 @@ export const content: DocContent = {
       type: "callout",
       tone: "warn",
       title: "Not implemented, not verified, not a product",
-      md: "Exploratory notes reference a `$AELIX` utility token, Alchemy RPC endpoints, wallets, and a Bankr launchpad, **none of these are built**, and none are part of the running equities desk. The token remains **unlaunched and speculative**: no sale, no price, no allocation, **not an investment**. Crypto trading is not supported by the underlying Robinhood beta and stays out of scope pending legal/securities review plus official confirmation of non-equities availability.",
+      md: "Exploratory notes reference a `$AELIX` utility token, Alchemy RPC endpoints, wallets, and a Bankr launchpad, **none of these are built**, and none are part of the running equities desk. The token remains **unlaunched and speculative**: no sale, no price, no allocation, **not an investment**. Crypto trading is not supported by the current Robinhood Agentic access surface and stays out of scope pending legal/securities review plus official confirmation of non-equities availability.",
     },
     {
       type: "heading",
@@ -118,7 +118,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "Aelix is an independent, educational **reference architecture** built on Claude Code and the Robinhood Agentic beta. It is not endorsed by or affiliated with Robinhood or Anthropic. Licensed under MIT, see the `LICENSE` file.",
+      md: "Aelix is an independent, educational **reference architecture** built on Claude Code and Robinhood Agentic access. It is not endorsed by or affiliated with Robinhood or Anthropic. Licensed under MIT, see the `LICENSE` file.",
     },
     {
       type: "note",

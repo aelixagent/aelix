@@ -153,7 +153,7 @@ export const content: DocContent = {
         [
           "**deny**",
           "`place_option_order`, `cancel_option_order`",
-          "**Blocked outright**, options are not supported in the equities-only beta.",
+          "**Blocked outright**, options are not supported in the current equities-only access surface.",
         ],
       ],
     },
@@ -236,7 +236,7 @@ export const content: DocContent = {
     },
     {
       type: "prose",
-      md: "The desk may place trades **only** in the Robinhood **Agentic** account. It has read access to your other Robinhood accounts **for context only**, it must never attempt to trade, transfer, or modify anything outside the Agentic account. Because that account is funded with its own dedicated budget, **that budget is the most the desk can ever put at risk.** Instruments are limited to equities: options, crypto, and futures are not supported in the beta and are not attempted.",
+      md: "The desk may place trades **only** in the Robinhood **Agentic** account. It has read access to your other Robinhood accounts **for context only**, it must never attempt to trade, transfer, or modify anything outside the Agentic account. Because that account is funded with its own dedicated budget, **that budget is the most the desk can ever put at risk.** Instruments are limited to equities: options, crypto, and futures are not supported in the current access surface and are not attempted.",
     },
     {
       type: "heading",
@@ -324,7 +324,7 @@ claude mcp remove robinhood-trading`,
     },
     {
       type: "pills",
-      items: ["Human-in-the-loop", "Least privilege", "deny → ask → allow", "Agentic account only", "Equities only", "Beta", "Not investment advice"],
+      items: ["Human-in-the-loop", "Least privilege", "deny → ask → allow", "Agentic account only", "Equities only", "Request access", "Not investment advice"],
     },
   ],
 };

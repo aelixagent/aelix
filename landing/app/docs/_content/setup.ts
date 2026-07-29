@@ -17,8 +17,8 @@ export const content: DocContent = {
     {
       type: "callout",
       tone: "danger",
-      title: "Real money · beta · decide your funding cap first",
-      md: "You are connecting a live brokerage account. **Robinhood Agentic Trading is in beta (US, equities only)**, expect bugs. Before you authenticate, decide the amount you will fund the Agentic account with: **that budget is the most the agent can ever lose.** Start small. None of this is investment advice and there is no track record anywhere in the project. See [Safety & Disclaimer](/docs/disclaimer).",
+      title: "Real money · request access · decide your funding cap first",
+      md: "You are connecting a live brokerage account. **The desk is limited to US equities inside Robinhood Agentic access**, expect bugs. Before you authenticate, decide the amount you will fund the Agentic account with: **that budget is the most the agent can ever lose.** Start small. None of this is investment advice and there is no track record anywhere in the project. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -304,7 +304,7 @@ cd rh-trading-agent`,
       type: "callout",
       tone: "warn",
       title: "You stay responsible",
-      md: "**Beta, equities only, expect bugs.** The funding cap limits how much you can lose; it does **not** make a strategy sound. You stay responsible for monitoring the desk. This is **not investment advice.**",
+      md: "**Request access, equities only, expect bugs.** The funding cap limits how much you can lose; it does **not** make a strategy sound. You stay responsible for monitoring the desk. This is **not investment advice.**",
     },
     {
       type: "list",
@@ -342,7 +342,7 @@ cd rh-trading-agent`,
     },
     {
       type: "pills",
-      items: ["Desktop only", "OAuth", "Project-scoped MCP", "deny → ask → allow", "Fund small", "Equities only", "Beta"],
+      items: ["Desktop only", "OAuth", "Project-scoped MCP", "deny → ask → allow", "Fund small", "Equities only", "Request access"],
     },
   ],
 };

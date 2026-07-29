@@ -13,7 +13,7 @@ vault where the agent's key is scoped, revocable, and expiring.**
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-c5e94a.svg)
 ![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-16180d)
-![Status: beta](https://img.shields.io/badge/status-beta%20·%20educational-e23b3b)
+![Status: request access](https://img.shields.io/badge/status-request%20access%20·%20educational-e23b3b)
 ![Scope: equities only](https://img.shields.io/badge/scope-equities%20·%20long--only-16180d)
 
 </div>
@@ -29,11 +29,11 @@ them, and the agent's key is separately scoped by expiry, size, budget, trade co
 ticker — a rejected order spends none of that budget. The desk is how we develop the
 rulebook; the vault is how that rulebook becomes code ([`onchain/`](onchain/README.md)).
 Mainnet, unaudited, no timelock on owner caps, deposits capped at 10,000 USDG, no
-depositors, trades, or track record; beta; not advice; unaffiliated with Robinhood.
+depositors, trades, or track record; request access; not advice; unaffiliated with Robinhood.
 
 > [!WARNING]
-> **Real money, beta, not investment advice.** Robinhood Agentic Trading is in beta
-> (US, equities only). The desk trades only inside an isolated Agentic account funded with
+> **Real money, request access, not investment advice.** The desk is limited to
+> US equities inside an isolated Robinhood Agentic account funded with
 > a dedicated budget, **that budget is the most it can ever lose**. There is **no track
 > record and no performance claim here**; this is a reference architecture for learning.
 > Run it at your own risk and monitor it yourself.
@@ -236,14 +236,14 @@ cd landing && npm install && npm run dev   # http://localhost:5190  (docs at /do
 
 ## Disclaimer
 
-AELIX is a **research & recommendation tool, not financial advice**. Robinhood Agentic
-Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic
+AELIX is a **research & recommendation tool, not financial advice**. The desk is
+limited to US equities inside an isolated Robinhood Agentic
 account funded with a dedicated budget, that budget is the most it can ever lose. **There
 is no track record and no performance claim here**; all example data is illustrative. All
 investment decisions are your own responsibility. Use only risk capital.
 
 The on-chain module ([`onchain/`](onchain/README.md)) is a separate, explicitly labeled
-surface — two doors, one brand, not a funnel: the desk is US, beta, equities; Robinhood
+surface — two doors, one brand, not a funnel: the desk is US equities through gated access; Robinhood
 Chain **Stock Tokens are not for US persons** and are price-tracking instruments, not
 shares. The vault is live on mainnet but **unaudited**, deposit-capped at 10,000 USDG,
 operator-funded, with no depositors, no trades, and no track record. The `$AELIX` token

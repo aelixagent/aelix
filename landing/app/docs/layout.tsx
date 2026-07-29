@@ -8,7 +8,7 @@ import "./docs.css";
 export const metadata: Metadata = {
   title: { default: "Docs", template: "%s // AELIX Docs" },
   description:
-    "Documentation for Aelix — least-privilege AI trading: on Robinhood you approve every order; on-chain the agent holds a scoped, revocable, expiring key. Beta; on-chain module unaudited; not investment advice; not affiliated with Robinhood.",
+    "Documentation for Aelix — least-privilege AI trading: on Robinhood you approve every order; on-chain the agent holds a scoped, revocable, expiring key. Request access; on-chain module unaudited; not investment advice; not affiliated with Robinhood.",
 };
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {

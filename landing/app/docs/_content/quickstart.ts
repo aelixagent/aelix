@@ -17,8 +17,8 @@ export const content: DocContent = {
     {
       type: "callout",
       tone: "danger",
-      title: "Real money · beta · not investment advice",
-      md: "Robinhood Agentic Trading is in **beta** (US, equities only). The desk only ever trades inside an isolated Agentic account funded with a dedicated budget, **that budget is the most it can lose**. There is no track record and no performance claim anywhere in this project. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
+      title: "Real money · request access · not investment advice",
+      md: "The desk only ever trades US equities inside an isolated Robinhood Agentic account funded with a dedicated budget, **that budget is the most it can lose**. There is no track record and no performance claim anywhere in this project. Run it at your own risk and monitor it yourself. See [Safety & Disclaimer](/docs/disclaimer).",
     },
     {
       type: "heading",
@@ -254,7 +254,7 @@ export const content: DocContent = {
     },
     {
       type: "pills",
-      items: ["Private repo", "Desktop only", "Small budget = max loss", "localhost:5180", "Human-in-the-loop", "Beta"],
+      items: ["Private repo", "Desktop only", "Small budget = max loss", "localhost:5180", "Human-in-the-loop", "Request access"],
     },
   ],
 };

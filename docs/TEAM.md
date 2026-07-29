@@ -62,4 +62,4 @@ through the Risk Manager, and come back to you with a preview — never a placed
 - **Independent risk veto:** the Risk Manager evaluates against written rules in
   `strategies/` and can block a trade the analysts liked. If `strategies/` caps are
   still unset, it VETOes — so fill those in before trading.
-- **Equities only / Agentic account only:** matches the account's beta scope.
+- **Equities only / Agentic account only:** matches the current account scope.

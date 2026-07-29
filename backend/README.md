@@ -99,7 +99,7 @@ Frontend (Next.js app)  ──HTTPS/JWT──▶  THIS BACKEND
    a KMS.
 2. **Swap the store** — implement the `JsonStore` interface in `src/lib/store.mjs`
    against Postgres, and set `STORE_DRIVER=postgres`.
-3. **Broker** — set `BROKER_MODE=mcp`. Confirm Robinhood's Agentic beta ToS permits
+3. **Broker** — set `BROKER_MODE=mcp`. Confirm Robinhood's Agentic access ToS permits
    a third-party multi-user app storing user tokens, and verify the real MCP tool
    names/response shapes in `src/lib/broker.mjs` (marked `TODO`).
 4. **Scale the scheduler** — move the in-process loop to a Redis/BullMQ worker.

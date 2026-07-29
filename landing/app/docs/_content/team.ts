@@ -343,7 +343,7 @@ Required changes (if APPROVE-WITH-CHANGES): <e.g. cut qty to N, add stop at $X>`
     },
     {
       type: "note",
-      md: "This is a research tool, not investment advice. Robinhood Agentic Trading is in **beta** (US, equities only, long-only). There is no track record and no performance claim; every number in this project is illustrative. See [Safety & Disclaimer](/docs/disclaimer).",
+      md: "This is a research tool, not investment advice. The desk is limited to **US equities, long-only** inside an isolated Robinhood Agentic account. There is no track record and no performance claim; every number in this project is illustrative. See [Safety & Disclaimer](/docs/disclaimer).",
     },
   ],
 };

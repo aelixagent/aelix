@@ -24,7 +24,7 @@ export const content: DocContent = {
         { term: "Claude Code", md: "The agent host Aelix runs inside. There is no separate backend server or Python orchestrator, the PM *is* the session. See [Architecture](/docs/architecture)." },
         { term: "MCP (Model Context Protocol)", md: "The protocol that connects Claude Code to the broker. Aelix uses one MCP server, `robinhood-trading`. See [MCP & Tools](/docs/mcp)." },
         { term: "robinhood-trading", md: "The single MCP server (HTTP transport, OAuth) that is the desk's only path to the account. Defined in `.mcp.json`." },
-        { term: "Robinhood Agentic account", md: "The isolated, beta, equities-only account the desk may trade. Every other account is read-only for context." },
+        { term: "Robinhood Agentic account", md: "The isolated, equities-only account the desk may trade. Every other account is read-only for context." },
         { term: "OAuth", md: "The in-session authentication flow for the MCP server. The agent never sees your password; there is a Robinhood mobile verification step." },
       ],
     },

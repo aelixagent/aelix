@@ -96,6 +96,6 @@ claude mcp remove robinhood-trading
 
 ## Reminders
 
-- Beta, equities only; expect bugs.
+- Request access, equities only; expect bugs.
 - The funding cap limits loss; it does not make a strategy sound.
 - You stay responsible for monitoring. Not investment advice.

@@ -10,7 +10,7 @@
 
 1. Skim **§1–§3** for the pitch, **§11** for voice, **§12** for the hard limits.
 2. Pull ready-made copy from the **§13 X Content Playbook** (taglines, bios, post templates).
-3. Before posting, run the **§12 compliance checklist** — Aelix is real-money-adjacent, the equities desk is **beta**, and the on-chain module is **live on mainnet but unaudited**, so overclaiming is the #1 risk.
+3. Before posting, run the **§12 compliance checklist** — Aelix is real-money-adjacent, desk access is gated, and the on-chain module is **live on mainnet but unaudited**, so overclaiming is the #1 risk.
 
 ---
 
@@ -24,7 +24,7 @@ This is the *one* approved line in which "Robinhood" may lead (§12 otherwise ba
 
 **The core pitch (89 words — adapt tone per surface, keep every fact):**
 
-> Aelix is an AI research desk in Claude Code. On your Robinhood account it never places an order without your yes; that isn't changing. On Robinhood Chain the caps are compiled into a vault that reverts any order breaching them, and the agent's key is separately scoped by expiry, size, budget, trade count and ticker — a rejected order spends none of that budget. Mainnet, unaudited, no timelock on owner caps, deposits capped at 10,000 USDG, no depositors, trades, or track record; beta; not advice; unaffiliated with Robinhood.
+> Aelix is an AI research desk in Claude Code. On your Robinhood account it never places an order without your yes; that isn't changing. On Robinhood Chain the caps are compiled into a vault that reverts any order breaching them, and the agent's key is separately scoped by expiry, size, budget, trade count and ticker — a rejected order spends none of that budget. Mainnet, unaudited, no timelock on owner caps, deposits capped at 10,000 USDG, no depositors, trades, or track record; request access; not advice; unaffiliated with Robinhood.
 
 - Brand is **Aelix** (established 2026-07-21). Wordmark styled `◤ AELIX ◢`; mark is the chartreuse **"AX" monogram** (`/aelix-mark.png`).
 - Not a bot that auto-trades. Positioned as the deliberate opposite of "trust the agent with capital": least privilege on both surfaces, and the flagship metric is how often the vault says **no** (§3).
@@ -42,7 +42,7 @@ This is the *one* approved line in which "Robinhood" may lead (§12 otherwise ba
 
 - **Headline surface: the brokerage desk.** Human approves every order. **Unchanged, not changing.** A stranger can verify it on their own laptop: `.claude/agents/*.md` frontmatter shows the analysts hold no order tools; the `deny → ask → allow` permission gate; kill switch = `claude mcp remove robinhood-trading`.
 - **Surface two: the on-chain vault** — explicitly labeled, **operator-funded**. Framing sentence (use it): **"the desk is how we develop the rulebook; the vault is how that rulebook becomes code."**
-- State the geographic split as a **chosen constraint**: desk = US, beta, equities; Stock Tokens = not for US persons, price-tracking, not shares. **Two doors, one brand — not a funnel.**
+- State the geographic split as a **chosen constraint**: desk = US equities through gated access; Stock Tokens = not for US persons, price-tracking, not shares. **Two doors, one brand — not a funnel.**
 - **Discipline:** the words "autonomous" and "your money" never appear in the same sentence. Per-order approval is stated as **unchanged** — the safety story must never look like it moved.
 
 ---
@@ -205,7 +205,7 @@ Global caps live in `strategies/README.md`; % of **NAV** (`get_portfolio.total_v
 - "Reads the tape. / Weighs the risk. / Waits for you."
 - "Nothing Slips" · "Signals, Not Noise" · "You Decide" · "The desk proposes; you dispose."
 - "One Desk. Every Angle." · "Run with Aelix" · "Approved by you. Executed with care."
-- Marquee: HUMAN-IN-THE-LOOP · NO ORDER WITHOUT YOUR APPROVAL · 4 SPECIALIST AGENTS · RISK VETO ARMED · GUARDRAILS AS CODE · ON-CHAIN VAULT · LIVE ON ROBINHOOD CHAIN MAINNET · UNAUDITED · DEPOSITS CAPPED · NO TRACK RECORD · BETA · NOT INVESTMENT ADVICE
+- Marquee: HUMAN-IN-THE-LOOP · NO ORDER WITHOUT YOUR APPROVAL · 4 SPECIALIST AGENTS · RISK VETO ARMED · GUARDRAILS AS CODE · ON-CHAIN VAULT · LIVE ON ROBINHOOD CHAIN MAINNET · UNAUDITED · DEPOSITS CAPPED · NO TRACK RECORD · REQUEST ACCESS · NOT INVESTMENT ADVICE
   - Note: drop "VERIFIABLE TRACK RECORD" from the marquee — the rails exist, the record doesn't. Use "VERIFIABLE BY DESIGN" or "ATTESTED ON-CHAIN" if a slot needs filling.
 - Stats: "4 Specialist AI agents" · "100% Orders you approve first" · "1 Risk manager with veto"
 
@@ -214,7 +214,7 @@ Global caps live in `strategies/README.md`; % of **NAV** (`get_portfolio.total_v
 ## 11. Status & disclaimers (bake these into content)
 
 - **Not investment advice.** Research tool / reference architecture. **No track record, no performance claims** — any example figure must be explicitly labelled **SAMPLE**, never passed off as live.
-- **Real money · beta.** Robinhood Agentic Trading is **beta, US, equities only, long-only, USD**. Options/crypto/futures unsupported (option tools hard-denied).
+- **Real money · request access.** The desk is **US, equities only, long-only, USD**. Options/crypto/futures unsupported (option tools hard-denied).
 - **On-chain module: live on mainnet, unaudited, empty.** Deployed to Robinhood Chain mainnet (4663) with real periphery; the whole stack is owned by the 2-of-3 Safe (handover completed and verified 2026-07-26), but there is still **no third-party audit**, **no timelock on owner powers** (the Safe can change caps/oracle/manager in one tx), contracts are unverified on the explorer, deposits are capped at 10,000 USDG (owner-changeable setting, not structural), and **TVL 0 / no depositors / no trades**. Multisig ownership is key custody, not code assurance — it does not close the audit gap. Still gated behind legal/securities review. "There is no track record."
 - **$AELIX token is NOT live** — unlaunched, no sale, no price, no investment.
 - **Any displayed figure must be a real on-chain read, honestly empty, or explicitly labelled SAMPLE.** Gate every "live" indicator on a successful read. Never fabricate a number, and never rebrand sample data as mainnet data.
@@ -241,7 +241,7 @@ Global caps live in `strategies/README.md`; % of **NAV** (`get_portfolio.total_v
 - Attestation rails (`DeskRegistry` + `PerfScore`) are deployed: performance math is computed only from attested data, so it **can't be inflated after the fact**. Claim the *mechanism*, never a result.
 - **Every owner-controlled contract in the stack is owned by a 2-of-3 Safe multisig** — the blanket claim is now permitted, verified on-chain 2026-07-26. You may say: changing any risk cap, feed, deposit cap or session grant requires 2 of 3 signatures, and **no single hot key can weaken the guardrails**. `owner()` == the Safe and `pendingOwner()` == `0x0` on `RWAVault`, `ChainlinkOracleAdapter` and `SessionKeyExecutor`; `GuardrailConfig` and `UniswapSwapAdapter` were Safe-owned from construction; the deployer EOA now reverts `OwnableUnauthorizedAccount` on owner-only calls. Say it as a **key-custody** property — it says nothing about code quality, it does **not** soften the audit prohibition below, and wherever you describe these owner powers you **must** also say "**no timelock yet**."
 - Prompt-injection contained; open-source (MIT); runs in Claude Code, no backend.
-- Equities, Robinhood Agentic (beta). Any integration statement stays factual and carries the no-affiliation line in the same block.
+- Equities, Robinhood Agentic access. Any integration statement stays factual and carries the no-affiliation line in the same block.
 
 **You must NOT claim / imply:**
 - ❌ **That the module is audited, security-reviewed, or "reviewed by auditors."** There has been **no third-party audit**. Two internal audit passes plus a 42-agent preflight audit are **not an audit** — never let "hardened", "audit-passed", "battle-tested" or similar imply one. *This is the single most important prohibition in this doc and must survive every rewrite.*
@@ -266,7 +266,7 @@ Global caps live in `strategies/README.md`; % of **NAV** (`get_portfolio.total_v
 - ❌ Affiliation/endorsement by **Robinhood or Anthropic**.
 - ❌ Financial advice or "trade this."
 
-**When relevant, include a caveat:** `mainnet · unaudited · deposits capped` · `no track record` · `beta · not investment advice` · `not affiliated with Robinhood` · and, wherever owner powers appear, `no timelock yet`.
+**When relevant, include a caveat:** `mainnet · unaudited · deposits capped` · `no track record` · `request access · not investment advice` · `not affiliated with Robinhood` · and, wherever owner powers appear, `no timelock yet`.
 
 > Retired: `testnet preview · not live` and `mocked periphery`. Both are now **false** — replace them with the strings above. Replacing a stale caveat is required; **deleting** one is not.
 
@@ -308,7 +308,7 @@ Use `⛓ mainnet · unaudited` or a bare `Unaudited.` — never drop the `unaudi
 >
 > On Robinhood, Aelix is a research desk that never places an order without your yes — that isn't changing. On Robinhood Chain, the caps are compiled into a vault that reverts any order breaching them, and the agent's key is scoped by expiry, size, budget, trade count and ticker. A rejected order spends none of that budget.
 >
-> Mainnet · unaudited · no timelock on owner caps · deposits capped · no track record · beta · not advice · not affiliated with Robinhood 👇
+> Mainnet · unaudited · no timelock on owner caps · deposits capped · no track record · request access · not advice · not affiliated with Robinhood 👇
 
 **The flagship (refusal rate — use prominently):**
 > The first number we publish will be how often the vault said no.
@@ -327,7 +327,7 @@ Use `⛓ mainnet · unaudited` or a bare `Unaudited.` — never drop the `unaudi
 **Two surfaces (never blur them):**
 > Two doors, one brand.
 >
-> The desk: US, beta, equities. You approve every order — unchanged.
+> The desk: US equities through gated access. You approve every order — unchanged.
 > The vault: on-chain, operator-funded, Stock Tokens not for US persons.
 >
 > The desk is how we develop the rulebook; the vault is how that rulebook becomes code.

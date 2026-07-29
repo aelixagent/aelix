@@ -8,8 +8,9 @@ import "../vx.css";
 
 const ACCESS_EMAIL = process.env.NEXT_PUBLIC_ACCESS_EMAIL || "access@aelix.xyz";
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const ACCESS_WAVE = "Wave 01 review closes Friday, August 7, 2026";
 
-type AccessLane = "wallet-preorder" | "desk-beta" | "vault-preview";
+type AccessLane = "wallet-preorder" | "desk-access" | "vault-access";
 type Persona = "trader" | "builder" | "fund" | "researcher";
 
 const LANES: { value: AccessLane; label: string; description: string; walletRequired: boolean }[] = [
@@ -20,15 +21,15 @@ const LANES: { value: AccessLane; label: string; description: string; walletRequ
     walletRequired: true,
   },
   {
-    value: "desk-beta",
-    label: "Desk beta",
+    value: "desk-access",
+    label: "Desk access",
     description: "Request access to the human-approved research desk flow.",
     walletRequired: false,
   },
   {
-    value: "vault-preview",
-    label: "Vault preview",
-    description: "Ask for the on-chain vault preview, caveats first.",
+    value: "vault-access",
+    label: "Vault access",
+    description: "Ask for access to the live on-chain vault surface, caveats first.",
     walletRequired: true,
   },
 ];
@@ -82,7 +83,8 @@ export default function RequestAccessPage() {
       `persona: ${persona}`,
       `telegram_or_x: ${telegram.trim() || "not provided"}`,
       `intent: ${intent.trim() || "not provided"}`,
-      "acknowledged: beta, unaudited, no track record, not investment advice",
+      `access_wave: ${ACCESS_WAVE}`,
+      "acknowledged: gated access, unaudited on-chain module, no track record, not investment advice",
     ].join("\n");
   }, [emailClean, intent, lane, persona, requestId, telegram, walletClean]);
 
@@ -102,6 +104,7 @@ export default function RequestAccessPage() {
       persona,
       telegram: telegram.trim() || null,
       intent: intent.trim() || null,
+      accessWave: ACCESS_WAVE,
       consent,
       createdAt: new Date().toISOString(),
     };
@@ -151,7 +154,7 @@ export default function RequestAccessPage() {
         </Link>
         <nav className="access-nav" aria-label="Access navigation">
           <Link className="vx-nav-link" href="/docs">Docs</Link>
-          <Link className="vx-nav-link" href={VAULT_URL}>Vault preview</Link>
+          <Link className="vx-nav-link" href={VAULT_URL}>Vault</Link>
         </nav>
       </header>
 
@@ -161,22 +164,21 @@ export default function RequestAccessPage() {
             <span className="vx-eyebrow__tick" aria-hidden="true" />
             Request access
           </p>
-          <h1 className="access-title">Wallet pre-order, gated access.</h1>
+          <h1 className="access-title">Enter the next access wave.</h1>
           <p className="access-lede">
-            AELIX is not opening a live auto-trading product. This request collects
-            early access intent for the human-approved desk, the wallet pre-order list,
-            and the on-chain vault preview.
+            AELIX access opens in waves. Drop an EVM wallet to enter Wave 01 for
+            the human-approved desk, the wallet pre-order list, and the live on-chain vault.
           </p>
           <div className="access-rail" aria-label="Request rules">
             <div>
               <span>01</span>
-              <strong>Wallet first</strong>
-              <p>EVM address required for wallet pre-order and vault preview lanes.</p>
+              <strong>Wave 01</strong>
+              <p>Review closes Friday, August 7, 2026. Earlier wallets get reviewed first.</p>
             </div>
             <div>
               <span>02</span>
-              <strong>No performance claim</strong>
-              <p>No track record, no depositors, no returns, no investment advice.</p>
+              <strong>Wallet first</strong>
+              <p>EVM address required for wallet pre-order and vault access lanes.</p>
             </div>
             <div>
               <span>03</span>
@@ -262,7 +264,7 @@ export default function RequestAccessPage() {
             <span>What do you want access for?</span>
             <textarea
               rows={4}
-              placeholder="Desk beta, wallet pre-order, vault preview, integration, research..."
+              placeholder="Desk access, wallet pre-order, vault access, integration, research..."
               value={intent}
               onChange={(event) => setIntent(event.target.value)}
             />
@@ -275,13 +277,13 @@ export default function RequestAccessPage() {
               onChange={(event) => setConsent(event.target.checked)}
             />
             <span>
-              I understand AELIX is beta software, the on-chain module is unaudited,
+              I understand AELIX access is gated, the on-chain module is unaudited,
               there is no track record, and this is not investment advice.
             </span>
           </label>
 
           <button className="vx-btn vx-btn-lime access-submit" type="submit" disabled={!canSubmit || submitting}>
-            <span>{submitting ? "Saving request" : submitted ? "Request saved" : "Drop wallet / request access"}</span>
+            <span>{submitting ? "Saving request" : submitted ? "Request saved" : "Enter next access wave"}</span>
           </button>
 
           {submitError && (

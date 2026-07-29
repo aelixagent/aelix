@@ -15,7 +15,7 @@ saham (equities)** — sebuah tim analis AI yang menyaring watchlist, memperdeba
 kandidat, dan menyerahkan sebuah **kartu preview order** kepada Anda.
 
 > **Ruang lingkup yang sebenarnya:** ini **hanya equities (saham AS)**, **long-only**,
-> dalam **USD**. Robinhood Agentic Trading masih **beta** dan belum mendukung
+> dalam **USD**. Surface Robinhood Agentic saat ini belum mendukung
 > crypto/options/futures. Materi crypto/token pada versi 1.0 dokumen ini telah dipindahkan
 > ke **Lampiran** dan **belum diimplementasikan**.
 
@@ -331,8 +331,8 @@ Untuk memenuhi prinsip Transparansi & Audit:
 ## 13. Catatan Penting (Disclaimer)
 
 **Disclaimer:** Project Aelix adalah **alat bantu riset, bukan penasihat keuangan**. Semua
-keputusan investasi adalah tanggung jawab pribadi pengguna. Robinhood Agentic Trading masih
-beta (US, equities only); harap awasi sendiri. **Tidak ada track record dan tidak ada klaim
+keputusan investasi adalah tanggung jawab pribadi pengguna. Akses Robinhood Agentic saat ini
+US equities only; harap awasi sendiri. **Tidak ada track record dan tidak ada klaim
 kinerja** — semua data contoh bersifat ilustratif. Selalu verifikasi ulang sebelum
 bertindak, dan gunakan hanya dana yang siap hilang (risk capital).
 
@@ -342,7 +342,7 @@ bertindak, dan gunakan hanya dana yang siap hilang (risk capital).
 
 Asumsi berikut **masih perlu diverifikasi** ke sumber resmi sebelum diandalkan:
 
-- **Cakupan instrumen:** Robinhood Agentic Trading saat ini beta dan **equities-only** —
+- **Cakupan instrumen:** Robinhood Agentic Trading saat ini **equities-only** —
   dukungan crypto/options/futures belum tersedia. Desk ini sengaja dibatasi ke equities
   long-only.
 - **Nama & perilaku tool MCP:** verifikasi nama tool riil via `/mcp` atau

@@ -71,7 +71,7 @@ export const content: DocContent = {
       items: [
         { term: "robinhood-trading", md: "The server name the permission rules and sub-agent tool lists reference (tools appear as `mcp__robinhood-trading__<tool>`)." },
         { term: "type: http", md: "A remote HTTP MCP transport, Claude Code connects out to Robinhood's hosted endpoint; nothing runs locally." },
-        { term: "url", md: "`https://agent.robinhood.com/mcp/trading`, the Robinhood Agentic Trading endpoint (US, equities, beta)." },
+        { term: "url", md: "`https://agent.robinhood.com/mcp/trading`, the Robinhood Agentic Trading endpoint (US equities)." },
       ],
     },
     {
@@ -128,7 +128,7 @@ export const content: DocContent = {
       items: [
         { term: "allow", md: "Runs with **no prompt**. Reserved for read-only market and account reads (`get_portfolio`, `get_equity_quotes`, …), scans (`run_scan`), the preview-only `review_equity_order`, plus `WebSearch`, a few whitelisted `WebFetch` news domains, and a handful of `git` and `Skill` commands." },
         { term: "ask", md: "Claude Code **pauses and asks you** in-session before the call. This is where every order lives: `place_equity_order` and `cancel_equity_order`, alongside scan- and watchlist-mutating tools." },
-        { term: "deny", md: "**Blocked outright**, no prompt, no override. Holds `place_option_order` and `cancel_option_order`, options aren't supported in this equities-only beta, so they are hard-denied." },
+        { term: "deny", md: "**Blocked outright**, no prompt, no override. Holds `place_option_order` and `cancel_option_order`, options aren't supported in the current equities-only access surface, so they are hard-denied." },
       ],
     },
     {
@@ -330,7 +330,7 @@ desk-request.json`,
         {
           label: "04",
           title: "Deny what you'll never use",
-          md: "Keep `place_option_order` and `cancel_option_order` in `deny`. Options aren't supported in this beta, so hard-denying them means a mistaken call fails closed instead of prompting.",
+          md: "Keep `place_option_order` and `cancel_option_order` in `deny`. Options aren't supported in this access surface, so hard-denying them means a mistaken call fails closed instead of prompting.",
         },
       ],
     },
@@ -342,7 +342,7 @@ desk-request.json`,
     },
     {
       type: "pills",
-      items: ["deny → ask → allow", "Project-scoped MCP", "Least-privilege sub-agents", "Secrets stay out of git", "Restart to reload agents", "Beta · equities only"],
+      items: ["deny → ask → allow", "Project-scoped MCP", "Least-privilege sub-agents", "Secrets stay out of git", "Restart to reload agents", "Request access · equities only"],
     },
     {
       type: "note",

@@ -8,9 +8,9 @@ import {
 
 const EVM_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const LANES = new Set(["wallet-preorder", "desk-beta", "vault-preview"]);
+const LANES = new Set(["wallet-preorder", "desk-access", "vault-access"]);
 const PERSONAS = new Set(["trader", "builder", "fund", "researcher"]);
-const WALLET_REQUIRED = new Set(["wallet-preorder", "vault-preview"]);
+const WALLET_REQUIRED = new Set(["wallet-preorder", "vault-access"]);
 function cleanText(value: unknown, max = 600) {
   return String(value ?? "").trim().slice(0, max);
 }
@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
     persona,
     telegram: telegram || null,
     intent: intent || null,
-    acknowledged: "beta, unaudited, no track record, not investment advice",
+    accessWave: "Wave 01 review closes Friday, August 7, 2026",
+    acknowledged: "gated access, unaudited on-chain module, no track record, not investment advice",
     createdAt: new Date().toISOString(),
   };
 

@@ -45,7 +45,8 @@ test("collector persists signed access requests and rejects unsigned writes", as
       persona: "builder",
       telegram: "@test",
       intent: "test",
-      acknowledged: "beta, unaudited, no track record, not investment advice",
+      accessWave: "Wave 01 review closes Friday, August 7, 2026",
+      acknowledged: "gated access, unaudited on-chain module, no track record, not investment advice",
       createdAt: new Date().toISOString(),
     };
     const body = JSON.stringify(record);

@@ -23,12 +23,12 @@ export function CtaFooter() {
           <span className="eyebrow">// 04, ACCESS</span>
           <h2>Request access.</h2>
           <p>
-            Join the gated desk beta or the wallet pre-order list. The desk researches
-            your watchlist and stops at a preview; you decide whether it ever becomes an order.
+            Wave 01 review closes Friday, August 7, 2026. Drop an EVM wallet for
+            desk access, the wallet pre-order list, or the live vault surface.
           </p>
           <Magnetic>
             <a href={REQUEST_ACCESS_URL} className="btn btn-lime">
-              <ScrambleHover text="Request Access" /> ▸
+              <ScrambleHover text="Enter Access Wave" /> ▸
             </a>
           </Magnetic>
         </div>
@@ -57,7 +57,7 @@ export function CtaFooter() {
               <span className="d" /> GUARDRAILS · ARMED
             </span>
             <span className="fs">
-              <span className="d" style={{ background: "var(--warn)" }} /> MODE · BETA
+              <span className="d" style={{ background: "var(--warn)" }} /> MODE · REQUEST ACCESS
             </span>
             <span className="fs">
               <span className="d" style={{ background: "var(--red)" }} /> ORDERS · HUMAN-APPROVED
@@ -65,8 +65,8 @@ export function CtaFooter() {
           </div>
           <div className="disclaimer">
             <strong>⚠ DISCLAIMER</strong>
-            Aelix is a research &amp; recommendation tool, <b>not financial advice</b>. Robinhood Agentic
-            Trading is in beta (US, equities only). The desk trades only inside an isolated Agentic account
+            Aelix is a research &amp; recommendation tool, <b>not financial advice</b>. The desk is limited
+            to US equities inside an isolated Robinhood Agentic account
             funded with a dedicated budget, that budget is the most it can ever lose. There is no track
             record and no performance claim here. All investment decisions are your own responsibility. Use
             only risk capital.

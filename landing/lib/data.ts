@@ -20,7 +20,7 @@ export const MARQUEE = [
   "REFUSALS GO ON THE RECORD · APPEND-ONLY",
   "MAINNET · CHAIN 4663",
   "UNAUDITED · DEPOSITS CAPPED",
-  "BETA · NOT INVESTMENT ADVICE",
+  "REQUEST ACCESS · NOT INVESTMENT ADVICE",
 ] as const;
 
 export const STATS = [
@@ -113,11 +113,11 @@ export const FAQ = [
   },
   {
     q: "Which markets can it trade?",
-    a: "US equities only, inside an isolated Robinhood Agentic account (beta). Options, futures and crypto are out of scope of the underlying beta.",
+    a: "US equities only, inside an isolated Robinhood Agentic account. Options, futures and crypto are out of scope of the current desk access surface.",
   },
   {
     q: "What about the on-chain vault and verifiable track record?",
-    a: "The vault is deployed on Robinhood Chain mainnet (chainId 4663): an RWA Vault (ERC-4626, share token vAELIX) wired to a GuardrailConfig that compiles the desk’s written caps on-chain, plus append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Every owner-controlled contract is owned by a 2-of-3 Safe multisig, so no single hot key can weaken a cap or swap a feed — but there is no timelock yet, so once two of three sign, the Safe can change caps, feeds or the deposit cap in a single transaction. Read the caveats: multisig custody is not an audit, and there is none, it is unaudited (internal review passes are not an audit), the contracts are not yet verified on the block explorer, deposits are capped at 10,000 USDG (an owner-changeable setting, not a structural limit), the vault is operator-funded with no depositors, and nothing has been attested, so there is no track record. The vault trades Robinhood Stock Tokens — price-tracking tokens, not shares, and not available to US persons — while the desk trades US equities in beta; two doors, kept deliberately separate. Not an investment product and not investment advice.",
+    a: "The vault is deployed on Robinhood Chain mainnet (chainId 4663): an RWA Vault (ERC-4626, share token vAELIX) wired to a GuardrailConfig that compiles the desk's written caps on-chain, plus append-only attestation contracts so decisions and outcomes can be recorded rather than claimed. Every owner-controlled contract is owned by a 2-of-3 Safe multisig, so no single hot key can weaken a cap or swap a feed, but there is no timelock yet, so once two of three sign, the Safe can change caps, feeds or the deposit cap in a single transaction. Read the caveats: multisig custody is not an audit, and there is none, it is unaudited (internal review passes are not an audit), the contracts are not yet verified on the block explorer, deposits are capped at 10,000 USDG (an owner-changeable setting, not a structural limit), the vault is operator-funded with no depositors, and nothing has been attested, so there is no track record. The vault trades Robinhood Stock Tokens, price-tracking tokens, not shares, and not available to US persons, while the desk trades US equities through gated access; two doors, kept deliberately separate. Not an investment product and not investment advice.",
   },
   {
     q: "Who executes on-chain, does the agent trade by itself?",
