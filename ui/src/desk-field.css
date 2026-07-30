@@ -132,3 +132,56 @@
   .desk-field { height: 260px; }
   .df-title { font-size: 26px; }
 }
+
+/* Monochrome treatment: recessed black glass with white hardware glow. */
+.desk-field {
+  background:
+    radial-gradient(110% 86% at 50% -12%, rgba(255, 255, 255, 0.11), transparent 55%),
+    radial-gradient(90% 120% at 10% 120%, rgba(255, 255, 255, 0.045), transparent 50%),
+    linear-gradient(180deg, #111 0%, #050505 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    24px 32px 74px rgba(0, 0, 0, 0.84),
+    -10px -10px 26px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -30px 48px rgba(0, 0, 0, 0.48);
+}
+
+.desk-field-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+}
+
+.df-eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.df-title {
+  color: #f8f8f5;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.df-node.df-core,
+.df-node.df-orbit {
+  background: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.62);
+}
+
+.desk-field.mode-loading .desk-field-canvas::after {
+  background: radial-gradient(60% 60% at 50% 42%, rgba(255, 255, 255, 0.10), transparent 70%);
+}
+
+.desk-field.mode-fallback .desk-field-canvas {
+  background:
+    radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(2px 2px at 70% 60%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 85% 25%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(2px 2px at 55% 15%, rgba(255, 255, 255, 0.3), transparent);
+}
+.desk-field.mode-fallback .desk-field-canvas::before {
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.22), inset 0 0 40px rgba(255, 255, 255, 0.10);
+}

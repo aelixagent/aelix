@@ -648,3 +648,269 @@ html { overflow-x: clip; }
   .oc-perf { gap: 14px; }
   .panel { padding: 16px 15px; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Monochrome desk skin — black/white, soft neumorphic depth, tactile
+   skeuomorphic bevels. This intentionally overrides the prior lime accent.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #050505;
+  --bg-2: #090909;
+  --panel: #111111;
+  --panel-2: #171717;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-2: rgba(255, 255, 255, 0.22);
+  --text: #f5f5f2;
+  --text-dim: rgba(245, 245, 242, 0.66);
+  --text-faint: rgba(245, 245, 242, 0.42);
+  --pos: #ffffff;
+  --pos-bg: rgba(255, 255, 255, 0.08);
+  --pos-glow: rgba(255, 255, 255, 0.24);
+  --neon: #ffffff;
+  --neg: #a8a8a4;
+  --neg-bg: rgba(255, 255, 255, 0.055);
+  --warn: #d7d7d2;
+  --accent: #ffffff;
+  --accent-bg: rgba(255, 255, 255, 0.075);
+  --elev:
+    18px 24px 56px rgba(0, 0, 0, 0.78),
+    -10px -10px 26px rgba(255, 255, 255, 0.035),
+    inset 0 1px 1px rgba(255, 255, 255, 0.16),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.34);
+}
+
+body {
+  background:
+    radial-gradient(900px 560px at 18% -10%, rgba(255, 255, 255, 0.075), transparent 62%),
+    radial-gradient(760px 460px at 92% 12%, rgba(255, 255, 255, 0.045), transparent 58%),
+    linear-gradient(180deg, #070707 0%, #030303 52%, #000 100%);
+}
+
+body::after {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.app {
+  max-width: 1320px;
+}
+
+.topbar,
+.panel,
+.oc-band,
+.cand,
+.bt-card,
+.preview-grid,
+.vault-hero,
+.oc-grid,
+.oc-attest,
+.run-prompt-preview,
+.run-input {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012) 38%, rgba(0, 0, 0, 0.44)),
+    var(--panel);
+  border-color: var(--border);
+}
+
+.topbar {
+  border-radius: 22px;
+  box-shadow:
+    28px 32px 80px rgba(0, 0, 0, 0.82),
+    -12px -12px 28px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.82);
+}
+
+.topbar-glow {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.36), #fff, rgba(255, 255, 255, 0.28), transparent);
+}
+.topbar-glow::after {
+  background: radial-gradient(60% 100% at 50% 0, rgba(255, 255, 255, 0.12), transparent 70%);
+}
+
+.logo {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #222, #050505);
+  box-shadow:
+    10px 12px 24px rgba(0, 0, 0, 0.62),
+    -4px -4px 12px rgba(255, 255, 255, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.52);
+}
+.logo img {
+  filter: grayscale(1) contrast(1.24) brightness(1.12);
+}
+
+.brand-title {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.panel {
+  border-radius: 18px;
+  box-shadow: var(--elev);
+}
+.panel:hover {
+  box-shadow:
+    24px 30px 70px rgba(0, 0, 0, 0.86),
+    -10px -10px 26px rgba(255, 255, 255, 0.045),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.38);
+}
+.panel h2::before {
+  background: linear-gradient(180deg, #fff, #777);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+.oc-band {
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 100% at 90% 0, rgba(255, 255, 255, 0.05), transparent 54%),
+    linear-gradient(145deg, #101010, #050505);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    20px 28px 64px rgba(0, 0, 0, 0.7);
+}
+
+.grid-wrap,
+.preview-grid,
+.vault-hero,
+.oc-grid,
+.run-input,
+.run-prompt-preview {
+  box-shadow:
+    inset 8px 8px 18px rgba(0, 0, 0, 0.58),
+    inset -5px -5px 14px rgba(255, 255, 255, 0.035);
+}
+
+.cand,
+.bt-card {
+  border-radius: 16px;
+  box-shadow:
+    12px 16px 34px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -12px 20px rgba(0, 0, 0, 0.28);
+}
+
+.meter {
+  height: 8px;
+  background: #050505;
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.85),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.06);
+}
+.meter-fill.ok,
+.meter-fill.warn,
+.meter-fill.breach {
+  background: linear-gradient(90deg, #777, #fff);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.22);
+}
+.meter-fill.breach {
+  opacity: 0.6;
+}
+
+.tag,
+.badge,
+.chip,
+.side,
+.oc-enforced,
+.preview-badge,
+.net-badge,
+.run-btn,
+.btn {
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 14px rgba(0, 0, 0, 0.22);
+}
+
+.tag,
+.chip.pos,
+.chip.neg,
+.chip.flat,
+.badge.approve,
+.badge.pending,
+.badge.changes,
+.badge.veto,
+.side.buy,
+.side.sell,
+.oc-enforced.on,
+.oc-enforced.off,
+.preview-badge {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.net-dot.on,
+.dot.on,
+.rail-tick.on {
+  background: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.58);
+}
+.net-dot.off,
+.dot.off {
+  background: #9a9a9a;
+  box-shadow: 0 0 9px rgba(255, 255, 255, 0.2);
+}
+.rail-tick.on,
+.rail-tick.off {
+  color: #050505;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.run-btn,
+.btn.primary,
+.vault-link {
+  background: linear-gradient(180deg, #f8f8f4, #a8a8a4);
+  color: #050505;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.run-btn:hover:not(:disabled),
+.vault-link:hover {
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.btn.ghost {
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.preview {
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    24px 30px 70px rgba(0, 0, 0, 0.82),
+    -8px -8px 24px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -24px 44px rgba(0, 0, 0, 0.4);
+}
+
+.vault-nav-v,
+.stat-value.hero,
+.ring-arc {
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.14);
+}
+.ring-arc {
+  stroke: #fff;
+  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.26));
+}
+
+.approve-note,
+.run-status .warn-text,
+.oc-cap.warn-cap,
+.net-state,
+.preview-badge {
+  color: var(--text-dim);
+}
+
+.inj-quote,
+.panel.alert h2::before {
+  color: #f5f5f2;
+}
+.panel.alert {
+  border-color: rgba(255, 255, 255, 0.2);
+}

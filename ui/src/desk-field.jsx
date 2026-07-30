@@ -17,10 +17,10 @@ import { useEffect, useRef, useState } from 'react'
  *   - disposes every geometry/material/renderer on unmount (no GPU leak)
  */
 
-const ACCENT = 0xc5e94a // Aelix lime
-const POS = 0x3fd07f
-const NEG = 0xef4444
-const DIM = 0x59626f
+const ACCENT = 0xf2f2f2
+const POS = 0xffffff
+const NEG = 0x9a9a9a
+const DIM = 0x555555
 
 function nodesFrom({ positions, guardrails, isDemo }) {
   if (!isDemo && positions && positions.length) {
@@ -149,7 +149,7 @@ function initScene(THREE, el, data) {
   const key = new THREE.PointLight(ACCENT, 1.4, 40)
   key.position.set(4, 6, 6)
   scene.add(key)
-  const fill = new THREE.PointLight(0x9fb8ff, 0.5, 40)
+  const fill = new THREE.PointLight(0xcfcfcf, 0.5, 40)
   fill.position.set(-6, -3, 4)
   scene.add(fill)
 
