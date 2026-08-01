@@ -1,6 +1,72 @@
 import { useState } from 'react'
 import { usd, pct, num, signClass, timeAgo } from './format.js'
 
+/* ---------- agent chat ---------- */
+
+export function AgentChat() {
+  const [prompt, setPrompt] = useState('')
+  const [sent, setSent] = useState(false)
+  const [history, setHistory] = useState([])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!prompt.trim()) return
+    
+    const userMsg = { role: 'user', text: prompt }
+    setHistory(h => [...h, userMsg])
+    setPrompt('')
+    setSent(true)
+    
+    // Simulate AI response
+    setTimeout(() => {
+      const agentMsg = { 
+        role: 'agent', 
+        text: `Understood! I am analyzing "${userMsg.text}". Check the Trade Proposal and Desk Analysis sections for my findings.`
+      }
+      setHistory(h => [...h, agentMsg])
+      setSent(false)
+    }, 1500)
+  }
+
+  return (
+    <section className="panel agent-chat" style={{ marginBottom: '20px' }}>
+      {history.length > 0 && (
+        <div className="chat-history" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px', maxHeight: '200px', overflowY: 'auto' }}>
+          {history.map((msg, i) => (
+            <div key={i} className={`chat-msg ${msg.role}`} style={{
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              background: msg.role === 'user' ? 'var(--bg-2)' : 'var(--pos-bg)',
+              border: msg.role === 'agent' ? '1px solid rgba(215, 254, 81, 0.3)' : '1px solid var(--border)',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              maxWidth: '85%',
+              color: msg.role === 'agent' ? 'var(--pos)' : 'var(--text)'
+            }}>
+              <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {msg.role === 'user' ? 'You' : 'Agentic AI'}
+              </div>
+              <div style={{ lineHeight: 1.5, fontSize: '13px' }}>{msg.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px' }}>
+        <input 
+          className="run-input" 
+          style={{ flex: 1 }}
+          placeholder="Chat with Agentic AI... (e.g. 'buy 10 shares of AAPL')" 
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          disabled={sent}
+        />
+        <button type="submit" className="run-btn" disabled={!prompt.trim() || sent}>
+          {sent ? 'Typing...' : 'Send'}
+        </button>
+      </form>
+    </section>
+  )
+}
+
 /* ---------- run trigger (copies a desk-run prompt to the clipboard; read-only) ---------- */
 
 export function RunControls() {

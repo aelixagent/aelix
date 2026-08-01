@@ -152,7 +152,7 @@ small { opacity: 0.65; font-size: 0.85em; }
 .vault-link:hover { background: var(--pos-bg); box-shadow: 0 0 16px var(--pos-glow); transform: translateY(-1px); }
 
 /* ---------- layout ---------- */
-.layout { display: grid; grid-template-columns: 1fr 330px; gap: 20px; align-items: start; }
+.layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
 /* min-width:0 lets these grid tracks shrink below their content's intrinsic width
    (e.g. the Positions table's min-width) so the table scrolls inside grid-wrap
    instead of forcing the whole page wider than the viewport on mobile */

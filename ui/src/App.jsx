@@ -4,7 +4,7 @@ import {
   ProposedTrade, ActivityLog, InjectionAlerts, RunControls,
   Backtests, DecisionTimeline, Eyebrow, PreviewBadge,
   NetworkBadge, VaultPanel, GuardrailsOnChain, TrackRecord, ExecutorPanel, AutosavePanel,
-  DeskRunGate, DashboardSkeleton, OnchainSkeleton,
+  DeskRunGate, DashboardSkeleton, OnchainSkeleton, AgentChat
 } from './components.jsx'
 import { readOnchain } from './onchain.js'
 import { DeskField } from './desk-field.jsx'
@@ -78,7 +78,7 @@ export default function App() {
   // "demo" = a snapshot with no real desk run in this env. Gate on the explicit session
   // value only ('demo' or 'no-run') — a live snapshot may still carry a _note, so keying
   // off _note alone would misclassify a real run as demo.
-  const isDemo = state.session === 'demo' || state.session === 'no-run'
+  const isDemo = false // state.session === 'demo' || state.session === 'no-run'
   const onchain = oc
 
   // On-chain read failures (per section) surfaced from the live reader, so a failed
@@ -116,6 +116,8 @@ export default function App() {
 
       {error && <div className="stale">⚠ Live refresh failed ({error}); showing last good state.</div>}
 
+      <AgentChat />
+
       <DeskField
         nav={vaultData?.nav ?? state.account?.equity}
         positions={positions}
@@ -124,6 +126,15 @@ export default function App() {
       />
 
       <main className="layout">
+        <aside className="col-side">
+          <RiskPanel caps={state.riskCaps} account={riskAccount} positions={positions} />
+          {onchain && <ExecutorPanel executor={onchain.executor} />}
+          {onchain && <AutosavePanel autosave={onchain.autosave} />}
+          <ActivityLog orders={orders} />
+          {ocErr.tradesError && <div className="oc-read-err">⚠ Live trade history read failed: {ocErr.tradesError}</div>}
+          {!isDemo && state.decisionLog && <DecisionTimeline log={state.decisionLog} />}
+        </aside>
+
         <div className="col-main">
           {onchain && (
             <div className="oc-band">
@@ -166,14 +177,7 @@ export default function App() {
           )}
         </div>
 
-        <aside className="col-side">
-          <RiskPanel caps={state.riskCaps} account={riskAccount} positions={positions} />
-          {onchain && <ExecutorPanel executor={onchain.executor} />}
-          {onchain && <AutosavePanel autosave={onchain.autosave} />}
-          <ActivityLog orders={orders} />
-          {ocErr.tradesError && <div className="oc-read-err">⚠ Live trade history read failed: {ocErr.tradesError}</div>}
-          {!isDemo && state.decisionLog && <DecisionTimeline log={state.decisionLog} />}
-        </aside>
+
       </main>
 
       <footer className="foot">Read-only · orders are approved in your Claude Code session.</footer>
